@@ -1,0 +1,24 @@
+<%
+  # Form Checkbox Component
+  # Usage: render 'admin/shared/form_checkbox', form: f, field: :active, label: 'Active', help_text: 'Make this product visible'
+
+  help_text ||= nil
+  checked ||= false
+%>
+
+<div class="mb-4">
+  <div class="flex items-start">
+    <div class="flex items-center h-5">
+      <%= form.check_box field,
+        class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2",
+        checked: checked
+      %>
+    </div>
+    <div class="ml-3">
+      <%= form.label field, label, class: "text-sm font-medium text-gray-700" %>
+      <% if help_text %>
+        <p class="text-xs text-gray-500"><%= help_text %></p>
+      <% end %>
+    </div>
+  </div>
+</div>

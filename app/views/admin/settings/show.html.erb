@@ -1,0 +1,158 @@
+<!-- Page Header -->
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.settings.title") %></h1>
+  <p class="mt-1 text-sm text-gray-600"><%= t("admin.settings.subtitle", default: "Configure your store settings and preferences") %></p>
+</div>
+
+<%= form_with(model: [:admin, @setting], url: admin_setting_path(locale: I18n.locale), method: :put, local: true, class: "space-y-6") do |form| %>
+  <% if @setting.errors.any? %>
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <div class="font-semibold mb-2">Please fix the errors below</div>
+      <ul class="list-disc pl-5 space-y-1">
+        <% @setting.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- Store Information Section -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+      </svg>
+      <%= t("admin.settings.store_info", default: "Store Information") %>
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <%= form.label :store_name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :store_name,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "VENE Jewelry" %>
+      </div>
+
+      <div>
+        <%= form.label :default_currency, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :default_currency,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "USD" %>
+        <p class="mt-1 text-xs text-gray-500">Currency code (e.g., USD, EUR, GBP)</p>
+      </div>
+
+      <div>
+        <%= form.label :local_country, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :local_country,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "United States" %>
+      </div>
+
+      <div>
+        <%= form.label :whatsapp_phone_number, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :whatsapp_phone_number,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "+1234567890" %>
+        <p class="mt-1 text-xs text-gray-500">Include country code</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax & Shipping Section -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <%= t("admin.settings.tax_shipping", default: "Tax & Shipping") %>
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <%= form.label :local_tax_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="relative">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">
+            <span>%</span>
+          </div>
+          <%= form.number_field :local_tax_rate, step: 0.01,
+            class: "block w-full pr-8 pl-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+            placeholder: "0.00" %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Local sales tax rate</p>
+      </div>
+
+      <div>
+        <%= form.label :international_tax_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="relative">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">
+            <span>%</span>
+          </div>
+          <%= form.number_field :international_tax_rate, step: 0.01,
+            class: "block w-full pr-8 pl-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+            placeholder: "0.00" %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">International tax rate</p>
+      </div>
+
+      <div>
+        <%= form.label :shipping_flat_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+            <span>$</span>
+          </div>
+          <%= form.number_field :shipping_flat_rate, step: 0.01,
+            class: "block w-full pl-8 pr-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+            placeholder: "0.00" %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Flat shipping rate</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Integration Section -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+      </svg>
+      <%= t("admin.settings.payment", default: "Payment Integration") %>
+    </h3>
+
+    <div class="space-y-4 bg-gray-50 rounded-lg p-4">
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#465FFF] to-[#3651E6] rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-gray-900">MontyPay Configuration</h4>
+          <p class="text-xs text-gray-600">Configure your MontyPay payment gateway credentials</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <%= form.label :montypay_merchant_id, class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.text_field :montypay_merchant_id,
+            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors font-mono",
+            placeholder: "merchant_xxxxxxxxxxxx" %>
+        </div>
+
+        <div>
+          <%= form.label :montypay_api_key, class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.password_field :montypay_api_key,
+            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors font-mono",
+            placeholder: "••••••••••••••••" %>
+          <p class="mt-1 text-xs text-gray-500">Keep this secret and secure</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="flex items-center justify-end pt-4">
+    <%= form.submit t("admin.actions.save"),
+      class: "inline-flex items-center px-6 py-2.5 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" %>
+  </div>
+<% end %>

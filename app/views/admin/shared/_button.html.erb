@@ -1,0 +1,57 @@
+<%
+  # Button Component
+  # Usage: render 'admin/shared/button', text: 'Save', type: 'primary', href: nil, method: nil, data: {}
+
+  type ||= 'primary'
+  size ||= 'md'
+  icon ||= nil
+  href ||= nil
+  method ||= nil
+  data ||= {}
+  full_width ||= false
+  disabled ||= false
+
+  base_classes = "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+
+  size_classes = {
+    'sm' => 'px-3 py-1.5 text-sm',
+    'md' => 'px-4 py-2 text-sm',
+    'lg' => 'px-6 py-3 text-base'
+  }
+
+  type_classes = {
+    'primary' => 'bg-[#465FFF] hover:bg-[#3651E6] text-white focus:ring-[#465FFF] shadow-sm',
+    'secondary' => 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-400',
+    'success' => 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500 shadow-sm',
+    'danger' => 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 shadow-sm',
+    'outline' => 'border-2 border-[#465FFF] text-[#465FFF] hover:bg-[#465FFF] hover:text-white focus:ring-[#465FFF]',
+    'ghost' => 'text-gray-700 hover:bg-gray-100 focus:ring-gray-400'
+  }
+
+  disabled_classes = 'opacity-50 cursor-not-allowed pointer-events-none'
+  width_classes = full_width ? 'w-full' : ''
+
+  classes = [
+    base_classes,
+    size_classes[size],
+    type_classes[type],
+    width_classes,
+    disabled ? disabled_classes : ''
+  ].join(' ')
+%>
+
+<% if href %>
+  <%= link_to href, class: classes, method: method, data: data do %>
+    <% if icon %>
+      <span class="mr-2"><%= icon %></span>
+    <% end %>
+    <%= text %>
+  <% end %>
+<% else %>
+  <button type="<%= button_type || 'button' %>" class="<%= classes %>" <%= 'disabled' if disabled %> <%= "data-#{data.keys.first}=\"#{data.values.first}\"" if data.any? %>>
+    <% if icon %>
+      <span class="mr-2"><%= icon %></span>
+    <% end %>
+    <%= text %>
+  </button>
+<% end %>

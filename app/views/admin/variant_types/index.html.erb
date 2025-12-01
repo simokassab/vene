@@ -1,0 +1,90 @@
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Variant Types</h1>
+      <p class="mt-2 text-sm text-gray-700">Manage variant types (Size, Color, etc.) and their options</p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <%= link_to new_admin_variant_type_path(locale: I18n.locale),
+        class: "inline-flex items-center px-4 py-2 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-colors" do %>
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Variant Type
+      <% end %>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Options</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% @variant_types.each do |variant_type| %>
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="font-medium text-gray-900"><%= variant_type.name %></div>
+              <% if variant_type.description.present? %>
+                <div class="text-sm text-gray-500"><%= variant_type.description %></div>
+              <% end %>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1">
+                <% variant_type.variant_options.active.ordered.limit(5).each do |option| %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                    <%= option.value %>
+                  </span>
+                <% end %>
+                <% if variant_type.variant_options.count > 5 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-600">
+                    +<%= variant_type.variant_options.count - 5 %> more
+                  </span>
+                <% end %>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <% if variant_type.active %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+              <% else %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <%= link_to "Edit", edit_admin_variant_type_path(variant_type, locale: I18n.locale),
+                class: "text-[#465FFF] hover:text-[#3651E6] mr-4" %>
+              <%= button_to "Delete", admin_variant_type_path(variant_type, locale: I18n.locale),
+                method: :delete,
+                data: { turbo_confirm: "Are you sure?" },
+                class: "text-red-600 hover:text-red-900 inline" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @variant_types.empty? %>
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No variant types</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by creating a new variant type.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Pagination -->
+  <% if @pagy.pages > 1 %>
+    <div class="mt-6">
+      <%== pagy_nav(@pagy) %>
+    </div>
+  <% end %>
+</div>

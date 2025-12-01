@@ -1,0 +1,73 @@
+<% content_for :full_width, true %>
+
+<div class="min-h-screen bg-gray-50 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <!-- Header -->
+    <div class="space-y-2">
+      <p class="text-sm uppercase tracking-[0.2em] text-gray-500"><%= t("search.title", default: "Search") %></p>
+      <h1 class="text-4xl font-bold text-gray-900">
+        <%= @query.present? ? @query : t("search.placeholder", default: "Browse our collection") %>
+      </h1>
+      <p class="text-gray-600"><%= t("search.results_count", default: "#{@products.size} results found", count: @products.size) %></p>
+    </div>
+
+    <% if @query.blank? %>
+      <div class="text-center py-16 bg-white border border-dashed border-gray-300 rounded-2xl">
+        <p class="text-xl font-semibold text-gray-900 mb-2"><%= t("search.enter_query", default: "Start typing to search our products") %></p>
+        <p class="text-gray-600"><%= t("search.tip", default: "Search by product name in English or Arabic") %></p>
+      </div>
+    <% elsif @products.empty? %>
+      <div class="text-center py-16 bg-white border border-dashed border-gray-300 rounded-2xl">
+        <p class="text-xl font-semibold text-gray-900 mb-2"><%= t("search.no_results", default: "No products match that search") %></p>
+        <p class="text-gray-600 mb-6"><%= t("search.try_again", default: "Try another keyword or check out our categories") %></p>
+        <%= link_to t("home.shop_now", default: "Shop Now"), root_path(locale: I18n.locale),
+          class: "inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-full font-semibold hover:bg-black transition" %>
+      </div>
+    <% else %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <% @products.each_with_index do |product, index| %>
+          <div class="group relative animate-fade-in" style="animation-delay: <%= index * 50 %>ms;">
+            <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
+              <div class="relative aspect-square overflow-hidden bg-gray-100">
+                <% if product.primary_image&.image&.url %>
+                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                    <%= image_tag product.primary_image.image.url,
+                      class: "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" %>
+                  <% end %>
+                <% else %>
+                  <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                <% end %>
+
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <%= link_to product_path(product.slug, locale: I18n.locale),
+                    class: "px-4 py-2 bg-white text-gray-900 font-semibold rounded-full text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300" do %>
+                    <%= t("common.quick_view", default: "Quick View") %>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="p-4">
+                <div class="text-xs text-gray-500 mb-1"><%= product.category.name(I18n.locale) %></div>
+                <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                  <h3 class="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-gray-700 transition-colors">
+                    <%= product.name(I18n.locale) %>
+                  </h3>
+                <% end %>
+                <div class="text-lg font-bold text-gray-900">
+                  <%= number_to_currency(product.current_price, unit: current_settings.default_currency) %>
+                  <% if product.on_sale_with_price? %>
+                    <span class="text-sm text-gray-400 line-through ml-2"><%= number_to_currency(product.price, unit: current_settings.default_currency) %></span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

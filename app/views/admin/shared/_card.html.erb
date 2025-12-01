@@ -1,0 +1,39 @@
+<%
+  # Card Component
+  # Usage: render 'admin/shared/card', title: 'Card Title', padding: true do
+  #   content here
+  # end
+
+  title ||= nil
+  subtitle ||= nil
+  padding ||= true
+  shadow ||= true
+  actions ||= nil
+
+  base_classes = "bg-white rounded-xl border border-gray-200"
+  shadow_classes = shadow ? "shadow-sm hover:shadow-md transition-shadow duration-200" : ""
+
+  classes = "#{base_classes} #{shadow_classes}"
+%>
+
+<div class="<%= classes %>">
+  <% if title %>
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900"><%= title %></h3>
+        <% if subtitle %>
+          <p class="mt-1 text-sm text-gray-500"><%= subtitle %></p>
+        <% end %>
+      </div>
+      <% if actions %>
+        <div class="flex items-center space-x-2">
+          <%= actions %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="<%= padding ? 'p-6' : '' %>">
+    <%= yield %>
+  </div>
+</div>

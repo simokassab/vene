@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name_en: MyString
+  name_ar: MyString
+  description_en: MyText
+  description_ar: MyText
+  price: 9.99
+  category: one
+  stock_quantity: 1
+  metal: MyString
+  diamonds: MyString
+  gemstones: MyString
+  active: false
+  slug: MyString
+
+two:
+  name_en: MyString
+  name_ar: MyString
+  description_en: MyText
+  description_ar: MyText
+  price: 9.99
+  category: two
+  stock_quantity: 1
+  metal: MyString
+  diamonds: MyString
+  gemstones: MyString
+  active: false
+  slug: MyString

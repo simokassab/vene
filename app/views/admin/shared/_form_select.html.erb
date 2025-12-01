@@ -1,0 +1,36 @@
+<%
+  # Form Select Component
+  # Usage: render 'admin/shared/form_select', form: f, field: :category_id, label: 'Category', options: categories, required: true
+
+  required ||= false
+  help_text ||= nil
+  error ||= nil
+  prompt ||= nil
+  multiple ||= false
+  include_blank ||= false
+
+  select_classes = "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors"
+  select_classes += " border-red-300 focus:ring-red-500 focus:border-red-500" if error
+
+  label_classes = "block text-sm font-medium text-gray-700 mb-2"
+  label_classes += " after:content-['*'] after:ml-0.5 after:text-red-500" if required
+%>
+
+<div class="mb-4">
+  <% if label %>
+    <%= form.label field, label, class: label_classes %>
+  <% end %>
+
+  <%= form.select field, options,
+    { prompt: prompt, include_blank: include_blank },
+    { class: select_classes, required: required, multiple: multiple }
+  %>
+
+  <% if help_text %>
+    <p class="mt-1 text-xs text-gray-500"><%= help_text %></p>
+  <% end %>
+
+  <% if error %>
+    <p class="mt-1 text-xs text-red-600"><%= error %></p>
+  <% end %>
+</div>

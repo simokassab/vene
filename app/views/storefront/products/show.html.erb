@@ -1,0 +1,507 @@
+<% images = @product.product_images
+   primary_url = images.first&.image&.url %>
+
+<!-- Alpine.js State Management -->
+<div x-data="{
+  activeImage: '<%= primary_url || '' %>',
+  quantity: 1,
+  selectedVariant: null,
+  selectedTab: 'description',
+  showImageModal: false,
+  addedToCart: false,
+  imageZoom: false,
+  zoomX: 0,
+  zoomY: 0,
+  hasVariants: <%= @product.has_variants? %>,
+  handleMouseMove(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    this.zoomX = ((e.clientX - rect.left) / rect.width) * 100;
+    this.zoomY = ((e.clientY - rect.top) / rect.height) * 100;
+  }
+}" class="pb-16">
+
+  <!-- Breadcrumb -->
+  <div class="mb-6">
+    <div class="flex items-center text-sm text-gray-600">
+      <%= link_to t("common.home", default: "Home"), root_path(locale: I18n.locale),
+        class: "hover:text-gray-900 transition-colors" %>
+      <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <%= link_to @product.category.name(I18n.locale), category_path(@product.category.slug, locale: I18n.locale),
+        class: "hover:text-gray-900 transition-colors" %>
+      <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-gray-900 font-medium"><%= @product.name(I18n.locale) %></span>
+    </div>
+  </div>
+
+  <!-- Product Details Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+    <!-- LEFT: Image Gallery -->
+    <div class="lg:sticky lg:top-24 lg:self-start">
+      <!-- Main Image -->
+      <div class="relative bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden mb-6">
+        <div class="aspect-square flex items-center justify-center bg-gray-50 relative overflow-hidden cursor-pointer"
+             @mouseenter="imageZoom = true"
+             @mouseleave="imageZoom = false"
+             @mousemove="handleMouseMove"
+             @click="showImageModal = true">
+          <% if primary_url %>
+            <div class="w-full h-full flex items-center justify-center p-8">
+              <img :src="activeImage"
+                   data-main-image
+                   class="max-h-full w-full object-contain transition-all duration-300"
+                   :class="imageZoom ? 'opacity-0' : 'opacity-100'" />
+            </div>
+
+            <!-- Zoomed Image (appears on hover) -->
+            <div x-show="imageZoom"
+                 class="absolute inset-0 pointer-events-none"
+                 style="display: none;">
+              <div class="w-full h-full"
+                   :style="{
+                     backgroundImage: `url(${activeImage})`,
+                     backgroundPosition: `${zoomX}% ${zoomY}%`,
+                     backgroundSize: '200%',
+                     backgroundRepeat: 'no-repeat'
+                   }">
+              </div>
+            </div>
+          <% else %>
+            <div class="flex flex-col items-center justify-center text-gray-400 py-24">
+              <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <p><%= t("common.no_image", default: "No image available") %></p>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Zoom Hint -->
+        <% if primary_url %>
+          <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+            <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity"
+                 :class="imageZoom ? 'opacity-100' : ''">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+              </svg>
+              <span x-show="!imageZoom">Hover to zoom</span>
+              <span x-show="imageZoom">Move mouse to explore</span>
+            </div>
+            <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+              </svg>
+              Click for fullscreen
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Thumbnail Gallery -->
+      <% if images.any? %>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+          <% images.each_with_index do |img, index| %>
+            <button type="button"
+                    @click="activeImage = '<%= img.image.url %>'; imageZoom = false;"
+                    :class="activeImage === '<%= img.image.url %>' ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
+                    class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-white shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer group">
+              <%= image_tag img.image.url, class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" %>
+
+              <!-- Selected indicator -->
+              <div x-show="activeImage === '<%= img.image.url %>'"
+                   class="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
+                <div class="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+              </div>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+
+      <!-- Trust Badges -->
+      <div class="grid grid-cols-3 gap-4 mt-8">
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
+            <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-900"><%= t("common.authentic", default: "100% Authentic") %></p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
+            <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-900"><%= t("common.gift_ready", default: "Gift Ready") %></p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
+            <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <p class="text-xs font-medium text-gray-900"><%= t("common.fast_ship", default: "Fast Shipping") %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Product Information -->
+    <div class="space-y-6">
+      <!-- Category Badge -->
+      <div>
+        <%= link_to @product.category.name(I18n.locale), category_path(@product.category.slug, locale: I18n.locale),
+          class: "inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium text-gray-700 transition-colors" %>
+      </div>
+
+      <!-- Product Title & Price -->
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+          <%= @product.name(I18n.locale) %>
+        </h1>
+        <div class="flex items-center flex-wrap gap-3">
+          <% if @product.on_sale_with_price? %>
+            <span class="text-4xl font-bold text-red-700">
+              <%= number_to_currency(@product.current_price, unit: current_settings.default_currency) %>
+            </span>
+            <span class="text-xl text-gray-400 line-through">
+              <%= number_to_currency(@product.price, unit: current_settings.default_currency) %>
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-50 text-red-700 font-semibold text-sm">
+              <%= t("common.sale", default: "Sale") %>
+              <span class="ml-2 text-xs font-bold">-<%= number_to_percentage(@product.discount_percentage, precision: 0) %></span>
+            </span>
+          <% else %>
+            <span class="text-4xl font-bold text-gray-900">
+              <%= number_to_currency(@product.price, unit: current_settings.default_currency) %>
+            </span>
+          <% end %>
+          <span class="text-sm text-gray-500">
+            <%= t("common.tax_included", default: "Tax included") %>
+          </span>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 text-yellow-400">
+          <% 5.times do %>
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+            </svg>
+          <% end %>
+        </div>
+        <span class="text-sm text-gray-600">(4.9) • 127 reviews</span>
+      </div>
+
+      <!-- Variant Selector (if product has variants) -->
+      <% if @product.has_variants? %>
+        <%
+          first_variant = @product.product_variants.active.first
+          variant_type_name = first_variant&.variant_type&.name || first_variant&.name || "Select Option"
+        %>
+        <div class="space-y-4 p-6 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <label class="text-base font-semibold text-gray-900">
+              <%= variant_type_name %>
+              <span class="text-red-600">*</span>
+            </label>
+            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Required</span>
+          </div>
+
+          <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+            <% @product.product_variants.active.in_stock.each do |variant| %>
+              <button type="button"
+                      @click="selectedVariant = <%= variant.id %>"
+                      :class="selectedVariant === <%= variant.id %> ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900 hover:shadow-sm'"
+                      class="px-3 py-2.5 border-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+                <%= variant.variant_option&.value || variant.value %>
+              </button>
+            <% end %>
+
+            <% @product.product_variants.active.where("stock_quantity <= 0").each do |variant| %>
+              <div class="relative px-3 py-2.5 border-2 border-gray-200 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed opacity-60 group/variant">
+                <%= variant.variant_option&.value || variant.value %>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/variant:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                  Out of stock
+                  <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <div x-show="!selectedVariant && hasVariants"
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 translate-y-1"
+               x-transition:enter-end="opacity-100 translate-y-0"
+               class="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>Please select <%= variant_type_name.downcase %> to continue</span>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Quantity Selector & Add to Cart -->
+      <div class="space-y-4 p-6 bg-gray-50 rounded-2xl">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-medium text-gray-700"><%= t("common.quantity", default: "Quantity") %>:</label>
+          <div class="flex items-center border-2 border-gray-300 rounded-lg bg-white">
+            <button @click="quantity = Math.max(1, quantity - 1)"
+                    class="px-4 py-2 hover:bg-gray-100 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+              </svg>
+            </button>
+            <input type="number"
+                   x-model="quantity"
+                   min="1"
+                   class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold" />
+            <button @click="quantity++"
+                    class="px-4 py-2 hover:bg-gray-100 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= hidden_field_tag :product_id, @product.id %>
+            <input type="hidden" name="product_variant_id" x-model="selectedVariant">
+            <input type="hidden" name="quantity" x-model="quantity">
+            <button type="submit"
+                    :disabled="hasVariants && !selectedVariant"
+                    :class="(hasVariants && !selectedVariant) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:shadow-xl hover:scale-105'"
+                    class="w-full bg-gray-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+              <%= t("products.add_to_cart", default: "Add to Cart") %>
+            </button>
+          </form>
+
+          <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= hidden_field_tag :product_id, @product.id %>
+            <%= hidden_field_tag :redirect_to, checkout_path(locale: I18n.locale) %>
+            <input type="hidden" name="product_variant_id" x-model="selectedVariant">
+            <input type="hidden" name="quantity" x-model="quantity">
+            <button type="submit"
+                    :disabled="hasVariants && !selectedVariant"
+                    :class="(hasVariants && !selectedVariant) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 hover:text-white hover:scale-105'"
+                    class="w-full border-2 border-gray-700 text-gray-700 font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <%= t("products.buy_now", default: "Buy Now") %>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Product Tabs -->
+      <div class="border-t border-gray-200 pt-6">
+        <!-- Tab Headers -->
+        <div class="flex gap-4 border-b border-gray-200 mb-6">
+          <button @click="selectedTab = 'description'"
+                  :class="selectedTab === 'description' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
+                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
+            <%= t("common.description", default: "Description") %>
+          </button>
+          <button @click="selectedTab = 'specifications'"
+                  :class="selectedTab === 'specifications' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
+                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
+            <%= t("common.specifications", default: "Specifications") %>
+          </button>
+          <button @click="selectedTab = 'shipping'"
+                  :class="selectedTab === 'shipping' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
+                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
+            <%= t("common.shipping", default: "Shipping & Returns") %>
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div>
+          <!-- Description Tab -->
+          <div x-show="selectedTab === 'description'"
+               x-transition:enter="transition-opacity duration-300"
+               x-transition:enter-start="opacity-0"
+               x-transition:enter-end="opacity-100"
+               class="prose max-w-none text-gray-700">
+            <%= simple_format(@product.description(I18n.locale)) %>
+          </div>
+
+          <!-- Specifications Tab -->
+          <div x-show="selectedTab === 'specifications'"
+               x-transition:enter="transition-opacity duration-300"
+               x-transition:enter-start="opacity-0"
+               x-transition:enter-end="opacity-100"
+               class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
+              <div class="text-sm text-gray-500 mb-1"><%= t("products.metal", default: "Metal") %></div>
+              <div class="font-semibold text-gray-900"><%= @product.metal.presence || '-' %></div>
+            </div>
+            <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
+              <div class="text-sm text-gray-500 mb-1"><%= t("products.diamonds", default: "Diamonds") %></div>
+              <div class="font-semibold text-gray-900"><%= @product.diamonds.presence || '-' %></div>
+            </div>
+            <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
+              <div class="text-sm text-gray-500 mb-1"><%= t("products.gemstones", default: "Gemstones") %></div>
+              <div class="font-semibold text-gray-900"><%= @product.gemstones.presence || '-' %></div>
+            </div>
+            <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
+              <div class="text-sm text-gray-500 mb-1"><%= t("products.category", default: "Category") %></div>
+              <div class="font-semibold text-gray-900"><%= @product.category.name(I18n.locale) %></div>
+            </div>
+          </div>
+
+          <!-- Shipping Tab -->
+          <div x-show="selectedTab === 'shipping'"
+               x-transition:enter="transition-opacity duration-300"
+               x-transition:enter-start="opacity-0"
+               x-transition:enter-end="opacity-100"
+               class="space-y-4">
+            <div class="p-6 bg-white rounded-xl border-2 border-gray-200">
+              <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center">
+                  <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900 mb-2">DHL Express Shipping</h4>
+                  <p class="text-gray-600 text-sm"><%= t("products.shipping_note", default: "Fast and secure worldwide shipping via DHL Express. Delivery within 3-7 business days.") %></p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 bg-white rounded-xl border-2 border-gray-200">
+              <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center">
+                  <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900 mb-2">Tax & Duties</h4>
+                  <p class="text-gray-600 text-sm"><%= t("products.tax_note", local: current_settings.local_country, default: "Taxes calculated at checkout based on your location.") %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  <% if @related_products.any? %>
+    <div class="mt-20">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">
+          <%= t("products.related", default: "You May Also Like") %>
+        </h2>
+        <%= link_to category_path(@product.category.slug, locale: I18n.locale),
+          class: "text-gray-900 hover:text-gray-700 font-medium flex items-center gap-2 transition-colors" do %>
+          <%= t("home.view_all", default: "View All") %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        <% end %>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <% @related_products.each_with_index do |product, index| %>
+          <div class="group relative animate-fade-in" style="animation-delay: <%= index * 100 %>ms;">
+            <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
+              <!-- Product Image -->
+              <div class="relative aspect-square overflow-hidden bg-gray-100">
+                <% if product.primary_image&.image&.url %>
+                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                    <%= image_tag product.primary_image.image.url,
+                      class: "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" %>
+                  <% end %>
+                <% else %>
+                  <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                <% end %>
+
+                <!-- Quick View -->
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <%= link_to product_path(product.slug, locale: I18n.locale),
+                    class: "px-4 py-2 bg-white text-gray-900 font-semibold rounded-full text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300" do %>
+                    <%= t("common.quick_view", default: "Quick View") %>
+                  <% end %>
+                </div>
+              </div>
+
+              <!-- Product Info -->
+              <div class="p-4">
+                <div class="text-xs text-gray-500 mb-1"><%= product.category.name(I18n.locale) %></div>
+                <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                  <h3 class="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-gray-700 transition-colors">
+                    <%= product.name(I18n.locale) %>
+                  </h3>
+                <% end %>
+                <div class="text-lg font-bold text-gray-900">
+                  <%= number_to_currency(product.price, unit: current_settings.default_currency) %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Image Modal -->
+  <div x-show="showImageModal"
+       x-transition:enter="transition-opacity duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       @click="showImageModal = false"
+       class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+    <div class="relative max-w-6xl w-full" @click.stop>
+      <button @click="showImageModal = false"
+              class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+      <img :src="activeImage" class="w-full h-auto max-h-[90vh] object-contain" />
+    </div>
+  </div>
+</div>
+
+<!-- Custom CSS Animations -->
+<style>
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+</style>

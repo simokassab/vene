@@ -1,0 +1,24 @@
+<h1 class="text-2xl font-semibold mb-6"><%= t("nav.login") %> (Admin)</h1>
+
+<%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+  <div class="bg-white p-6 rounded shadow space-y-4 max-w-md">
+    <div>
+      <%= f.label :email, class: "block text-sm font-medium" %>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "mt-1 w-full border rounded px-3 py-2" %>
+    </div>
+
+    <div>
+      <%= f.label :password, class: "block text-sm font-medium" %>
+      <%= f.password_field :password, autocomplete: "current-password", class: "mt-1 w-full border rounded px-3 py-2" %>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <%= f.check_box :remember_me %>
+      <%= f.label :remember_me, class: "text-sm" %>
+    </div>
+
+    <div>
+      <%= f.submit t("nav.login"), class: "w-full bg-black text-white py-2 rounded" %>
+    </div>
+  </div>
+<% end %>

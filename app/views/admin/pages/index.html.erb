@@ -1,0 +1,98 @@
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.pages.title") %></h1>
+    <p class="mt-1 text-sm text-gray-600"><%= t("admin.pages.subtitle", default: "Manage static pages and content") %></p>
+  </div>
+  <%= link_to new_admin_page_path(locale: I18n.locale), class: "inline-flex items-center justify-center px-4 py-2 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" do %>
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+    </svg>
+    <%= t("admin.actions.new") %>
+  <% end %>
+</div>
+
+<!-- Pages Table -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            ID
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <%= t("admin.pages.title_label") %>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <%= t("admin.pages.slug", default: "Slug") %>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <%= t("admin.pages.status", default: "Status") %>
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <%= t("common.actions", default: "Actions") %>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% if @pages.any? %>
+          <% @pages.each do |page| %>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-500">#<%= page.id %></div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900"><%= page.title_en %></div>
+                    <% if page.title_ar.present? %>
+                      <div class="text-xs text-gray-500"><%= page.title_ar %></div>
+                    <% end %>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500 font-mono">/<%= page.slug %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <%= render 'admin/shared/badge',
+                  text: page.active? ? t("common.active", default: "Active") : t("common.inactive", default: "Inactive"),
+                  type: page.active? ? 'success' : 'default'
+                %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                <%= link_to edit_admin_page_path(page, locale: I18n.locale), class: "inline-flex items-center text-[#465FFF] hover:text-[#3651E6] font-medium transition-colors" do %>
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                  <%= t("admin.actions.edit") %>
+                <% end %>
+                <%= link_to admin_page_path(page, locale: I18n.locale),
+                  data: { turbo_method: :delete, turbo_confirm: t("admin.actions.confirm") },
+                  class: "inline-flex items-center text-red-600 hover:text-red-700 font-medium transition-colors" do %>
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  <%= t("admin.actions.delete") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center">
+              <div class="text-gray-400">
+                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-sm font-medium"><%= t("admin.pages.no_pages", default: "No pages yet") %></p>
+                <p class="mt-1 text-xs text-gray-500"><%= t("admin.pages.create_first", default: "Create your first page to add static content") %></p>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

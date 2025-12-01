@@ -1,0 +1,49 @@
+<%
+  # Form Input Component
+  # Usage: render 'admin/shared/form_input', form: f, field: :name, label: 'Product Name', type: 'text', required: true
+
+  type ||= 'text'
+  required ||= false
+  placeholder ||= ''
+  help_text ||= nil
+  error ||= nil
+  icon ||= nil
+  disabled ||= false
+
+  input_classes = "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors"
+  input_classes += " pl-10" if icon
+  input_classes += " border-red-300 focus:ring-red-500 focus:border-red-500" if error
+  input_classes += " bg-gray-50 cursor-not-allowed" if disabled
+
+  label_classes = "block text-sm font-medium text-gray-700 mb-2"
+  label_classes += " after:content-['*'] after:ml-0.5 after:text-red-500" if required
+%>
+
+<div class="mb-4">
+  <% if label %>
+    <%= form.label field, label, class: label_classes %>
+  <% end %>
+
+  <div class="relative">
+    <% if icon %>
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+        <%= icon %>
+      </div>
+    <% end %>
+
+    <%= form.send("#{type}_field", field,
+      class: input_classes,
+      placeholder: placeholder,
+      required: required,
+      disabled: disabled
+    ) %>
+  </div>
+
+  <% if help_text %>
+    <p class="mt-1 text-xs text-gray-500"><%= help_text %></p>
+  <% end %>
+
+  <% if error %>
+    <p class="mt-1 text-xs text-red-600"><%= error %></p>
+  <% end %>
+</div>

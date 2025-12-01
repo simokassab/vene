@@ -1,0 +1,21 @@
+<h1 class="text-xl font-semibold mb-4"><%= t("admin.orders.details") %> #<%= @order.id %></h1>
+
+<%= form_with model: [:admin, @order], local: true do |form| %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded shadow">
+    <div>
+      <%= form.label :dhl_tracking_id, class: "block text-sm font-medium" %>
+      <%= form.text_field :dhl_tracking_id, class: "mt-1 w-full border rounded px-3 py-2" %>
+    </div>
+    <div>
+      <%= form.label :status, class: "block text-sm font-medium" %>
+      <%= form.select :status, Order::STATUSES, {}, class: "mt-1 w-full border rounded px-3 py-2" %>
+    </div>
+    <div>
+      <%= form.label :payment_status, class: "block text-sm font-medium" %>
+      <%= form.select :payment_status, Order::PAYMENT_STATUSES, {}, class: "mt-1 w-full border rounded px-3 py-2" %>
+    </div>
+  </div>
+  <div class="mt-4">
+    <%= form.submit t("admin.actions.save"), class: "bg-black text-white px-4 py-2 rounded" %>
+  </div>
+<% end %>

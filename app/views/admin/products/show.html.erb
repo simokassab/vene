@@ -1,0 +1,36 @@
+<h1 class="text-xl font-semibold mb-4"><%= @product.name_en %></h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="space-y-4">
+    <div class="bg-white p-4 rounded shadow">
+      <div class="text-sm text-gray-500"><%= t("admin.products.category") %></div>
+      <div class="font-semibold"><%= @product.category&.name_en %></div>
+      <div class="mt-2 text-gray-700"><%= number_to_currency(@product.price) %></div>
+      <div class="mt-2 text-sm text-gray-500"><%= @product.active? ? t("common.yes") : t("common.no") %></div>
+      <div class="mt-4 space-y-1 text-sm">
+        <div><strong><%= t("products.metal") %>:</strong> <%= @product.metal %></div>
+        <div><strong><%= t("products.diamonds") %>:</strong> <%= @product.diamonds %></div>
+        <div><strong><%= t("products.gemstones") %>:</strong> <%= @product.gemstones %></div>
+      </div>
+      <div class="mt-4 space-y-1 text-sm">
+        <div><strong>EN:</strong> <%= @product.description_en %></div>
+        <div><strong>AR:</strong> <%= @product.description_ar %></div>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white p-4 rounded shadow">
+    <div class="font-semibold mb-2"><%= t("admin.products.images") %></div>
+    <div class="grid grid-cols-2 gap-3">
+      <% @product.product_images.each do |img| %>
+        <div class="border rounded overflow-hidden">
+          <%= image_tag img.image.url, class: "w-full h-32 object-cover" if img.image? %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4 space-x-2">
+  <%= link_to t("admin.actions.edit"), edit_admin_product_path(@product, locale: I18n.locale), class: "bg-black text-white px-4 py-2 rounded" %>
+  <%= link_to t("admin.actions.delete"), admin_product_path(@product, locale: I18n.locale), data: { turbo_method: :delete, turbo_confirm: t("admin.actions.confirm") }, class: "bg-red-600 text-white px-4 py-2 rounded" %>
+</div>

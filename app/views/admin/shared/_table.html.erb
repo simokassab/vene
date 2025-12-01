@@ -1,0 +1,88 @@
+<%
+  # Table Component with Alpine.js
+  # Usage: render 'admin/shared/table', headers: ['Name', 'Price', 'Status'], data: products, actions: true
+
+  headers ||= []
+  searchable ||= true
+  sortable ||= true
+  actions_header ||= t('common.actions', default: 'Actions')
+  empty_message ||= t('common.no_records', default: 'No records found')
+%>
+
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+     x-data="{
+       search: '',
+       sortColumn: '',
+       sortDirection: 'asc',
+
+       sortBy(column) {
+         if (this.sortColumn === column) {
+           this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+         } else {
+           this.sortColumn = column
+           this.sortDirection = 'asc'
+         }
+       }
+     }">
+
+  <% if searchable %>
+    <!-- Search Bar -->
+    <div class="p-4 border-b border-gray-200">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input
+          type="text"
+          x-model="search"
+          class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] text-sm"
+          placeholder="<%= t('common.search', default: 'Search...') %>"
+        >
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <% headers.each_with_index do |header, index| %>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <% if sortable %>
+                <button
+                  @click="sortBy('<%= index %>')"
+                  class="group inline-flex items-center space-x-1 hover:text-gray-700"
+                >
+                  <span><%= header %></span>
+                  <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600" :class="{ 'text-[#465FFF]': sortColumn === '<%= index %>' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
+              <% else %>
+                <%= header %>
+              <% end %>
+            </th>
+          <% end %>
+          <% if defined?(actions) && actions %>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= actions_header %>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <%= yield %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if defined?(pagination) && pagination %>
+    <!-- Pagination -->
+    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+      <%= pagination %>
+    </div>
+  <% end %>
+</div>

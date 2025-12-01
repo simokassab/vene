@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  store_name: MyString
+  local_tax_rate: 9.99
+  international_tax_rate: 9.99
+  shipping_flat_rate: 9.99
+  default_currency: MyString
+  whatsapp_phone_number: MyString
+  local_country: MyString
+  montypay_merchant_id: MyString
+  montypay_api_key: MyString
+
+two:
+  store_name: MyString
+  local_tax_rate: 9.99
+  international_tax_rate: 9.99
+  shipping_flat_rate: 9.99
+  default_currency: MyString
+  whatsapp_phone_number: MyString
+  local_country: MyString
+  montypay_merchant_id: MyString
+  montypay_api_key: MyString

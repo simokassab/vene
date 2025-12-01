@@ -1,0 +1,237 @@
+<%= form_with(model: [:admin, @variant_type], class: "space-y-6", data: { turbo: false }) do |form| %>
+  <% if @variant_type.errors.any? %>
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <div class="font-semibold mb-2">Please fix the errors below</div>
+      <ul class="list-disc pl-5 space-y-1">
+        <% @variant_type.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- Basic Information -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+
+    <div class="space-y-4">
+      <div>
+        <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :name,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]",
+          placeholder: "e.g., Size, Color, Material" %>
+        <p class="mt-1 text-xs text-gray-500">The name of the variant type (e.g., Size for rings)</p>
+      </div>
+
+      <div>
+        <%= form.label :description, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :description, rows: 3,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]",
+          placeholder: "Optional description" %>
+      </div>
+
+      <div class="flex items-center">
+        <%= form.check_box :active,
+          class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+        <%= form.label :active, class: "ml-2 text-sm font-medium text-gray-700" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant Options -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" x-data="variantOptionsManager()">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Variant Options</h3>
+    <p class="text-sm text-gray-600 mb-4">Add the available options for this variant type (e.g., 52, 53, 54 for sizes)</p>
+
+    <div class="space-y-3">
+      <%= form.fields_for :variant_options do |option_form| %>
+        <div class="variant-option-fields grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" x-data="{ show: true }" x-show="show">
+          <%= option_form.hidden_field :id %>
+          <%= option_form.hidden_field :_destroy, value: '0', class: 'destroy-field' %>
+
+          <div class="col-span-5">
+            <%= option_form.label :value, "Value", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= option_form.text_field :value,
+              class: "block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]",
+              placeholder: "e.g., 52" %>
+          </div>
+
+          <div class="col-span-2">
+            <%= option_form.label :position, "Order", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= option_form.number_field :position,
+              class: "block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]",
+              placeholder: "0" %>
+          </div>
+
+          <div class="col-span-3 flex items-end">
+            <div class="flex items-center h-10">
+              <%= option_form.check_box :active,
+                class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+              <%= option_form.label :active, "Active", class: "ml-2 text-sm font-medium text-gray-700" %>
+            </div>
+          </div>
+
+          <div class="col-span-2 flex items-end">
+            <button type="button"
+                    @click="$el.closest('.variant-option-fields').querySelector('.destroy-field').value = '1'; show = false"
+                    class="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+              Remove
+            </button>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- New options will be added here -->
+      <template x-for="(option, index) in newOptions" :key="index">
+        <div class="variant-option-fields grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="col-span-5">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
+            <input type="text"
+                   :name="`variant_type[variant_options_attributes][${Date.now() + index}][value]`"
+                   x-model="option.value"
+                   class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
+                   placeholder="e.g., 52">
+          </div>
+
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Order</label>
+            <input type="number"
+                   :name="`variant_type[variant_options_attributes][${Date.now() + index}][position]`"
+                   x-model="option.position"
+                   class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
+                   placeholder="0">
+          </div>
+
+          <div class="col-span-3 flex items-end">
+            <div class="flex items-center h-10">
+              <input type="hidden"
+                     :name="`variant_type[variant_options_attributes][${Date.now() + index}][active]`"
+                     value="0">
+              <input type="checkbox"
+                     :name="`variant_type[variant_options_attributes][${Date.now() + index}][active]`"
+                     x-model="option.active"
+                     value="1"
+                     class="w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2">
+              <label class="ml-2 text-sm font-medium text-gray-700">Active</label>
+            </div>
+          </div>
+
+          <div class="col-span-2 flex items-end">
+            <button type="button"
+                    @click="removeNewOption(index)"
+                    class="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+              Remove
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <button type="button"
+            @click="addOption"
+            class="mt-4 inline-flex items-center px-4 py-2 bg-[#465FFF] hover:bg-[#3651E6] text-white text-sm font-medium rounded-lg transition-colors">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Option
+    </button>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="flex items-center justify-between pt-4">
+    <%= link_to admin_variant_types_path(locale: I18n.locale),
+      class: "inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" do %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Cancel
+    <% end %>
+
+    <%= form.submit "Save Variant Type",
+      class: "inline-flex items-center px-6 py-2.5 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" %>
+  </div>
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('variant-options-container');
+  const addBtn = document.getElementById('add-variant-option');
+
+  if (!container || !addBtn) return;
+
+  // Add new option
+  addBtn.addEventListener('click', function() {
+    const timestamp = new Date().getTime();
+    const newOptionHtml = `
+      <div class="variant-option-fields grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="col-span-5">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
+          <input type="text" name="variant_type[variant_options_attributes][${timestamp}][value]"
+            class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
+            placeholder="e.g., 52">
+        </div>
+
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Order</label>
+          <input type="number" name="variant_type[variant_options_attributes][${timestamp}][position]"
+            class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
+            placeholder="0" value="0">
+        </div>
+
+        <div class="col-span-3 flex items-end">
+          <div class="flex items-center h-10">
+            <input type="hidden" name="variant_type[variant_options_attributes][${timestamp}][active]" value="0">
+            <input type="checkbox" name="variant_type[variant_options_attributes][${timestamp}][active]" value="1" checked
+              class="w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2">
+            <label class="ml-2 text-sm font-medium text-gray-700">Active</label>
+          </div>
+        </div>
+
+        <div class="col-span-2 flex items-end">
+          <button type="button" class="remove-variant-option w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+            Remove
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', newOptionHtml);
+  });
+
+  // Remove option (delegate event)
+  container.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-variant-option') || e.target.closest('.remove-variant-option')) {
+      const button = e.target.classList.contains('remove-variant-option') ? e.target : e.target.closest('.remove-variant-option');
+      const optionField = button.closest('.variant-option-fields');
+      const destroyCheckbox = optionField.querySelector('.variant-option-destroy-checkbox');
+
+      if (destroyCheckbox) {
+        destroyCheckbox.checked = true;
+        optionField.style.display = 'none';
+      } else {
+        optionField.remove();
+      }
+    }
+  });
+});
+</script>
+
+<script>
+function variantOptionsManager() {
+  return {
+    newOptions: [],
+
+    addOption() {
+      this.newOptions.push({
+        value: '',
+        position: this.newOptions.length,
+        active: true
+      });
+    },
+
+    removeNewOption(index) {
+      this.newOptions.splice(index, 1);
+    }
+  }
+}
+</script>

@@ -1,0 +1,3 @@
+<%= I18n.t("mailers.order_mailer.confirmation.greeting", name: @order.name) %>
+
+<%= I18n.t("mailers.order_mailer.confirmation.body", id: @order.id, total: @order.total_amount) %>
