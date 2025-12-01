@@ -17,3 +17,8 @@ development:
 test:
   <<: *default
   database: <%= ENV.fetch("DATABASE_NAME_TEST", "vene_jewelry_test") %>
+
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "vene_jewelry_production") %>
