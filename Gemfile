@@ -23,7 +23,7 @@ gem "jbuilder"
 gem "devise"
 
 # File uploads
-gem "carrierwave"
+gem "carrierwave", "~> 3.0"
 gem "mini_magick"
 
 # Background jobs
