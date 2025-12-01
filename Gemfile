@@ -25,6 +25,7 @@ gem "devise"
 # File uploads
 gem "carrierwave"
 gem "mini_magick"
+gem "mimemagic", "~> 0.4.3"
 
 # Background jobs
 gem "sidekiq"
