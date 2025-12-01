@@ -418,7 +418,6 @@ DEPENDENCIES
   jbuilder
   kamal
   letter_opener
-  mimemagic (~> 0.4.3)
   mini_magick
   pagy (~> 9.0)
   pg (~> 1.1)
