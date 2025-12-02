@@ -10,7 +10,7 @@ module.exports = {
       RAILS_MASTER_KEY: '957a8b123ce5187fb8674dadcbb52217',
       DATABASE_HOST: '127.0.0.1',
       DATABASE_PORT: '5432',
-      DATABASE_USERNAME: 'postgres',
+      DATABASE_USERNAME: 'x_care_user',
       DATABASE_PASSWORD: 'Sama2022',  // UPDATE THIS with your PostgreSQL password
       DATABASE_NAME: 'vene_production',
       REDIS_URL: 'redis://localhost:6379/1',  // Using DB 1 to separate from xcare
