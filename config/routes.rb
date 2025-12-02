@@ -7,7 +7,7 @@ Rails.application.routes.draw do
       sessions: "customers/sessions"
     }
 
-    devise_for :admins, path: "admin", class_name: "User", skip: %i[registrations passwords confirmations], controllers: {
+    devise_for :users, path: "admin", as: "admin", skip: %i[registrations passwords confirmations], controllers: {
       sessions: "admin/sessions"
     }
 

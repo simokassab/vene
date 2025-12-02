@@ -1,12 +1,12 @@
 class Admin::SessionsController < Devise::SessionsController
-  layout "admin"
+  layout "admin", except: [:new]
 
   def create
     super do |resource|
       unless resource.admin?
         sign_out resource
         flash[:alert] = I18n.t("errors.not_authorized")
-        redirect_to new_admin_session_path(locale: I18n.locale) and return
+        redirect_to new_admin_user_session_path(locale: I18n.locale) and return
       end
     end
   end
