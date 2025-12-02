@@ -29,5 +29,9 @@ module VeneJewelry
     config.i18n.fallbacks = true
 
     config.active_job.queue_adapter = :sidekiq
+
+    # Allow requests from nginx proxy on port 8000
+    config.action_controller.default_url_options = { host: '161.97.162.62', port: 8000 }
+    config.action_controller.asset_host = 'http://161.97.162.62:8000'
   end
 end
