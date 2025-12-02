@@ -8,7 +8,7 @@ module.exports = {
     env: {
       RAILS_ENV: 'production',
       RAILS_MASTER_KEY: '957a8b123ce5187fb8674dadcbb52217',
-      DATABASE_HOST: 'localhost',
+      DATABASE_HOST: '127.0.0.1',
       DATABASE_PORT: '5432',
       DATABASE_USERNAME: 'postgres',
       DATABASE_PASSWORD: 'Sama2022',  // UPDATE THIS with your PostgreSQL password
