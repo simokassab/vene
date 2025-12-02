@@ -8,11 +8,13 @@
   selectedVariant: null,
   selectedTab: 'description',
   showImageModal: false,
+  showVideoModal: false,
   addedToCart: false,
   imageZoom: false,
   zoomX: 0,
   zoomY: 0,
   hasVariants: <%= @product.has_variants? %>,
+  viewingVideo: false,
   handleMouseMove(e) {
     const rect = e.currentTarget.getBoundingClientRect();
     this.zoomX = ((e.clientX - rect.left) / rect.width) * 100;
@@ -40,11 +42,40 @@
   <!-- Product Details Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-    <!-- LEFT: Image Gallery -->
+    <!-- LEFT: Image/Video Gallery -->
     <div class="lg:sticky lg:top-24 lg:self-start">
-      <!-- Main Image -->
+      <!-- Main Display Area -->
       <div class="relative bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden mb-6">
-        <div class="aspect-square flex items-center justify-center bg-gray-50 relative overflow-hidden cursor-pointer"
+        <!-- Video View -->
+        <% if @product.video.present? %>
+          <div x-show="viewingVideo"
+               x-transition:enter="transition ease-out duration-300"
+               x-transition:enter-start="opacity-0"
+               x-transition:enter-end="opacity-100"
+               class="aspect-square flex items-center justify-center bg-black relative">
+            <video controls
+                   class="w-full h-full object-contain"
+                   x-init="$watch('viewingVideo', value => { if (!value) { $el.pause(); $el.currentTime = 0; } })">
+              <source src="<%= @product.video.url %>" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+
+            <!-- Close Video Button -->
+            <button @click="viewingVideo = false"
+                    class="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-all duration-200 z-10">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        <% end %>
+
+        <!-- Image View -->
+        <div x-show="!viewingVideo"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             class="aspect-square flex items-center justify-center bg-gray-50 relative overflow-hidden cursor-pointer"
              @mouseenter="imageZoom = true"
              @mouseleave="imageZoom = false"
              @mousemove="handleMouseMove"
@@ -80,9 +111,9 @@
           <% end %>
         </div>
 
-        <!-- Zoom Hint -->
+        <!-- Zoom Hint (only show when not viewing video) -->
         <% if primary_url %>
-          <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+          <div x-show="!viewingVideo" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
             <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity"
                  :class="imageZoom ? 'opacity-100' : ''">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,17 +133,51 @@
       </div>
 
       <!-- Thumbnail Gallery -->
-      <% if images.any? %>
-        <div class="flex gap-2 overflow-x-auto pb-2">
+      <div class="flex gap-2 overflow-x-auto pb-2">
+        <!-- Video Thumbnail (if video exists) -->
+        <% if @product.video.present? %>
+          <button type="button"
+                  @click="viewingVideo = true; imageZoom = false;"
+                  :class="viewingVideo ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
+                  class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600 shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer group">
+            <!-- Video Play Icon -->
+            <div class="w-full h-full flex items-center justify-center">
+              <div class="relative">
+                <div class="absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
+                <svg class="w-8 h-8 text-white relative z-10 group-hover:scale-125 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Video Label -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent py-1">
+              <p class="text-white text-[10px] font-bold text-center uppercase tracking-wide">Video</p>
+            </div>
+
+            <!-- Selected indicator -->
+            <div x-show="viewingVideo"
+                 class="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
+              <div class="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+            </div>
+          </button>
+        <% end %>
+
+        <!-- Image Thumbnails -->
+        <% if images.any? %>
           <% images.each_with_index do |img, index| %>
             <button type="button"
-                    @click="activeImage = '<%= img.image.url %>'; imageZoom = false;"
-                    :class="activeImage === '<%= img.image.url %>' ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
+                    @click="activeImage = '<%= img.image.url %>'; imageZoom = false; viewingVideo = false;"
+                    :class="(activeImage === '<%= img.image.url %>' && !viewingVideo) ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
                     class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-white shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer group">
               <%= image_tag img.image.url, class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" %>
 
               <!-- Selected indicator -->
-              <div x-show="activeImage === '<%= img.image.url %>'"
+              <div x-show="activeImage === '<%= img.image.url %>' && !viewingVideo"
                    class="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
                 <div class="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
                   <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,8 +187,8 @@
               </div>
             </button>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
       <!-- Trust Badges -->
       <div class="grid grid-cols-3 gap-4 mt-8">
@@ -320,6 +385,17 @@
                   class="pb-4 px-2 border-b-2 font-medium transition-colors">
             <%= t("common.description", default: "Description") %>
           </button>
+          <% if @product.video.present? %>
+            <button @click="selectedTab = 'video'"
+                    :class="selectedTab === 'video' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
+                    class="pb-4 px-2 border-b-2 font-medium transition-colors flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <%= t("common.video", default: "Video") %>
+            </button>
+          <% end %>
           <button @click="selectedTab = 'specifications'"
                   :class="selectedTab === 'specifications' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
                   class="pb-4 px-2 border-b-2 font-medium transition-colors">
@@ -342,6 +418,36 @@
                class="prose max-w-none text-gray-700">
             <%= simple_format(@product.description(I18n.locale)) %>
           </div>
+
+          <!-- Video Tab -->
+          <% if @product.video.present? %>
+            <div x-show="selectedTab === 'video'"
+                 x-transition:enter="transition-opacity duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 class="space-y-4">
+              <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 shadow-2xl">
+                <h3 class="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                  Watch Product Video
+                </h3>
+                <div class="rounded-xl overflow-hidden bg-black shadow-xl">
+                  <video controls class="w-full" controlsList="nodownload">
+                    <source src="<%= @product.video.url %>" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                <p class="text-gray-300 text-sm mt-4 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  See this product in action and get a closer look at its details
+                </p>
+              </div>
+            </div>
+          <% end %>
 
           <!-- Specifications Tab -->
           <div x-show="selectedTab === 'specifications'"

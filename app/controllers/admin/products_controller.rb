@@ -48,7 +48,7 @@ class Admin::ProductsController < Admin::BaseController
   def product_params
     params.require(:product).permit(:name_en, :name_ar, :description_en, :description_ar, :price, :category_id,
                                     :stock_quantity, :metal, :diamonds, :gemstones, :active, :slug,
-                                    :featured, :on_sale, :sale_price,
+                                    :featured, :on_sale, :sale_price, :video, :remove_video,
                                     related_product_ids: [],
                                     images: [],
                                     product_images_attributes: %i[id image position _destroy],
