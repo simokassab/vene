@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'vene_jewelry',
-    cwd: '/home/mkassab/ruby/vene_jewelry',
+    cwd: '/var/www/vene',
     script: 'bin/rails',
     args: 'server -b 0.0.0.0 -p 3001',
     interpreter: '/root/.rbenv/shims/ruby',
