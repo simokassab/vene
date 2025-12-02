@@ -84,6 +84,9 @@ Rails.application.configure do
     /161\.97\.162\.62/,        # Allow requests with IP and any port
     "localhost"                # Allow localhost
   ]
+
+  # Allow requests from port 8000 (nginx proxy)
+  config.action_controller.forgery_protection_origin_check = false
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
