@@ -829,7 +829,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="carrierwave (v2.2.0) [path][gem]" type="rubylib">
+      <library name="carrierwave (v3.1.2) [path][gem]" type="rubylib">
         <properties>
           <option name="additionalInfo">
             <AdditionalInfo>
@@ -846,15 +846,15 @@
               <option value="lib" />
             </list>
           </option>
-          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-2.2.0" />
-          <option name="version" value="2.2.0" />
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-3.1.2" />
+          <option name="version" value="3.1.2" />
         </properties>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-2.2.0/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-3.1.2/lib" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-2.2.0/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/carrierwave-3.1.2/lib" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -1944,7 +1944,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="marcel (v1.1.0) [path][gem]" type="rubylib">
+      <library name="marcel (v1.0.4) [path][gem]" type="rubylib">
         <properties>
           <option name="additionalInfo">
             <AdditionalInfo>
@@ -1961,15 +1961,15 @@
               <option value="lib" />
             </list>
           </option>
-          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.1.0" />
-          <option name="version" value="1.1.0" />
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.0.4" />
+          <option name="version" value="1.0.4" />
         </properties>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.1.0/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.0.4/lib" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.1.0/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/marcel-1.0.4/lib" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -2001,41 +2001,6 @@
         <SOURCES>
           <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/matrix-0.4.3/lib" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="mimemagic (v0.4.3) [path][gem]" type="rubylib">
-        <properties>
-          <option name="additionalInfo">
-            <AdditionalInfo>
-              <option name="authors" value="N/A" />
-              <option name="email" value="N/A" />
-              <option name="homepage" value="N/A" />
-              <option name="summary" value="N/A" />
-            </AdditionalInfo>
-          </option>
-          <option name="fromPath" value="true" />
-          <option name="name" value="mimemagic" />
-          <option name="requirePaths">
-            <list>
-              <option value="lib" />
-            </list>
-          </option>
-          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3" />
-          <option name="version" value="0.4.3" />
-        </properties>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3/ext" />
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3/lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3/ext" />
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3/lib" />
-        </SOURCES>
-        <excluded>
-          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/mimemagic-0.4.3/ext" />
-        </excluded>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
