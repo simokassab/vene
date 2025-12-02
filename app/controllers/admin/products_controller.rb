@@ -14,8 +14,10 @@ class Admin::ProductsController < Admin::BaseController
   def show; end
 
   def create
-    @product = Product.new(product_params.except(:images))
+    @product = Product.new(product_params.except(:images, :product_variants_attributes))
+
     if @product.save
+      process_variants
       attach_images
       redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.created")
     else
@@ -26,7 +28,8 @@ class Admin::ProductsController < Admin::BaseController
   def edit; end
 
   def update
-    if @product.update(product_params.except(:images))
+    if @product.update(product_params.except(:images, :product_variants_attributes))
+      process_variants
       attach_images
       redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.updated")
     else
@@ -63,6 +66,52 @@ class Admin::ProductsController < Admin::BaseController
       next if image_file.blank?
 
       @product.product_images.create(image: image_file, position: starting_position + idx)
+    end
+  end
+
+  def process_variants
+    return unless params.dig(:product, :product_variants_attributes).present?
+
+    variants_params = params[:product][:product_variants_attributes].values
+
+    variants_params.each do |variant_attrs|
+      # Skip if variant_option_id is blank (no variant selected)
+      next if variant_attrs[:variant_option_id].blank?
+
+      # Convert stock_quantity to integer
+      stock_qty = variant_attrs[:stock_quantity].to_i
+
+      # Find existing variant or initialize new one
+      if variant_attrs[:id].present?
+        # Update existing variant
+        variant = @product.product_variants.find_by(id: variant_attrs[:id])
+        if variant
+          variant.update(
+            variant_type_id: variant_attrs[:variant_type_id],
+            variant_option_id: variant_attrs[:variant_option_id],
+            stock_quantity: stock_qty,
+            active: variant_attrs[:active] == "1"
+          )
+        end
+      else
+        # Create new variant only if stock > 0
+        if stock_qty > 0
+          @product.product_variants.create(
+            variant_type_id: variant_attrs[:variant_type_id],
+            variant_option_id: variant_attrs[:variant_option_id],
+            stock_quantity: stock_qty,
+            active: variant_attrs[:active] == "1"
+          )
+        end
+      end
+    end
+
+    # Remove variants that are no longer in the submitted data
+    submitted_option_ids = variants_params.map { |v| v[:variant_option_id].to_i }.compact
+    @product.product_variants.each do |variant|
+      unless submitted_option_ids.include?(variant.variant_option_id)
+        variant.destroy
+      end
     end
   end
 end

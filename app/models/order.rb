@@ -29,6 +29,25 @@ class Order < ApplicationRecord
     save!
   end
 
+  def cancel_order!
+    return false if status == "canceled"
+
+    transaction do
+      # Restore stock for all items
+      order_items.each do |item|
+        if item.product_variant_id.present?
+          item.product_variant.increment!(:stock_quantity, item.quantity)
+        else
+          item.product.increment!(:stock_quantity, item.quantity)
+        end
+      end
+
+      update!(status: "canceled")
+    end
+
+    true
+  end
+
   private
 
   def set_defaults

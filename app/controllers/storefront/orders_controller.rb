@@ -16,8 +16,11 @@ class Storefront::OrdersController < ApplicationController
 
   def cancel
     if @order.status == "pending" || @order.status == "payment_pending"
-      @order.update(status: "canceled")
-      redirect_back fallback_location: orders_path(locale: I18n.locale), notice: t("orders.canceled", default: "Order canceled")
+      if @order.cancel_order!
+        redirect_back fallback_location: orders_path(locale: I18n.locale), notice: t("orders.canceled", default: "Order canceled")
+      else
+        redirect_back fallback_location: orders_path(locale: I18n.locale), alert: t("orders.cancel_failed", default: "Failed to cancel order")
+      end
     else
       redirect_back fallback_location: orders_path(locale: I18n.locale), alert: t("orders.cannot_cancel", default: "This order can no longer be canceled")
     end

@@ -26,7 +26,16 @@ class Storefront::CartsController < ApplicationController
 
   def remove_item
     cart = Cart.new(session)
+
+    # Debug logging
+    Rails.logger.debug "=== REMOVE ITEM ==="
+    Rails.logger.debug "Cart key param: #{params[:cart_key]}"
+    Rails.logger.debug "Session cart before: #{session[:cart].inspect}"
+
     cart.remove(params[:cart_key])
-    redirect_to cart_path(locale: I18n.locale), notice: t("cart.updated")
+
+    Rails.logger.debug "Session cart after: #{session[:cart].inspect}"
+
+    redirect_to cart_path(locale: I18n.locale), notice: t("cart.item_removed", default: "Item removed from cart")
   end
 end

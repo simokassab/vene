@@ -24,8 +24,19 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def update_status
-    @order.update(status: params[:status])
-    redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.status_updated")
+    old_status = @order.status
+
+    if params[:status] == "canceled" && old_status != "canceled"
+      # Use the cancel_order! method which restores stock
+      if @order.cancel_order!
+        redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.order_canceled")
+      else
+        redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.cancel_failed")
+      end
+    else
+      @order.update(status: params[:status])
+      redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.status_updated")
+    end
   end
 
   def update_payment_status

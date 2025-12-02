@@ -9,7 +9,7 @@ class Cart
     end
 
     def cart_key
-      product_variant ? "#{product.id}_#{product_variant.id}" : product.id.to_s
+      product_variant&.id.present? ? "#{product.id}_#{product_variant.id}" : product.id.to_s
     end
   end
 
@@ -29,7 +29,19 @@ class Cart
   end
 
   def remove(cart_key)
-    @session[:cart].delete(cart_key)
+    # Handle both old format "11_" and new format "11"
+    key_to_remove = cart_key.to_s
+
+    # Try exact match first
+    if @session[:cart].key?(key_to_remove)
+      @session[:cart].delete(key_to_remove)
+    # Try with underscore suffix (legacy format)
+    elsif @session[:cart].key?("#{key_to_remove}_")
+      @session[:cart].delete("#{key_to_remove}_")
+    # Try without underscore suffix (if passed with underscore)
+    elsif key_to_remove.end_with?('_') && @session[:cart].key?(key_to_remove.chomp('_'))
+      @session[:cart].delete(key_to_remove.chomp('_'))
+    end
   end
 
   def clear
@@ -67,7 +79,7 @@ class Cart
   private
 
   def cart_key(product_id, product_variant_id = nil)
-    product_variant_id ? "#{product_id}_#{product_variant_id}" : product_id.to_s
+    product_variant_id.present? ? "#{product_id}_#{product_variant_id}" : product_id.to_s
   end
 
   def parse_cart_key(key)

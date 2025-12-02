@@ -3,7 +3,9 @@
 <!-- Alpine.js State Management -->
 <div x-data="{
   removingItem: null,
-  showContinueShopping: false
+  showContinueShopping: false,
+  showRemoveModal: false,
+  itemToRemove: null
 }" class="min-h-screen bg-gray-50 py-12">
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -132,15 +134,14 @@
                     <% end %>
 
                     <!-- Remove Button -->
-                    <%= button_to remove_item_cart_path(locale: I18n.locale, cart_key: item.cart_key),
-                      method: :delete,
-                      onclick: "return confirm('#{t('cart.confirm_remove', default: 'Remove this item?')}')",
-                      class: "flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" do %>
+                    <button type="button"
+                            @click="showRemoveModal = true; itemToRemove = '<%= item.cart_key %>'"
+                            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
                       <%= t("cart.remove", default: "Remove") %>
-                    <% end %>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -268,6 +269,68 @@
         </div>
       </div>
     <% end %>
+  </div>
+
+  <!-- Remove Item Confirmation Modal -->
+  <div x-show="showRemoveModal"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       @click="showRemoveModal = false"
+       class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div @click.stop
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-900">
+          <%= t("cart.confirm_remove_title", default: "Remove Item") %>
+        </h3>
+        <button @click="showRemoveModal = false"
+                class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="mb-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-gray-700">
+              <%= t("cart.confirm_remove", default: "Are you sure you want to remove this item from your cart?") %>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex items-center gap-3">
+        <button @click="showRemoveModal = false"
+                class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+          <%= t("common.cancel", default: "Cancel") %>
+        </button>
+        <%= form_with url: remove_item_cart_path(locale: I18n.locale), method: :delete, class: "flex-1", data: { turbo: true } do |f| %>
+          <input type="hidden" name="cart_key" x-bind:value="itemToRemove">
+          <%= f.submit t("cart.remove", default: "Remove"),
+            class: "w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors cursor-pointer" %>
+        <% end %>
+      </div>
+    </div>
   </div>
 </div>
 

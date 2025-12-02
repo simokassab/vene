@@ -1,5 +1,15 @@
-<% images = @product.product_images
-   primary_url = images.first&.image&.url %>
+<%
+  images = @product.product_images
+  primary_url = images.first&.image&.url
+
+  # Build variant stock data for Alpine.js
+  variant_stocks = {}
+  if @product.has_variants?
+    @product.product_variants.active.each do |pv|
+      variant_stocks[pv.id] = pv.stock_quantity
+    end
+  end
+%>
 
 <!-- Alpine.js State Management -->
 <div x-data="{
@@ -14,16 +24,64 @@
   zoomX: 0,
   zoomY: 0,
   hasVariants: <%= @product.has_variants? %>,
+  productStockQuantity: <%= @product.stock_quantity %>,
+  variantStocks: <%= variant_stocks.to_json %>,
   viewingVideo: false,
+
+  get maxQuantity() {
+    if (this.hasVariants) {
+      // If product has variants, ONLY use variant stock
+      return this.selectedVariant ? (this.variantStocks[this.selectedVariant] || 0) : 0;
+    }
+    // If no variants, use product stock
+    return this.productStockQuantity;
+  },
+
+  get availableStock() {
+    return this.maxQuantity;
+  },
+
+  get showStockInfo() {
+    // Only show stock info if no variants OR variant is selected
+    return !this.hasVariants || this.selectedVariant;
+  },
+
+  incrementQuantity() {
+    if (this.quantity < this.maxQuantity) {
+      this.quantity++;
+    }
+  },
+
+  decrementQuantity() {
+    this.quantity = Math.max(1, this.quantity - 1);
+  },
+
   handleMouseMove(e) {
     const rect = e.currentTarget.getBoundingClientRect();
     this.zoomX = ((e.clientX - rect.left) / rect.width) * 100;
     this.zoomY = ((e.clientY - rect.top) / rect.height) * 100;
+  },
+
+  init() {
+    this.$watch('selectedVariant', () => {
+      // Reset quantity to 1 when variant changes
+      this.quantity = 1;
+    });
+
+    this.$watch('quantity', (value) => {
+      // Ensure quantity doesn't exceed max
+      if (value > this.maxQuantity) {
+        this.quantity = this.maxQuantity;
+      }
+      if (value < 1) {
+        this.quantity = 1;
+      }
+    });
   }
 }" class="pb-16">
 
   <!-- Breadcrumb -->
-  <div class="mb-6">
+  <div class="mb-6 mt-20">
     <div class="flex items-center text-sm text-gray-600">
       <%= link_to t("common.home", default: "Home"), root_path(locale: I18n.locale),
         class: "hover:text-gray-900 transition-colors" %>
@@ -271,7 +329,14 @@
       <% if @product.has_variants? %>
         <%
           first_variant = @product.product_variants.active.first
-          variant_type_name = first_variant&.variant_type&.name || first_variant&.name || "Select Option"
+          variant_type = first_variant&.variant_type
+          variant_type_name = variant_type&.name || first_variant&.name || "Select Option"
+
+          # Get all variant options for this variant type
+          all_variant_options = variant_type ? variant_type.variant_options.active.ordered : []
+
+          # Build a hash of variant_option_id => product_variant for quick lookup
+          product_variants_by_option = @product.product_variants.active.index_by(&:variant_option_id)
         %>
         <div class="space-y-4 p-6 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
           <div class="flex items-center justify-between">
@@ -283,23 +348,28 @@
           </div>
 
           <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-            <% @product.product_variants.active.in_stock.each do |variant| %>
-              <button type="button"
-                      @click="selectedVariant = <%= variant.id %>"
-                      :class="selectedVariant === <%= variant.id %> ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900 hover:shadow-sm'"
-                      class="px-3 py-2.5 border-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
-                <%= variant.variant_option&.value || variant.value %>
-              </button>
-            <% end %>
+            <% all_variant_options.each do |variant_option| %>
+              <% product_variant = product_variants_by_option[variant_option.id] %>
+              <% in_stock = product_variant && product_variant.stock_quantity > 0 %>
 
-            <% @product.product_variants.active.where("stock_quantity <= 0").each do |variant| %>
-              <div class="relative px-3 py-2.5 border-2 border-gray-200 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed opacity-60 group/variant">
-                <%= variant.variant_option&.value || variant.value %>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/variant:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                  Out of stock
-                  <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+              <% if in_stock %>
+                <!-- Available variant - clickable -->
+                <button type="button"
+                        @click="selectedVariant = <%= product_variant.id %>"
+                        :class="selectedVariant === <%= product_variant.id %> ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900 hover:shadow-sm'"
+                        class="px-3 py-2.5 border-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+                  <%= variant_option.value %>
+                </button>
+              <% else %>
+                <!-- Out of stock or not configured - disabled -->
+                <div class="relative px-3 py-2.5 border-2 border-gray-200 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed opacity-60 group/variant">
+                  <%= variant_option.value %>
+                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/variant:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Out of stock
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
                 </div>
-              </div>
+              <% end %>
             <% end %>
           </div>
 
@@ -318,25 +388,55 @@
 
       <!-- Quantity Selector & Add to Cart -->
       <div class="space-y-4 p-6 bg-gray-50 rounded-2xl">
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-medium text-gray-700"><%= t("common.quantity", default: "Quantity") %>:</label>
-          <div class="flex items-center border-2 border-gray-300 rounded-lg bg-white">
-            <button @click="quantity = Math.max(1, quantity - 1)"
-                    class="px-4 py-2 hover:bg-gray-100 transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-              </svg>
-            </button>
-            <input type="number"
-                   x-model="quantity"
-                   min="1"
-                   class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold" />
-            <button @click="quantity++"
-                    class="px-4 py-2 hover:bg-gray-100 transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-            </button>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700"><%= t("common.quantity", default: "Quantity") %>:</label>
+            <span class="text-xs text-gray-600" x-show="showStockInfo && availableStock > 0">
+              <span x-text="availableStock"></span> available
+            </span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center border-2 border-gray-300 rounded-lg bg-white">
+              <button @click="decrementQuantity()"
+                      type="button"
+                      :disabled="quantity <= 1"
+                      :class="quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                      class="px-4 py-2 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                </svg>
+              </button>
+              <input type="number"
+                     x-model.number="quantity"
+                     min="1"
+                     :max="maxQuantity"
+                     class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold" />
+              <button @click="incrementQuantity()"
+                      type="button"
+                      :disabled="quantity >= maxQuantity"
+                      :class="quantity >= maxQuantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                      class="px-4 py-2 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <!-- Stock warning -->
+          <div x-show="hasVariants && !selectedVariant" class="text-xs text-amber-600">
+            Select a variant to see available stock
+          </div>
+          <div x-show="showStockInfo && availableStock > 0 && availableStock <= 5" class="text-xs text-orange-600 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>Only <span x-text="availableStock"></span> left in stock!</span>
+          </div>
+          <div x-show="showStockInfo && availableStock === 0" class="text-xs text-red-600 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span>Out of stock</span>
           </div>
         </div>
 
@@ -347,13 +447,14 @@
             <input type="hidden" name="product_variant_id" x-model="selectedVariant">
             <input type="hidden" name="quantity" x-model="quantity">
             <button type="submit"
-                    :disabled="hasVariants && !selectedVariant"
-                    :class="(hasVariants && !selectedVariant) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:shadow-xl hover:scale-105'"
+                    :disabled="(hasVariants && !selectedVariant) || maxQuantity === 0"
+                    :class="((hasVariants && !selectedVariant) || maxQuantity === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:shadow-xl hover:scale-105'"
                     class="w-full bg-gray-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
               </svg>
-              <%= t("products.add_to_cart", default: "Add to Cart") %>
+              <span x-show="maxQuantity > 0"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
+              <span x-show="maxQuantity === 0">Out of Stock</span>
             </button>
           </form>
 
@@ -364,13 +465,14 @@
             <input type="hidden" name="product_variant_id" x-model="selectedVariant">
             <input type="hidden" name="quantity" x-model="quantity">
             <button type="submit"
-                    :disabled="hasVariants && !selectedVariant"
-                    :class="(hasVariants && !selectedVariant) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 hover:text-white hover:scale-105'"
+                    :disabled="(hasVariants && !selectedVariant) || maxQuantity === 0"
+                    :class="((hasVariants && !selectedVariant) || maxQuantity === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 hover:text-white hover:scale-105'"
                     class="w-full border-2 border-gray-700 text-gray-700 font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
-              <%= t("products.buy_now", default: "Buy Now") %>
+              <span x-show="maxQuantity > 0"><%= t("products.buy_now", default: "Buy Now") %></span>
+              <span x-show="maxQuantity === 0">Out of Stock</span>
             </button>
           </form>
         </div>

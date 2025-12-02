@@ -175,27 +175,45 @@
 
   <!-- Product Variants Section -->
   <%
-    variant_options_data = VariantType.includes(:variant_options).active.map do |vt|
+    # Build the variant data structure
+    variant_types_data = VariantType.includes(:variant_options).active.map do |vt|
       {
         id: vt.id,
+        name: vt.name,
         options: vt.variant_options.active.ordered.map do |vo|
           existing_pv = @product.product_variants.find { |pv| pv.variant_option_id == vo.id }
           {
-            id: vo.id,
+            variant_option_id: vo.id,
             value: vo.value,
-            stock: existing_pv&.stock_quantity || 0,
-            product_variant_id: existing_pv&.id
+            stock_quantity: existing_pv&.stock_quantity || 0,
+            id: existing_pv&.id,
+            active: existing_pv&.active || true
           }
         end
       }
     end
+
+    selected_variant_type_id = @product.product_variants.first&.variant_type_id || nil
   %>
+
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
        x-data="{
-         selectedVariantType: <%= @product.product_variants.first&.variant_type_id.to_i || '""' %>,
-         variantOptions: <%= variant_options_data.to_json %>
-       }"
-       x-init="console.log('selectedVariantType:', selectedVariantType, typeof selectedVariantType); console.log('variantOptions:', variantOptions)">
+         selectedVariantTypeId: <%= selected_variant_type_id.to_json %>,
+         variantTypes: <%= variant_types_data.to_json %>,
+
+         get currentVariantType() {
+           return this.variantTypes.find(vt => vt.id === this.selectedVariantTypeId);
+         },
+
+         get currentOptions() {
+           return this.currentVariantType?.options || [];
+         },
+
+         shouldSubmitVariant(option) {
+           // Submit if it's an existing variant (has id) OR if stock > 0
+           return option.id || option.stock_quantity > 0;
+         }
+       }">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
       <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
@@ -205,7 +223,7 @@
 
     <div class="mb-4">
       <p class="text-sm text-gray-600">
-        Select a variant type (like Size) and choose which options apply to this product with their stock quantities.
+        Select a variant type (like Size) and set stock quantities for each option.
         <%= link_to "Manage Variant Types", admin_variant_types_path(locale: I18n.locale), target: "_blank", class: "text-[#465FFF] hover:text-[#3651E6]" %>
       </p>
     </div>
@@ -213,51 +231,56 @@
     <!-- Variant Type Selection -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">Select Variant Type</label>
-      <select x-model.number="selectedVariantType" class="block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]">
+      <select x-model.number="selectedVariantTypeId"
+              class="block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]">
         <option value="">No Variants</option>
         <% VariantType.active.each do |vt| %>
-          <option value="<%= vt.id %>"><%= vt.name %></option>
+          <option value="<%= vt.id %>" <%= 'selected' if selected_variant_type_id == vt.id %>><%= vt.name %></option>
         <% end %>
       </select>
     </div>
 
     <!-- Variant Options Grid -->
-    <div x-show="selectedVariantType" id="variants-container" class="space-y-3">
-      <template x-for="vtData in variantOptions" :key="vtData.id">
-        <div x-show="vtData.id == selectedVariantType" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <template x-for="(option, index) in vtData.options" :key="option.id">
-            <div class="variant-option-card p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-[#465FFF] transition-colors"
-                 x-data="{ variantKey: option.product_variant_id || ('new_' + vtData.id + '_' + index) }">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium text-gray-900" x-text="option.value"></span>
-              </div>
-              <!-- Only submit if has existing ID OR has stock quantity > 0 -->
-              <template x-if="option.product_variant_id || option.stock > 0">
-                <div>
-                  <!-- Hidden field for ID if updating existing variant -->
-                  <input x-show="option.product_variant_id" type="hidden" :name="'product[product_variants_attributes][' + variantKey + '][id]'" :value="option.product_variant_id">
-                  <input type="hidden" :name="'product[product_variants_attributes][' + variantKey + '][variant_type_id]'" :value="selectedVariantType">
-                  <input type="hidden" :name="'product[product_variants_attributes][' + variantKey + '][variant_option_id]'" :value="option.id">
-                  <input type="hidden" :name="'product[product_variants_attributes][' + variantKey + '][active]'" value="1">
-                  <input type="hidden" :name="'product[product_variants_attributes][' + variantKey + '][stock_quantity]'" :value="option.stock">
-                </div>
-              </template>
-              <div>
-                <label class="block text-xs text-gray-600 mb-1">Stock Quantity</label>
-                <input type="number"
-                       x-model.number="option.stock"
-                       class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
-                       placeholder="0"
-                       min="0">
-              </div>
+    <div x-show="selectedVariantTypeId !== null" class="space-y-3">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <template x-for="(option, index) in currentOptions" :key="option.variant_option_id">
+          <div class="variant-option-card p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-[#465FFF] transition-colors">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-gray-900" x-text="option.value"></span>
             </div>
-          </template>
-        </div>
-      </template>
 
+            <!-- Hidden inputs - always submit them so Alpine can track changes -->
+            <input type="hidden"
+                   :name="`product[product_variants_attributes][${index}][id]`"
+                   :value="option.id || ''">
+            <input type="hidden"
+                   :name="`product[product_variants_attributes][${index}][variant_type_id]`"
+                   :value="selectedVariantTypeId">
+            <input type="hidden"
+                   :name="`product[product_variants_attributes][${index}][variant_option_id]`"
+                   :value="option.variant_option_id">
+            <input type="hidden"
+                   :name="`product[product_variants_attributes][${index}][stock_quantity]`"
+                   :value="option.stock_quantity">
+            <input type="hidden"
+                   :name="`product[product_variants_attributes][${index}][active]`"
+                   value="1">
+
+            <!-- Stock quantity input (visible) -->
+            <div>
+              <label class="block text-xs text-gray-600 mb-1">Stock Quantity</label>
+              <input type="number"
+                     x-model.number="option.stock_quantity"
+                     class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
+                     placeholder="0"
+                     min="0">
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
 
-    <div x-show="!selectedVariantType" class="text-sm text-gray-500 italic">
+    <div x-show="selectedVariantTypeId === null" class="text-sm text-gray-500 italic">
       Select a variant type above to add variants to this product, or leave as "No Variants" if this product doesn't need variants.
     </div>
   </div>

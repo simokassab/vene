@@ -9,7 +9,6 @@ class Product < ApplicationRecord
   mount_uploader :video, ProductVideoUploader
 
   accepts_nested_attributes_for :product_images, allow_destroy: true
-  accepts_nested_attributes_for :product_variants, allow_destroy: true, reject_if: :all_blank
 
   validates :name_en, :name_ar, :price, :slug, presence: true
   validates :slug, uniqueness: true
