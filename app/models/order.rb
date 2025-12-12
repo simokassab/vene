@@ -33,8 +33,8 @@ class Order < ApplicationRecord
     return false if status == "canceled"
 
     transaction do
-      # Restore stock for all items
-      order_items.each do |item|
+      # Restore stock ONLY for regular orders (not pre-orders)
+      order_items.regular_orders.each do |item|
         if item.product_variant_id.present?
           item.product_variant.increment!(:stock_quantity, item.quantity)
         else
@@ -46,6 +46,23 @@ class Order < ApplicationRecord
     end
 
     true
+  end
+
+  # Pre-order helper methods
+  def has_preorder_items?
+    order_items.preorders.exists?
+  end
+
+  def all_preorder_items?
+    order_items.any? && order_items.all?(&:is_preorder?)
+  end
+
+  def earliest_preorder_delivery_date
+    order_items.preorders.minimum(:preorder_estimated_delivery_date)
+  end
+
+  def latest_preorder_delivery_date
+    order_items.preorders.maximum(:preorder_estimated_delivery_date)
   end
 
   private

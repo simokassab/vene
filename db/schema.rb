@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_02_111941) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -52,6 +52,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_111941) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "product_variant_id"
+    t.boolean "is_preorder", default: false, null: false
+    t.date "preorder_estimated_delivery_date"
+    t.index ["is_preorder"], name: "index_order_items_on_is_preorder"
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["product_id"], name: "index_order_items_on_product_id"
     t.index ["product_variant_id"], name: "index_order_items_on_product_variant_id"
@@ -126,6 +129,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_111941) do
     t.datetime "updated_at", null: false
     t.bigint "variant_type_id"
     t.bigint "variant_option_id"
+    t.boolean "allow_preorder", default: false, null: false
+    t.date "preorder_estimated_delivery_date"
+    t.index ["allow_preorder"], name: "index_product_variants_on_allow_preorder"
     t.index ["product_id", "name", "value"], name: "index_variants_on_product_name_value", unique: true
     t.index ["product_id"], name: "index_product_variants_on_product_id"
     t.index ["variant_option_id"], name: "index_product_variants_on_variant_option_id"
@@ -151,6 +157,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_111941) do
     t.boolean "on_sale", default: false
     t.decimal "sale_price", precision: 10, scale: 2
     t.string "video"
+    t.boolean "allow_preorder", default: false, null: false
+    t.date "preorder_estimated_delivery_date"
+    t.text "preorder_note_en"
+    t.text "preorder_note_ar"
+    t.index ["allow_preorder"], name: "index_products_on_allow_preorder"
     t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["slug"], name: "index_products_on_slug", unique: true
   end
@@ -167,6 +178,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_111941) do
     t.string "montypay_api_key"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "preorder_enabled", default: true, null: false
+    t.integer "preorder_default_delivery_days", default: 30
+    t.text "preorder_disclaimer_en", default: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed."
+    t.text "preorder_disclaimer_ar", default: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة."
   end
 
   create_table "users", force: :cascade do |t|

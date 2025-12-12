@@ -11,6 +11,31 @@ class Cart
     def cart_key
       product_variant&.id.present? ? "#{product.id}_#{product_variant.id}" : product.id.to_s
     end
+
+    # Pre-order methods
+    def is_preorder?
+      if product_variant
+        product_variant.preorder_only?
+      else
+        product.preorder_only?
+      end
+    end
+
+    def estimated_delivery_date
+      if product_variant
+        product_variant.estimated_delivery_date
+      else
+        product.estimated_delivery_date
+      end
+    end
+
+    def in_stock?
+      if product_variant
+        product_variant.stock_quantity > 0
+      else
+        product.stock_quantity > 0
+      end
+    end
   end
 
   def initialize(session)

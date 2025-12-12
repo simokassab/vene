@@ -10,19 +10,25 @@ class Product < ApplicationRecord
 
   accepts_nested_attributes_for :product_images, allow_destroy: true
 
-  validates :name_en, :name_ar, :price, :slug, presence: true
-  validates :slug, uniqueness: true
+  before_validation :generate_slug
+
+  validates :name_en, :name_ar, :price, presence: true
+  validates :slug, presence: true, uniqueness: true
   validates :stock_quantity, numericality: { greater_than_or_equal_to: 0 }
+  validate :preorder_date_must_be_future
 
   scope :active, -> { where(active: true) }
   scope :recent, -> { order(created_at: :desc) }
   scope :featured, -> { where(featured: true) }
   scope :on_sale, -> { where(on_sale: true) }
+  scope :preorder_available, -> { where(allow_preorder: true) }
+  scope :available_for_purchase, -> { where("stock_quantity > 0 OR allow_preorder = true") }
 
   # Ransack configuration
   def self.ransackable_attributes(auth_object = nil)
     %w[name_en name_ar description_en description_ar price sale_price stock_quantity
-       metal diamonds gemstones slug active featured on_sale created_at updated_at category_id]
+       metal diamonds gemstones slug active featured on_sale created_at updated_at category_id
+       allow_preorder preorder_estimated_delivery_date]
   end
 
   def self.ransackable_associations(auth_object = nil)
@@ -65,5 +71,51 @@ class Product < ApplicationRecord
 
   def has_variants?
     product_variants.active.any?
+  end
+
+  # Pre-order methods
+  def purchasable?
+    stock_quantity > 0 || allow_preorder?
+  end
+
+  def preorder_only?
+    stock_quantity <= 0 && allow_preorder?
+  end
+
+  def estimated_delivery_date
+    return nil unless allow_preorder?
+
+    preorder_estimated_delivery_date ||
+      (Date.current + (Setting.current.preorder_default_delivery_days || 30).days)
+  end
+
+  def preorder_note(locale = I18n.locale)
+    locale.to_sym == :ar ? preorder_note_ar : preorder_note_en
+  end
+
+  private
+
+  def generate_slug
+    if slug.blank? && name_en.present?
+      base_slug = name_en.parameterize
+      generated_slug = base_slug
+      counter = 1
+
+      # Ensure uniqueness by appending a number if needed
+      while Product.where(slug: generated_slug).where.not(id: id).exists?
+        generated_slug = "#{base_slug}-#{counter}"
+        counter += 1
+      end
+
+      self.slug = generated_slug
+    end
+  end
+
+  def preorder_date_must_be_future
+    if allow_preorder? && preorder_estimated_delivery_date.present?
+      if preorder_estimated_delivery_date <= Date.current
+        errors.add(:preorder_estimated_delivery_date, "must be in the future")
+      end
+    end
   end
 end

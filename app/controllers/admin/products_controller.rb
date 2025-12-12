@@ -52,10 +52,11 @@ class Admin::ProductsController < Admin::BaseController
     params.require(:product).permit(:name_en, :name_ar, :description_en, :description_ar, :price, :category_id,
                                     :stock_quantity, :metal, :diamonds, :gemstones, :active, :slug,
                                     :featured, :on_sale, :sale_price, :video, :remove_video,
+                                    :allow_preorder, :preorder_estimated_delivery_date, :preorder_note_en, :preorder_note_ar,
                                     related_product_ids: [],
                                     images: [],
                                     product_images_attributes: %i[id image position _destroy],
-                                    product_variants_attributes: %i[id name value variant_type_id variant_option_id stock_quantity active _destroy])
+                                    product_variants_attributes: %i[id name value variant_type_id variant_option_id stock_quantity active allow_preorder preorder_estimated_delivery_date _destroy])
   end
 
   def attach_images
@@ -90,17 +91,21 @@ class Admin::ProductsController < Admin::BaseController
             variant_type_id: variant_attrs[:variant_type_id],
             variant_option_id: variant_attrs[:variant_option_id],
             stock_quantity: stock_qty,
-            active: variant_attrs[:active] == "1"
+            active: variant_attrs[:active] == "1",
+            allow_preorder: variant_attrs[:allow_preorder] == "1",
+            preorder_estimated_delivery_date: variant_attrs[:preorder_estimated_delivery_date]
           )
         end
       else
-        # Create new variant only if stock > 0
-        if stock_qty > 0
+        # Create new variant only if stock > 0 OR allow_preorder is true
+        if stock_qty > 0 || variant_attrs[:allow_preorder] == "1"
           @product.product_variants.create(
             variant_type_id: variant_attrs[:variant_type_id],
             variant_option_id: variant_attrs[:variant_option_id],
             stock_quantity: stock_qty,
-            active: variant_attrs[:active] == "1"
+            active: variant_attrs[:active] == "1",
+            allow_preorder: variant_attrs[:allow_preorder] == "1",
+            preorder_estimated_delivery_date: variant_attrs[:preorder_estimated_delivery_date]
           )
         end
       end

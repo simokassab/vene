@@ -150,6 +150,56 @@
     </div>
   </div>
 
+  <!-- Pre-Order Settings Section -->
+  <div class="bg-amber-50 rounded-xl border border-amber-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Pre-Order Settings
+    </h3>
+
+    <div class="space-y-6">
+      <div class="flex items-start">
+        <div class="flex items-center h-5">
+          <%= form.check_box :preorder_enabled,
+            class: "w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2" %>
+        </div>
+        <div class="ml-3">
+          <%= form.label :preorder_enabled, "Enable Pre-Orders Globally", class: "text-sm font-medium text-gray-700" %>
+          <p class="text-xs text-gray-600">Allow customers to pre-order out-of-stock items site-wide</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <%= form.label :preorder_default_delivery_days, "Default Delivery Days", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.number_field :preorder_default_delivery_days,
+            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
+            placeholder: "30",
+            min: 1 %>
+          <p class="mt-1 text-xs text-gray-500">Used when product doesn't specify a delivery date</p>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :preorder_disclaimer_en, "Pre-Order Disclaimer (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :preorder_disclaimer_en, rows: 3,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
+          placeholder: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed." %>
+        <p class="mt-1 text-xs text-gray-500">Displayed to customers during checkout for pre-order items</p>
+      </div>
+
+      <div>
+        <%= form.label :preorder_disclaimer_ar, "Pre-Order Disclaimer (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :preorder_disclaimer_ar, rows: 3,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
+          placeholder: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة.",
+          dir: "rtl" %>
+      </div>
+    </div>
+  </div>
+
   <!-- Form Actions -->
   <div class="flex items-center justify-end pt-4">
     <%= form.submit t("admin.actions.save"),

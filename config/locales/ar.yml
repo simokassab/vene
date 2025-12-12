@@ -27,6 +27,8 @@ ar:
   products:
     add_to_cart: "أضف للسلة"
     buy_now: "اشتري الآن"
+    preorder_now: "اطلب مسبقاً الآن"
+    not_available: "غير متوفر"
     design_details: "تفاصيل التصميم"
     metal: "المعدن"
     diamonds: "الألماس"
@@ -44,6 +46,10 @@ ar:
     remove: "حذف"
     empty: "السلة فارغة"
     updated: "تم تحديث السلة"
+    not_available: "هذا المنتج غير متاح للشراء"
+    variant_required: "الرجاء اختيار نوع"
+    preorder_notice_title: "عناصر طلب مسبق في السلة"
+    preorder_ship_together: "إذا كان طلبك يحتوي على عناصر متوفرة وعناصر طلب مسبق، سيتم شحن جميع العناصر معاً عندما تصبح عناصر الطلب المسبق متاحة."
   checkout:
     title: "الدفع"
     pay: "ادفع الآن"
@@ -64,6 +70,8 @@ ar:
     subtotal: "المجموع"
     tax: "الضريبة"
     shipping: "الشحن"
+    preorder: "طلب مسبق"
+    preorder_ships_by: "يشحن بحلول %{date}"
   payments:
     success: "تم استلام الدفع"
     failure: "فشل الدفع"
@@ -159,6 +167,9 @@ ar:
         subject: "طلبك %{id} من VENE"
         greeting: "مرحباً %{name}"
         body: "شكراً لطلبك. إجمالي الطلب %{total}."
+        preorder_notice: "إشعار الطلب المسبق"
+        ship_together: "يحتوي طلبك على عناصر متوفرة وعناصر طلب مسبق. سيتم شحن جميع العناصر معاً عندما تصبح عناصر الطلب المسبق متاحة."
+        thanks: "شكراً لطلبك!"
       admin_notification:
         subject: "تم استلام طلب %{id}"
   errors:

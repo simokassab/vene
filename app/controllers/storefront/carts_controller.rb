@@ -13,6 +13,22 @@ class Storefront::CartsController < ApplicationController
       return
     end
 
+    # Validate product/variant is purchasable
+    if params[:product_variant_id].present?
+      variant = ProductVariant.find(params[:product_variant_id])
+      unless variant.purchasable?
+        redirect_to product_path(product.slug, locale: I18n.locale),
+                    alert: t("cart.not_available")
+        return
+      end
+    else
+      unless product.purchasable?
+        redirect_to product_path(product.slug, locale: I18n.locale),
+                    alert: t("cart.not_available")
+        return
+      end
+    end
+
     cart.add(params[:product_id], params[:quantity] || 1, params[:product_variant_id])
     redirect_target = params[:redirect_to].presence || cart_path(locale: I18n.locale)
     redirect_to redirect_target, notice: t("cart.updated")

@@ -1,3 +1,46 @@
 <%= I18n.t("mailers.order_mailer.confirmation.greeting", name: @order.name) %>
 
-<%= I18n.t("mailers.order_mailer.confirmation.body", id: @order.id, total: @order.total_amount) %>
+<%= I18n.t("mailers.order_mailer.confirmation.body", id: @order.id, total: number_to_currency(@order.total_amount, unit: @order.currency)) %>
+
+=====================================
+<%= I18n.t("orders.items", default: "Order Items") %>
+=====================================
+<% @order.order_items.each do |item| %>
+
+<%= item.product.name(I18n.locale) %>
+<% if item.product_variant %>
+  <%= item.product_variant.display_name %>
+<% end %>
+<% if item.is_preorder %>
+  [<%= I18n.t("orders.preorder", default: "PRE-ORDER") %>]
+  <% if item.preorder_estimated_delivery_date %>
+  <%= I18n.t("orders.preorder_ships_by", date: l(item.preorder_estimated_delivery_date, format: :long)) %>
+  <% end %>
+<% end %>
+<%= I18n.t("orders.qty", default: "Qty") %>: <%= item.quantity %> x <%= number_to_currency(item.unit_price, unit: @order.currency) %> = <%= number_to_currency(item.line_total, unit: @order.currency) %>
+
+<% end %>
+=====================================
+<%= I18n.t("orders.subtotal", default: "Subtotal") %>: <%= number_to_currency(@order.subtotal, unit: @order.currency) %>
+<%= I18n.t("orders.tax", default: "Tax") %>: <%= number_to_currency(@order.tax_amount, unit: @order.currency) %>
+<%= I18n.t("orders.shipping", default: "Shipping") %>: <%= number_to_currency(@order.shipping_amount, unit: @order.currency) %>
+-------------------------------------
+<%= I18n.t("orders.total", default: "Total") %>: <%= number_to_currency(@order.total_amount, unit: @order.currency) %>
+=====================================
+
+<% if @order.has_preorder_items? %>
+
+⚠️ <%= I18n.t("mailers.order_mailer.confirmation.preorder_notice", default: "Pre-Order Notice") %>
+
+<%= Setting.current.preorder_disclaimer(I18n.locale) %>
+
+<% if @order.order_items.preorders.any? && @order.order_items.regular_orders.any? %>
+<%= I18n.t("mailers.order_mailer.confirmation.ship_together", default: "Your order contains both in-stock and pre-order items. All items will be shipped together when pre-order items become available.") %>
+<% end %>
+
+<% end %>
+<%= I18n.t("orders.shipping_address", default: "Shipping Address") %>:
+<%= @order.address %>
+<%= @order.city %>, <%= @order.country %>
+
+<%= I18n.t("mailers.order_mailer.confirmation.thanks", default: "Thank you for your order!") %>

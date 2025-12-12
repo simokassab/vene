@@ -27,6 +27,8 @@ en:
   products:
     add_to_cart: "Add to Cart"
     buy_now: "Buy Now"
+    preorder_now: "Pre-Order Now"
+    not_available: "Not Available"
     design_details: "Design Details"
     metal: "Metal"
     diamonds: "Diamonds"
@@ -44,6 +46,10 @@ en:
     remove: "Remove"
     empty: "Your cart is empty"
     updated: "Cart updated"
+    not_available: "This item is not available for purchase"
+    variant_required: "Please select a variant"
+    preorder_notice_title: "Pre-Order Items in Cart"
+    preorder_ship_together: "If your order contains both in-stock and pre-order items, all items will be shipped together when pre-order items become available."
   checkout:
     title: "Checkout"
     pay: "Pay Securely"
@@ -64,6 +70,8 @@ en:
     subtotal: "Subtotal"
     tax: "Tax"
     shipping: "Shipping"
+    preorder: "Pre-Order"
+    preorder_ships_by: "Ships by %{date}"
   payments:
     success: "Payment received"
     failure: "Payment failed"
@@ -159,6 +167,9 @@ en:
         subject: "Your VENE Jewelry order %{id}"
         greeting: "Hello %{name},"
         body: "Thank you for your purchase. Your order %{id} totals %{total}."
+        preorder_notice: "Pre-Order Notice"
+        ship_together: "Your order contains both in-stock and pre-order items. All items will be shipped together when pre-order items become available."
+        thanks: "Thank you for your order!"
       admin_notification:
         subject: "New order %{id} received"
   errors:

@@ -59,6 +59,7 @@ Rails.application.routes.draw do
           patch :update_payment_status
         end
       end
+      resources :preorders, only: [:index]
       resource :setting, only: %i[show update]
       resources :pages
     end

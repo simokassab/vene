@@ -9,9 +9,12 @@ class ProductVariant < ApplicationRecord
   # For new approach: validate variant_type and variant_option presence
   # For old approach: validate name and value presence
   validate :validate_variant_data
+  validate :preorder_date_must_be_future
 
   scope :active, -> { where(active: true) }
   scope :in_stock, -> { where("stock_quantity > ?", 0) }
+  scope :preorder_available, -> { where(allow_preorder: true) }
+  scope :purchasable, -> { where("stock_quantity > 0 OR allow_preorder = true") }
 
   def display_name
     if variant_type && variant_option
@@ -23,6 +26,23 @@ class ProductVariant < ApplicationRecord
 
   def in_stock?
     stock_quantity > 0
+  end
+
+  # Pre-order methods
+  def purchasable?
+    stock_quantity > 0 || allow_preorder?
+  end
+
+  def preorder_only?
+    stock_quantity <= 0 && allow_preorder?
+  end
+
+  def estimated_delivery_date
+    return nil unless allow_preorder?
+
+    preorder_estimated_delivery_date ||
+      product.preorder_estimated_delivery_date ||
+      (Date.current + (Setting.current.preorder_default_delivery_days || 30).days)
   end
 
   private
@@ -57,6 +77,14 @@ class ProductVariant < ApplicationRecord
       end
     else
       errors.add(:base, "Must have either variant_type/variant_option or name/value")
+    end
+  end
+
+  def preorder_date_must_be_future
+    if allow_preorder? && preorder_estimated_delivery_date.present?
+      if preorder_estimated_delivery_date <= Date.current
+        errors.add(:preorder_estimated_delivery_date, "must be in the future")
+      end
     end
   end
 end
