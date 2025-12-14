@@ -2,7 +2,7 @@ class Admin::ProductsController < Admin::BaseController
   before_action :set_product, only: %i[show edit update destroy]
 
   def index
-    @q = Product.includes(:category, :product_images).ransack(params[:q])
+    @q = Product.includes(sub_category: :category, product_images: []).ransack(params[:q])
     @pagy, @products = pagy(@q.result, items: 20)
   end
 
@@ -49,7 +49,7 @@ class Admin::ProductsController < Admin::BaseController
   end
 
   def product_params
-    params.require(:product).permit(:name_en, :name_ar, :description_en, :description_ar, :price, :category_id,
+    params.require(:product).permit(:name_en, :name_ar, :description_en, :description_ar, :price, :sub_category_id,
                                     :stock_quantity, :metal, :diamonds, :gemstones, :active, :slug,
                                     :featured, :on_sale, :sale_price, :video, :remove_video,
                                     :allow_preorder, :preorder_estimated_delivery_date, :preorder_note_en, :preorder_note_ar,

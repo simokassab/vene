@@ -1,0 +1,131 @@
+<%= form_with(model: [:admin, @sub_category], local: true, class: "space-y-6") do |form| %>
+  <% if @sub_category.errors.any? %>
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">
+            <%= pluralize(@sub_category.errors.count, "error") %> prohibited this subcategory from being saved:
+          </h3>
+          <ul class="mt-2 list-disc pl-5 space-y-1">
+            <% @sub_category.errors.full_messages.each do |msg| %>
+              <li class="text-sm text-red-700"><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Basic Information -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="md:col-span-2">
+        <%= form.label :category_id, "Parent Category *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.collection_select :category_id, @categories, :id, :name_en,
+          { prompt: "Select a category" },
+          class: "block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+      </div>
+
+      <div>
+        <%= form.label :name_en, "Name (English) *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :name_en,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "Enter subcategory name in English" %>
+      </div>
+
+      <div>
+        <%= form.label :name_ar, "Name (Arabic) *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :name_ar,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "أدخل اسم الفئة الفرعية بالعربية",
+          dir: "rtl" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :slug, "URL Slug", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :slug,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors font-mono text-sm",
+          placeholder: "subcategory-url-slug (auto-generated if blank)" %>
+        <p class="mt-1 text-xs text-gray-500">Leave blank to auto-generate from category and name</p>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :description_en, "Description (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :description_en, rows: 3,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "Optional description for this subcategory" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :description_ar, "Description (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :description_ar, rows: 3,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "وصف اختياري لهذه الفئة الفرعية",
+          dir: "rtl" %>
+      </div>
+
+      <div>
+        <%= form.label :position, "Position (for ordering)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.number_field :position,
+          class: "block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "0" %>
+        <p class="mt-1 text-xs text-gray-500">Lower numbers appear first</p>
+      </div>
+
+      <div class="flex items-start pt-8">
+        <div class="flex items-center h-5">
+          <%= form.check_box :active,
+            class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+        </div>
+        <%= form.label :active, "Active (visible on storefront)", class: "ml-3 text-sm font-medium text-gray-700" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Subcategory Image (for Mega Menu)</h3>
+
+    <div class="space-y-4">
+      <div>
+        <%= form.label :image, "Upload Image", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.file_field :image,
+          accept: "image/png,image/jpeg,image/jpg,image/webp",
+          class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-[#465FFF] file:text-white hover:file:bg-[#3651E6] file:cursor-pointer" %>
+        <p class="mt-2 text-xs text-gray-500">
+          Recommended size: 300x300px for mega menu. Accepts JPG, PNG, WebP formats.
+        </p>
+      </div>
+
+      <% if @sub_category.image? %>
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-3">Current Image</p>
+          <div class="flex items-start space-x-4">
+            <%= image_tag @sub_category.image.url, class: "w-48 h-32 object-cover rounded-lg border-2 border-gray-200" %>
+            <div class="flex-1">
+              <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <p class="text-xs text-gray-600 mb-2"><strong>Preview (Mega Menu):</strong></p>
+                <%= image_tag @sub_category.image.mega_menu.url, class: "w-24 h-24 object-cover rounded-lg border border-gray-300" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="flex items-center justify-between pt-4">
+    <%= link_to "Cancel", admin_sub_categories_path(locale: I18n.locale),
+      class: "px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium" %>
+    <%= form.submit "Save Subcategory",
+      class: "px-6 py-2.5 bg-[#465FFF] hover:bg-[#3651E6] text-white rounded-lg transition-colors font-medium" %>
+  </div>
+<% end %>

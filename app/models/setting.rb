@@ -12,7 +12,8 @@ class Setting < ApplicationRecord
       preorder_enabled: true,
       preorder_default_delivery_days: 30,
       preorder_disclaimer_en: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed.",
-      preorder_disclaimer_ar: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة."
+      preorder_disclaimer_ar: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة.",
+      maintenance_mode: false
     )
   end
 

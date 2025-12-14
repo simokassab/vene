@@ -8,6 +8,7 @@
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
+  <script src="/tinymce/tinymce.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased" x-data="{ mobileMenu: false, userMenu: false }">
   <div class="flex min-h-screen">
@@ -28,6 +29,7 @@
             { name: t("admin.nav.dashboard"), path: admin_root_path(locale: I18n.locale), icon: '📊' },
             { name: t("admin.nav.products"), path: admin_products_path(locale: I18n.locale), icon: '📦' },
             { name: t("admin.nav.categories"), path: admin_categories_path(locale: I18n.locale), icon: '🏷️' },
+            { name: t("admin.nav.subcategories", default: "Subcategories"), path: admin_sub_categories_path(locale: I18n.locale), icon: '🔖' },
             { name: t("admin.nav.variant_types", default: "Variant Types"), path: admin_variant_types_path(locale: I18n.locale), icon: '🔧' },
             { name: t("admin.nav.orders"), path: admin_orders_path(locale: I18n.locale), icon: '🛒' },
             { name: t("admin.nav.banners"), path: admin_banners_path(locale: I18n.locale), icon: '🖼️' },

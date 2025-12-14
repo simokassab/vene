@@ -50,6 +50,7 @@ Rails.application.routes.draw do
         resources :product_images, only: %i[create destroy]
       end
       resources :categories
+      resources :sub_categories
       resources :banners
       resources :variant_types
       resources :orders do

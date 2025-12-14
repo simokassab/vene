@@ -1,5 +1,6 @@
 class Product < ApplicationRecord
-  belongs_to :category
+  belongs_to :sub_category
+  has_one :category, through: :sub_category
   has_many :product_images, dependent: :destroy
   has_many :product_variants, dependent: :destroy
   has_many :order_items
@@ -27,12 +28,12 @@ class Product < ApplicationRecord
   # Ransack configuration
   def self.ransackable_attributes(auth_object = nil)
     %w[name_en name_ar description_en description_ar price sale_price stock_quantity
-       metal diamonds gemstones slug active featured on_sale created_at updated_at category_id
+       metal diamonds gemstones slug active featured on_sale created_at updated_at sub_category_id
        allow_preorder preorder_estimated_delivery_date]
   end
 
   def self.ransackable_associations(auth_object = nil)
-    %w[category product_images]
+    %w[sub_category category product_images]
   end
 
   def name(locale = I18n.locale)
@@ -50,7 +51,20 @@ class Product < ApplicationRecord
   def featured_related(limit = 4)
     return related_products.active.limit(limit) if related_products.any?
 
-    Product.active.where(category_id: category_id).where.not(id: id).limit(limit)
+    # First try same subcategory
+    same_subcategory = Product.active
+      .where(sub_category_id: sub_category_id)
+      .where.not(id: id)
+      .limit(limit)
+
+    return same_subcategory if same_subcategory.count >= limit
+
+    # Fall back to same category
+    Product.active
+      .joins(:sub_category)
+      .where(sub_categories: { category_id: category.id })
+      .where.not(id: id)
+      .limit(limit)
   end
 
   def on_sale_with_price?

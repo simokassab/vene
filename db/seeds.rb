@@ -16,6 +16,49 @@ categories.each do |cat|
 end
 puts "Categories seeded"
 
+# Create subcategories
+subcategory_data = {
+  "Necklaces" => [
+    { en: "Pendants", ar: "قلائد" },
+    { en: "Chains", ar: "سلاسل" },
+    { en: "Chokers", ar: "قلادات قصيرة" }
+  ],
+  "Bracelets" => [
+    { en: "Bangles", ar: "أساور صلبة" },
+    { en: "Chain Bracelets", ar: "أساور سلسلة" },
+    { en: "Cuff Bracelets", ar: "أساور واسعة" }
+  ],
+  "Rings" => [
+    { en: "Engagement Rings", ar: "خواتم الخطوبة" },
+    { en: "Wedding Bands", ar: "دبل الزفاف" },
+    { en: "Fashion Rings", ar: "خواتم الموضة" }
+  ],
+  "Earrings" => [
+    { en: "Studs", ar: "أقراط صغيرة" },
+    { en: "Hoops", ar: "أقراط دائرية" },
+    { en: "Dangles", ar: "أقراط متدلية" }
+  ]
+}
+
+Category.find_each do |category|
+  names = subcategory_data[category.name_en] || [
+    { en: "General", ar: "عام" }
+  ]
+
+  names.each_with_index do |name, index|
+    SubCategory.find_or_create_by!(
+      category: category,
+      slug: "#{category.slug}-#{name[:en].parameterize}"
+    ) do |sc|
+      sc.name_en = name[:en]
+      sc.name_ar = name[:ar]
+      sc.position = index
+      sc.active = true
+    end
+  end
+end
+puts "Subcategories seeded"
+
 Page.find_or_create_by!(slug: "terms-and-conditions") do |p|
   p.title_en = "Terms and Conditions"
   p.title_ar = "الشروط والأحكام"
@@ -38,15 +81,15 @@ Page.find_or_create_by!(slug: "delivery-and-return-policy") do |p|
   p.active = true
 end
 
-first_category = Category.first
-if first_category
+first_subcategory = SubCategory.first
+if first_subcategory
   Product.find_or_create_by!(slug: "classic-necklace") do |product|
     product.name_en = "Classic Necklace"
     product.name_ar = "قلادة كلاسيكية"
     product.description_en = "Elegant gold necklace."
     product.description_ar = "قلادة ذهبية أنيقة."
     product.price = 500
-    product.category = first_category
+    product.sub_category = first_subcategory
     product.stock_quantity = 5
     product.metal = "18k Gold"
     product.diamonds = "VS1"

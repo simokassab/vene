@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -144,7 +144,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
     t.text "description_en"
     t.text "description_ar"
     t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
-    t.bigint "category_id", null: false
     t.integer "stock_quantity", default: 0, null: false
     t.string "metal"
     t.string "diamonds"
@@ -161,9 +160,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
     t.date "preorder_estimated_delivery_date"
     t.text "preorder_note_en"
     t.text "preorder_note_ar"
+    t.bigint "sub_category_id", null: false
     t.index ["allow_preorder"], name: "index_products_on_allow_preorder"
-    t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["slug"], name: "index_products_on_slug", unique: true
+    t.index ["sub_category_id"], name: "index_products_on_sub_category_id"
   end
 
   create_table "settings", force: :cascade do |t|
@@ -182,6 +182,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
     t.integer "preorder_default_delivery_days", default: 30
     t.text "preorder_disclaimer_en", default: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed."
     t.text "preorder_disclaimer_ar", default: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة."
+    t.boolean "maintenance_mode", default: false, null: false
+  end
+
+  create_table "sub_categories", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.string "name_en", null: false
+    t.string "name_ar", null: false
+    t.string "slug", null: false
+    t.text "description_en"
+    t.text "description_ar"
+    t.string "image"
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_sub_categories_on_active"
+    t.index ["category_id", "position"], name: "index_sub_categories_on_category_id_and_position"
+    t.index ["category_id"], name: "index_sub_categories_on_category_id"
+    t.index ["slug"], name: "index_sub_categories_on_slug", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -233,6 +252,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_215520) do
   add_foreign_key "product_variants", "products"
   add_foreign_key "product_variants", "variant_options"
   add_foreign_key "product_variants", "variant_types"
-  add_foreign_key "products", "categories"
+  add_foreign_key "products", "sub_categories"
+  add_foreign_key "sub_categories", "categories"
   add_foreign_key "variant_options", "variant_types"
 end
