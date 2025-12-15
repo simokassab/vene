@@ -30,8 +30,8 @@ class ApplicationController < ActionController::Base
   end
 
   def check_maintenance_mode
-    # Skip for admin controllers
-    return if self.class.ancestors.include?(Admin::BaseController)
+    # Skip for all admin controllers (including Devise admin controllers)
+    return if self.class.name.start_with?("Admin::")
 
     # Skip if maintenance mode is off
     return unless current_settings.maintenance_mode
