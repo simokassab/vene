@@ -1,6 +1,6 @@
 <% content_for :full_width, true %>
 
-<div class="min-h-screen bg-gray-50 py-10">
+<div class="min-h-screen bg-gray-50 pt-32 pb-10 mt-8">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
     <div class="flex items-center justify-between">
       <div>
@@ -82,16 +82,21 @@
           <span class="ml-3 font-semibold text-gray-900"><%= number_to_currency(@order.subtotal, unit: current_settings.default_currency) %></span>
         </div>
         <div class="text-sm text-gray-600">
-          <span><%= t("orders.tax", default: "Tax") %></span>
-          <span class="ml-3 font-semibold text-gray-900"><%= number_to_currency(@order.tax_amount, unit: current_settings.default_currency) %></span>
-        </div>
-        <div class="text-sm text-gray-600">
           <span><%= t("orders.shipping", default: "Shipping") %></span>
           <span class="ml-3 font-semibold text-gray-900"><%= number_to_currency(@order.shipping_amount, unit: current_settings.default_currency) %></span>
         </div>
+        <% if @order.discount_amount > 0 %>
+          <div class="text-sm text-green-600">
+            <span><%= t("coupons.discount", default: "Discount") %> (<span class="font-mono"><%= @order.coupon_code %></span>)</span>
+            <span class="ml-3 font-semibold">-<%= number_to_currency(@order.discount_amount, unit: current_settings.default_currency) %></span>
+          </div>
+        <% end %>
         <div class="text-lg font-bold text-gray-900">
           <span><%= t("orders.total", default: "Total") %></span>
           <span class="ml-3"><%= number_to_currency(@order.total_amount, unit: current_settings.default_currency) %></span>
+        </div>
+        <div class="text-xs text-gray-500 mt-2">
+          <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
         </div>
       </div>
     </div>

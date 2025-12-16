@@ -1,5 +1,6 @@
 class Order < ApplicationRecord
   belongs_to :user
+  belongs_to :coupon, optional: true
   has_many :order_items, dependent: :destroy
 
   accepts_nested_attributes_for :order_items
@@ -13,19 +14,11 @@ class Order < ApplicationRecord
 
   before_validation :set_defaults
 
-  def tax_type_local?
-    tax_type == "local"
-  end
-
   def update_totals!(settings)
     self.subtotal = order_items.sum(&:line_total)
-    self.tax_amount = if country == settings.local_country
-                        subtotal * (settings.local_tax_rate || 0) / 100
-                      else
-                        subtotal * (settings.international_tax_rate || 0) / 100
-                      end
+    self.tax_amount = 0 # Prices include tax
     self.shipping_amount = settings.shipping_flat_rate || 0
-    self.total_amount = subtotal + tax_amount + shipping_amount
+    self.total_amount = subtotal - discount_amount + shipping_amount
     save!
   end
 
@@ -63,6 +56,106 @@ class Order < ApplicationRecord
 
   def latest_preorder_delivery_date
     order_items.preorders.maximum(:preorder_estimated_delivery_date)
+  end
+
+  # DHL Express Shipment Integration
+
+  # Create a DHL Express shipment for this order
+  # @param shipper_address [Dhl::Address] The shipper address (optional, uses default)
+  # @param shipper_contact [Dhl::Contact] The shipper contact (optional, uses default)
+  # @param account_number [String] DHL account number (optional, uses ENV variable)
+  # @return [Dhl::Shipment] The created shipment
+  def create_dhl_shipment(shipper_address: nil, shipper_contact: nil, account_number: nil)
+    shipper_address ||= Dhl.default_shipper_address
+    shipper_contact ||= Dhl.default_shipper_contact
+    account_number ||= ENV["DHL_EXPRESS_ACCOUNT_NUMBER"]
+
+    raise ArgumentError, "Shipper address is required" if shipper_address.nil?
+    raise ArgumentError, "Shipper contact is required" if shipper_contact.nil?
+    raise ArgumentError, "DHL account number is required" if account_number.blank?
+
+    client = Dhl.client
+    shipment_request = Dhl::ShipmentRequest.from_order(
+      self,
+      shipper_address: shipper_address,
+      shipper_contact: shipper_contact,
+      account_number: account_number
+    )
+
+    shipment = client.shipments.create(shipment_request)
+
+    # Update order with tracking information
+    if shipment.success?
+      update!(dhl_tracking_id: shipment.tracking_number)
+
+      # Optionally store the label
+      if shipment.label_binary.present?
+        # You can store the label in ActiveStorage or file system here
+        Rails.logger.info("Shipment label created for order #{id}")
+      end
+    end
+
+    shipment
+  end
+
+  # Get DHL Express tracking information for this order
+  # @return [Dhl::TrackingInfo, nil] The tracking information or nil if no tracking ID
+  def dhl_tracking_info
+    return nil if dhl_tracking_id.blank?
+
+    client = Dhl.client
+    client.tracking.get(dhl_tracking_id)
+  rescue Dhl::Client::Error => e
+    Rails.logger.error("Failed to get DHL Express tracking info for order #{id}: #{e.message}")
+    nil
+  end
+
+  # Get DHL Express label PDF for this order
+  # Note: Labels are returned during shipment creation and should be stored
+  # This method attempts to retrieve it via API
+  # @return [String, nil] The label PDF binary or nil
+  def dhl_label_pdf
+    return nil if dhl_tracking_id.blank?
+
+    client = Dhl.client
+    label_content = client.labels.get(dhl_tracking_id)
+
+    return nil if label_content.blank?
+
+    Base64.decode64(label_content)
+  rescue Dhl::Client::Error => e
+    Rails.logger.error("Failed to get DHL Express label for order #{id}: #{e.message}")
+    nil
+  end
+
+  # Check if order has DHL tracking
+  def has_dhl_tracking?
+    dhl_tracking_id.present?
+  end
+
+  # Get shipping rates for this order (before creating shipment)
+  # @return [Array<Hash>] Available shipping rates
+  def get_dhl_shipping_rates
+    client = Dhl.client
+
+    # Create a rate request similar to shipment request but for rating
+    shipper_address = Dhl.default_shipper_address
+    shipper_contact = Dhl.default_shipper_contact
+    account_number = ENV["DHL_EXPRESS_ACCOUNT_NUMBER"]
+
+    return [] if shipper_address.nil? || shipper_contact.nil? || account_number.blank?
+
+    rate_request = Dhl::ShipmentRequest.from_order(
+      self,
+      shipper_address: shipper_address,
+      shipper_contact: shipper_contact,
+      account_number: account_number
+    )
+
+    client.shipments.get_rates(rate_request)
+  rescue Dhl::Client::Error => e
+    Rails.logger.error("Failed to get DHL Express rates for order #{id}: #{e.message}")
+    []
   end
 
   private

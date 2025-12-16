@@ -22,10 +22,10 @@
 <% end %>
 =====================================
 <%= I18n.t("orders.subtotal", default: "Subtotal") %>: <%= number_to_currency(@order.subtotal, unit: @order.currency) %>
-<%= I18n.t("orders.tax", default: "Tax") %>: <%= number_to_currency(@order.tax_amount, unit: @order.currency) %>
 <%= I18n.t("orders.shipping", default: "Shipping") %>: <%= number_to_currency(@order.shipping_amount, unit: @order.currency) %>
 -------------------------------------
 <%= I18n.t("orders.total", default: "Total") %>: <%= number_to_currency(@order.total_amount, unit: @order.currency) %>
+(<%= I18n.t("common.prices_include_tax", default: "Prices include all applicable taxes") %>)
 =====================================
 
 <% if @order.has_preorder_items? %>

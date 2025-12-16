@@ -2,7 +2,7 @@ class Admin::BannersController < Admin::BaseController
   before_action :set_banner, only: %i[edit update destroy]
 
   def index
-    @banners = Banner.ordered
+    @banners = Banner.includes(:product).ordered
   end
 
   def new

@@ -4,7 +4,7 @@ class Storefront::SearchesController < ApplicationController
     @products = if @query.present?
                   Product.active
                          .where("LOWER(name_en) LIKE :q OR LOWER(name_ar) LIKE :q", q: "%#{@query.downcase}%")
-                         .includes(:category, :product_images)
+                         .includes(:sub_category, :product_images)
                          .order(created_at: :desc)
                 else
                   Product.none

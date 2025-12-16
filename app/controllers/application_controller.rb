@@ -4,8 +4,18 @@ class ApplicationController < ActionController::Base
 
   before_action :set_locale, :set_settings, :check_maintenance_mode
 
-  helper_method :current_settings, :cart_item_count
+  helper_method :current_settings, :cart_item_count, :navigation_categories
 
+  unless Rails.env.production?
+    around_action :n_plus_one_detection
+
+    def n_plus_one_detection
+      Prosopite.scan
+      yield
+    ensure
+      Prosopite.finish
+    end
+  end
   def default_url_options
     { locale: I18n.locale }
   end
@@ -27,6 +37,11 @@ class ApplicationController < ActionController::Base
 
   def cart_item_count
     @cart_item_count ||= Cart.new(session).items.sum(&:quantity)
+  end
+
+  def navigation_categories
+    @navigation_categories ||= Category.active.ordered
+                                       .includes(sub_categories: :products)
   end
 
   def check_maintenance_mode

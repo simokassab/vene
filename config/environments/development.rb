@@ -2,7 +2,9 @@ require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
-
+  config.after_initialize do
+    Prosopite.rails_logger = true
+  end
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 

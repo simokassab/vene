@@ -101,6 +101,66 @@ class Cart
     items.sum(&:line_total)
   end
 
+  # Coupon methods
+  def apply_coupon(code, user)
+    return { success: false, error: I18n.t("coupons.errors.code_required", default: "Coupon code is required") } if code.blank?
+
+    # Check if the same coupon is already applied
+    if has_coupon? && @session[:coupon_code]&.upcase == code.upcase.strip
+      return { success: false, error: I18n.t("coupons.errors.already_applied", default: "This coupon is already applied to your cart") }
+    end
+
+    coupon = Coupon.find_by("UPPER(code) = ?", code.upcase.strip)
+
+    unless coupon
+      return { success: false, error: I18n.t("coupons.errors.not_found", default: "Coupon code not found") }
+    end
+
+    validation = coupon.valid_for_use?(user: user, subtotal: subtotal)
+
+    unless validation[:valid]
+      return { success: false, error: validation[:error] }
+    end
+
+    discount = coupon.calculate_discount(subtotal)
+
+    # Store in session
+    @session[:coupon_code] = coupon.code
+    @session[:coupon_id] = coupon.id
+    @session[:discount_amount] = discount.to_s
+
+    { success: true, coupon: coupon, discount: discount, error: nil }
+  end
+
+  def remove_coupon
+    @session.delete(:coupon_code)
+    @session.delete(:coupon_id)
+    @session.delete(:discount_amount)
+    @coupon = nil
+  end
+
+  def has_coupon?
+    @session[:coupon_id].present?
+  end
+
+  def coupon
+    return nil unless has_coupon?
+    @coupon ||= Coupon.find_by(id: @session[:coupon_id])
+  end
+
+  def discount_amount
+    return BigDecimal("0") unless has_coupon?
+    BigDecimal(@session[:discount_amount] || "0")
+  end
+
+  def total_after_discount
+    subtotal - discount_amount
+  end
+
+  def grand_total(shipping_amount)
+    total_after_discount + shipping_amount
+  end
+
   private
 
   def cart_key(product_id, product_variant_id = nil)

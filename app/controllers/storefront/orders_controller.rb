@@ -4,7 +4,7 @@ class Storefront::OrdersController < ApplicationController
   before_action :set_order, only: %i[show invoice cancel]
 
   def index
-    @orders = current_user.orders.includes(order_items: [:product, :product_variant]).order(created_at: :desc)
+    @orders = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).order(created_at: :desc)
   end
 
   def show; end
@@ -29,6 +29,6 @@ class Storefront::OrdersController < ApplicationController
   private
 
   def set_order
-    @order = current_user.orders.includes(order_items: [:product, :product_variant]).find(params[:id])
+    @order = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).find(params[:id])
   end
 end

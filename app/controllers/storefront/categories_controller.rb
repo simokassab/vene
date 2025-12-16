@@ -17,13 +17,13 @@ class Storefront::CategoriesController < ApplicationController
     # Apply sorting
     @products = case @sort
                 when "price_low"
-                  @products_query.order(price: :asc)
+                  @products_query.includes(:product_images).order(price: :asc)
                 when "price_high"
-                  @products_query.order(price: :desc)
+                  @products_query.includes(:product_images).order(price: :desc)
                 when "newest"
-                  @products_query.order(created_at: :desc)
+                  @products_query.includes(:product_images).order(created_at: :desc)
                 else
-                  @products_query.order(featured: :desc, created_at: :desc)
+                  @products_query.includes(:product_images).order(featured: :desc, created_at: :desc)
                 end
 
     # Get active subcategories with product counts for filter sidebar

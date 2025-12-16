@@ -7,6 +7,8 @@ class User < ApplicationRecord
   ROLES = %w[customer admin].freeze
 
   has_many :orders, dependent: :nullify
+  has_many :user_coupons, dependent: :destroy
+  has_many :coupons, through: :user_coupons
 
   validates :name, presence: true
   validates :role, inclusion: { in: ROLES }

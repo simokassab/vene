@@ -1439,6 +1439,41 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="google-protobuf (v4.33.2) [path][gem]" type="rubylib">
+        <properties>
+          <option name="additionalInfo">
+            <AdditionalInfo>
+              <option name="authors" value="N/A" />
+              <option name="email" value="N/A" />
+              <option name="homepage" value="N/A" />
+              <option name="summary" value="N/A" />
+            </AdditionalInfo>
+          </option>
+          <option name="fromPath" value="true" />
+          <option name="name" value="google-protobuf" />
+          <option name="requirePaths">
+            <list>
+              <option value="lib" />
+            </list>
+          </option>
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu" />
+          <option name="version" value="4.33.2" />
+        </properties>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu/ext" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu/ext" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu/lib" />
+        </SOURCES>
+        <excluded>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/google-protobuf-4.33.2-x86_64-linux-gnu/ext" />
+        </excluded>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="i18n (v1.14.7) [path][gem]" type="rubylib">
         <properties>
           <option name="additionalInfo">
@@ -2740,6 +2775,41 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="pg_query (v6.1.0) [path][gem]" type="rubylib">
+        <properties>
+          <option name="additionalInfo">
+            <AdditionalInfo>
+              <option name="authors" value="N/A" />
+              <option name="email" value="N/A" />
+              <option name="homepage" value="N/A" />
+              <option name="summary" value="N/A" />
+            </AdditionalInfo>
+          </option>
+          <option name="fromPath" value="true" />
+          <option name="name" value="pg_query" />
+          <option name="requirePaths">
+            <list>
+              <option value="lib" />
+            </list>
+          </option>
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0" />
+          <option name="version" value="6.1.0" />
+        </properties>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0/ext" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0/ext" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0/lib" />
+        </SOURCES>
+        <excluded>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/pg_query-6.1.0/ext" />
+        </excluded>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="pp (v0.6.3) [path][gem]" type="rubylib">
         <properties>
           <option name="additionalInfo">
@@ -2801,6 +2871,44 @@
         </SOURCES>
         <excluded>
           <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-2.5.0/data" />
+        </excluded>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="prawn-table (v0.2.2) [path][gem]" type="rubylib">
+        <properties>
+          <option name="additionalInfo">
+            <AdditionalInfo>
+              <option name="authors" value="N/A" />
+              <option name="email" value="N/A" />
+              <option name="homepage" value="N/A" />
+              <option name="summary" value="N/A" />
+            </AdditionalInfo>
+          </option>
+          <option name="fromPath" value="true" />
+          <option name="name" value="prawn-table" />
+          <option name="requirePaths">
+            <list>
+              <option value="lib" />
+            </list>
+          </option>
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2" />
+          <option name="version" value="0.2.2" />
+        </properties>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/spec" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/manual" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/spec" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/manual" />
+        </SOURCES>
+        <excluded>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/spec" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prawn-table-0.2.2/manual" />
         </excluded>
       </library>
     </orderEntry>
@@ -2919,6 +3027,41 @@
         <SOURCES>
           <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/propshaft-1.3.1/lib" />
         </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="prosopite (v2.1.2) [path][gem]" type="rubylib">
+        <properties>
+          <option name="additionalInfo">
+            <AdditionalInfo>
+              <option name="authors" value="N/A" />
+              <option name="email" value="N/A" />
+              <option name="homepage" value="N/A" />
+              <option name="summary" value="N/A" />
+            </AdditionalInfo>
+          </option>
+          <option name="fromPath" value="true" />
+          <option name="name" value="prosopite" />
+          <option name="requirePaths">
+            <list>
+              <option value="lib" />
+            </list>
+          </option>
+          <option name="url" value="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2" />
+          <option name="version" value="2.1.2" />
+        </properties>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2/.github" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2/lib" />
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2/.github" />
+        </SOURCES>
+        <excluded>
+          <root url="file://$MODULE_DIR$/vendor/bundle/ruby/3.4.0/gems/prosopite-2.1.2/.github" />
+        </excluded>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

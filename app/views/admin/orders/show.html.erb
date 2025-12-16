@@ -204,16 +204,21 @@
             <span class="font-medium"><%= number_to_currency(@order.subtotal) %></span>
           </div>
           <div class="flex justify-between text-sm text-gray-600">
-            <span><%= t("orders.tax", default: "Tax") %></span>
-            <span class="font-medium"><%= number_to_currency(@order.tax_amount) %></span>
-          </div>
-          <div class="flex justify-between text-sm text-gray-600">
             <span><%= t("orders.shipping", default: "Shipping") %></span>
             <span class="font-medium"><%= number_to_currency(@order.shipping_amount) %></span>
           </div>
+          <% if @order.discount_amount > 0 %>
+            <div class="flex justify-between text-sm text-green-600">
+              <span><%= t("coupons.discount", default: "Discount") %> (<span class="font-mono"><%= @order.coupon_code %></span>)</span>
+              <span class="font-medium">-<%= number_to_currency(@order.discount_amount) %></span>
+            </div>
+          <% end %>
           <div class="pt-2 border-t border-gray-300 flex justify-between text-base font-bold text-gray-900">
             <span><%= t("orders.total", default: "Total") %></span>
             <span class="text-[#465FFF]"><%= number_to_currency(@order.total_amount) %></span>
+          </div>
+          <div class="text-xs text-gray-500 text-right mt-1">
+            <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
           </div>
         </div>
       </div>

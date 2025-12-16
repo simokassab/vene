@@ -220,9 +220,7 @@
               </div>
 
               <!-- Price Breakdown -->
-              <% tax_rate = @order.country == current_settings.local_country ? current_settings.local_tax_rate.to_f : current_settings.international_tax_rate.to_f %>
-              <% tax_amount = @cart.subtotal * tax_rate / 100 %>
-              <% grand_total = @cart.subtotal + tax_amount + current_settings.shipping_flat_rate %>
+              <% grand_total = @cart.grand_total(current_settings.shipping_flat_rate) %>
 
               <div class="space-y-3">
                 <div class="flex justify-between text-gray-600">
@@ -242,15 +240,18 @@
                   </span>
                 </div>
 
-                <div class="flex justify-between text-gray-600">
-                  <span class="flex items-center gap-2">
-                    <%= t("orders.tax", default: "Tax") %>
-                    <span class="text-xs bg-gray-100 px-2 py-1 rounded-full"><%= tax_rate %>%</span>
-                  </span>
-                  <span class="font-semibold text-gray-900">
-                    <%= number_to_currency(tax_amount, unit: current_settings.default_currency) %>
-                  </span>
-                </div>
+                <!-- Discount (if coupon applied) -->
+                <% if @cart.has_coupon? && @cart.discount_amount > 0 %>
+                  <div class="flex justify-between text-green-600">
+                    <span class="flex items-center gap-2">
+                      <%= t("coupons.discount", default: "Discount") %>
+                      <span class="text-xs font-mono font-bold"><%= @cart.coupon&.code %></span>
+                    </span>
+                    <span class="font-semibold">
+                      -<%= number_to_currency(@cart.discount_amount, unit: current_settings.default_currency) %>
+                    </span>
+                  </div>
+                <% end %>
               </div>
 
               <!-- Total -->
@@ -262,7 +263,7 @@
                       <%= number_to_currency(grand_total, unit: current_settings.default_currency) %>
                     </div>
                     <div class="text-sm text-gray-500">
-                      <%= t("common.tax_included", default: "Tax included") %>
+                      <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
                     </div>
                   </div>
                 </div>

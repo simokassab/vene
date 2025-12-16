@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_16_213457) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
     t.datetime "updated_at", null: false
     t.string "image"
     t.index ["slug"], name: "index_categories_on_slug", unique: true
+  end
+
+  create_table "coupons", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "discount_type", default: "percentage", null: false
+    t.decimal "discount_value", precision: 10, scale: 2, default: "0.0", null: false
+    t.boolean "active", default: true, null: false
+    t.date "valid_from"
+    t.date "valid_until"
+    t.boolean "single_use_per_user", default: false, null: false
+    t.integer "usage_limit"
+    t.integer "usage_count", default: 0, null: false
+    t.decimal "min_order_amount", precision: 10, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_coupons_on_active"
+    t.index ["code"], name: "index_coupons_on_code", unique: true
+    t.index ["discount_type"], name: "index_coupons_on_discount_type"
+    t.index ["valid_from", "valid_until"], name: "index_coupons_on_valid_from_and_valid_until"
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -82,6 +101,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
     t.datetime "paid_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "coupon_code"
+    t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0", null: false
+    t.bigint "coupon_id"
+    t.index ["coupon_code"], name: "index_orders_on_coupon_code"
+    t.index ["coupon_id"], name: "index_orders_on_coupon_id"
     t.index ["dhl_tracking_id"], name: "index_orders_on_dhl_tracking_id"
     t.index ["payment_status"], name: "index_orders_on_payment_status"
     t.index ["status"], name: "index_orders_on_status"
@@ -203,6 +227,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
     t.index ["slug"], name: "index_sub_categories_on_slug", unique: true
   end
 
+  create_table "user_coupons", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "coupon_id", null: false
+    t.bigint "order_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coupon_id", "user_id"], name: "index_user_coupons_on_coupon_id_and_user_id"
+    t.index ["coupon_id"], name: "index_user_coupons_on_coupon_id"
+    t.index ["order_id"], name: "index_user_coupons_on_order_id"
+    t.index ["user_id", "coupon_id"], name: "index_user_coupons_on_user_id_and_coupon_id"
+    t.index ["user_id"], name: "index_user_coupons_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -245,6 +282,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "product_variants"
   add_foreign_key "order_items", "products"
+  add_foreign_key "orders", "coupons", on_delete: :nullify
   add_foreign_key "orders", "users"
   add_foreign_key "product_images", "products"
   add_foreign_key "product_relations", "products"
@@ -254,5 +292,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_221944) do
   add_foreign_key "product_variants", "variant_types"
   add_foreign_key "products", "sub_categories"
   add_foreign_key "sub_categories", "categories"
+  add_foreign_key "user_coupons", "coupons"
+  add_foreign_key "user_coupons", "orders"
+  add_foreign_key "user_coupons", "users"
   add_foreign_key "variant_options", "variant_types"
 end

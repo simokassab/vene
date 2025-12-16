@@ -45,7 +45,12 @@ class Product < ApplicationRecord
   end
 
   def primary_image
-    product_images.order(:position).first
+    # If product_images are already loaded, use the loaded data to avoid N+1 queries
+    if association(:product_images).loaded?
+      product_images.min_by { |img| [img.position || 999, img.created_at] }
+    else
+      product_images.order(:position, :created_at).first
+    end
   end
 
   def featured_related(limit = 4)

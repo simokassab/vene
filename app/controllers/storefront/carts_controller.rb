@@ -54,4 +54,23 @@ class Storefront::CartsController < ApplicationController
 
     redirect_to cart_path(locale: I18n.locale), notice: t("cart.item_removed", default: "Item removed from cart")
   end
+
+  def apply_coupon
+    cart = Cart.new(session)
+    result = cart.apply_coupon(params[:coupon_code], current_user)
+
+    if result[:success]
+      redirect_to cart_path(locale: I18n.locale),
+                  notice: t("coupons.applied", default: "Discount applied: %{discount}",
+                            discount: result[:coupon].discount_display)
+    else
+      redirect_to cart_path(locale: I18n.locale), alert: result[:error]
+    end
+  end
+
+  def remove_coupon
+    cart = Cart.new(session)
+    cart.remove_coupon
+    redirect_to cart_path(locale: I18n.locale), notice: t("coupons.removed", default: "Coupon removed")
+  end
 end

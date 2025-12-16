@@ -20,7 +20,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   </head>
 
-  <body class="bg-white text-gray-900" x-data="{ mobileMenu: false, searchOpen: false }">
+  <body class="bg-white text-gray-900" x-data="{ mobileMenu: false, searchOpen: false, ringSizeModal: false }">
     <header class="fixed top-0 inset-x-0 backdrop-blur z-30 shadow-lg" style="background-color: #131313;">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-20 gap-8">
@@ -80,17 +80,16 @@
 
         <!-- Categories Navigation with Mega Menu -->
         <div class="hidden md:flex items-center justify-center gap-8 pb-4 border-b border-gray-700">
-          <% Category.active.ordered.each do |category| %>
+          <% navigation_categories.each do |category| %>
             <div class="relative group">
               <%= link_to category.name(I18n.locale),
                 category_path(category.slug, locale: I18n.locale),
                 class: "text-sm font-medium text-white hover:text-gray-300 transition-colors py-2 block" %>
 
               <!-- Mega Menu Dropdown -->
-              <% subcategories = category.sub_categories.active.ordered
-                   .joins(:products).where(products: { active: true })
-                   .select("sub_categories.*, COUNT(products.id) as products_count")
-                   .group("sub_categories.id").having("COUNT(products.id) > 0").to_a %>
+              <% subcategories = category.sub_categories.select do |sc|
+                   sc.active? && sc.products.any?(&:active?)
+                 end.sort_by { |sc| [sc.position || 999, sc.name_en] } %>
 
               <% if subcategories.any? %>
                 <div class="absolute left-1/2 transform -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
@@ -229,6 +228,9 @@
         <div>
           <div class="font-semibold text-lg mb-2"><%= current_settings.store_name %></div>
           <p class="text-sm text-gray-400"><%= t("brand.tagline") %></p>
+          <button @click="ringSizeModal = true" class="mt-3 text-sm text-gray-400 hover:text-white underline">
+            <%= t("footer.ring_size_guide", default: "Ring Size Guide") %>
+          </button>
         </div>
         <div>
           <div class="font-semibold mb-2"><%= t("footer.legal") %></div>
@@ -250,5 +252,65 @@
         <span>WhatsApp</span>
       </a>
     <% end %>
+
+    <!-- Ring Size Guide Modal -->
+    <div x-show="ringSizeModal"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click.self="ringSizeModal = false"
+         @keydown.escape.window="ringSizeModal = false"
+         class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+         style="display: none;">
+      <div x-show="ringSizeModal"
+           x-transition:enter="transition ease-out duration-300"
+           x-transition:enter-start="opacity-0 transform scale-90"
+           x-transition:enter-end="opacity-100 transform scale-100"
+           x-transition:leave="transition ease-in duration-200"
+           x-transition:leave-start="opacity-100 transform scale-100"
+           x-transition:leave-end="opacity-0 transform scale-90"
+           class="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h3 class="text-xl font-semibold text-gray-900">
+            <%= t("footer.ring_size_guide", default: "Ring Size Guide") %>
+          </h3>
+          <button @click="ringSizeModal = false"
+                  class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body - PDF Viewer -->
+        <div class="flex-1 overflow-hidden">
+          <iframe src="/documents/ring-size-guide.pdf"
+                  class="w-full h-full"
+                  style="min-height: 70vh;"
+                  frameborder="0">
+          </iframe>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+          <a href="/documents/ring-size-guide.pdf"
+             download
+             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <%= t("common.download", default: "Download PDF") %>
+          </a>
+          <button @click="ringSizeModal = false"
+                  class="px-6 py-2 bg-gray-900 hover:bg-black text-white rounded-md transition-colors">
+            <%= t("common.close", default: "Close") %>
+          </button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

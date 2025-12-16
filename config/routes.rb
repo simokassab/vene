@@ -34,6 +34,8 @@ Rails.application.routes.draw do
       post :add_item
       patch :update_item
       delete :remove_item
+      post :apply_coupon
+      delete :remove_coupon
     end
     resource :checkout, only: [:show, :create], controller: "storefront/checkouts"
     resources :orders, only: [:index, :show], controller: "storefront/orders" do
@@ -53,6 +55,11 @@ Rails.application.routes.draw do
       resources :sub_categories
       resources :banners
       resources :variant_types
+      resources :coupons do
+        member do
+          patch :toggle_active
+        end
+      end
       resources :orders do
         member do
           get :invoice

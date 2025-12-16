@@ -2,7 +2,7 @@ class Admin::OrdersController < Admin::BaseController
   before_action :set_order, only: %i[show edit update destroy update_status update_payment_status]
 
   def index
-    @orders = Order.order(created_at: :desc)
+    @orders = Order.includes(:user, order_items: :product).order(created_at: :desc)
     @orders = @orders.where(status: params[:status]) if params[:status].present?
   end
 
@@ -52,7 +52,7 @@ class Admin::OrdersController < Admin::BaseController
   private
 
   def set_order
-    @order = Order.includes(order_items: { product: [:category, :product_images], product_variant: [] }).find(params[:id])
+    @order = Order.includes(order_items: { product: [:sub_category, :product_images], product_variant: [] }).find(params[:id])
   end
 
   def order_params

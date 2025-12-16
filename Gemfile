@@ -31,6 +31,7 @@ gem "sidekiq"
 
 # PDF generation
 gem "prawn"
+gem "prawn-table"
 
 # Search, sort, and filter
 gem "ransack"
@@ -76,6 +77,8 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+  gem 'prosopite'
+  gem "pg_query"
 end
 
 group :development do

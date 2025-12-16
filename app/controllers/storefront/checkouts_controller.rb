@@ -12,7 +12,6 @@ class Storefront::CheckoutsController < ApplicationController
     return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
 
     @order = current_user.orders.new(order_params)
-    @order.tax_type = order_params[:country] == current_settings.local_country ? "local" : "international"
     @order.status = "payment_pending"
 
     ActiveRecord::Base.transaction do
@@ -24,17 +23,49 @@ class Storefront::CheckoutsController < ApplicationController
           unit_price: item.unit_price
         )
       end
+
       @order.save!
       @order.update_totals!(current_settings)
+
+      # Handle coupon if applied (after order is saved)
+      if @cart.has_coupon?
+        coupon = @cart.coupon
+        if coupon
+          # Re-validate coupon (security: don't trust session)
+          validation = coupon.valid_for_use?(user: current_user, subtotal: @order.subtotal)
+          if validation[:valid]
+            discount = coupon.calculate_discount(@order.subtotal)
+            @order.update!(
+              coupon: coupon,
+              coupon_code: coupon.code,
+              discount_amount: discount
+            )
+            # Recalculate total with discount
+            @order.update!(total_amount: @order.subtotal - discount + @order.shipping_amount)
+
+            # Create user coupon record and increment usage
+            UserCoupon.create!(user: current_user, coupon: coupon, order: @order)
+            coupon.increment_usage!
+          else
+            # Coupon is no longer valid, remove from session
+            @cart.remove_coupon
+          end
+        else
+          # Coupon was deleted, remove from session
+          @cart.remove_coupon
+        end
+      end
+
       OrderConfirmationJob.perform_later(@order.id)
       session[:cart] = {}
+      @cart.remove_coupon # Clear coupon from session
     end
 
     result = Montypay::Client.new(@order).start_payment
     if result.success?
-      redirect_to storefront_payments_success_path(locale: I18n.locale, order_id: @order.id)
+      redirect_to success_storefront_payments_path(locale: I18n.locale, order_id: @order.id)
     else
-      redirect_to storefront_payments_failure_path(locale: I18n.locale, order_id: @order.id)
+      redirect_to failure_storefront_payments_path(locale: I18n.locale, order_id: @order.id)
     end
   rescue ActiveRecord::RecordInvalid
     render :show, status: :unprocessable_entity
