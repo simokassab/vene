@@ -19,7 +19,7 @@
 }" class="overflow-hidden">
 
   <!-- Hero Banner Section -->
-  <section class="relative h-screen  overflow-hidden">
+  <section class="relative h-screen overflow-hidden">
     <% if @banners.any? %>
       <% @banners.each_with_index do |banner, index| %>
         <div x-show="currentSlide === <%= index %>"
