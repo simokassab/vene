@@ -37,7 +37,7 @@ gem "prawn-table"
 gem "ransack"
 
 # Pagination
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.2"
 
 # Country select
 gem "country_select"
