@@ -221,6 +221,13 @@
           class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
           placeholder: "e.g., Ruby, Emerald" %>
       </div>
+
+      <div>
+        <%= form.label :others, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_field :others,
+          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+          placeholder: "e.g., Other specifications" %>
+      </div>
     </div>
   </div>
 
@@ -406,14 +413,12 @@
                     <%= image_tag img.image.url, class: "w-full h-full object-cover", alt: "Product image" %>
                   </div>
                   <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                    <%= link_to "Delete",
-                        admin_product_product_image_path(@product, img, locale: I18n.locale),
-                        method: :delete,
-                        data: {
-                          turbo_method: :delete,
-                          turbo_confirm: t("admin.actions.confirm")
-                        },
-                        class: "bg-red-600 hover:bg-red-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-lg inline-block" %>
+                    <button
+                      type="button"
+                      onclick="document.getElementById('delete-image-form-<%= img.id %>').submit()"
+                      class="bg-red-600 hover:bg-red-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-lg">
+                      Delete
+                    </button>
                   </div>
                 <% else %>
                   <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
@@ -482,5 +487,19 @@
     <%= form.submit t("admin.actions.save"),
       class: "inline-flex items-center px-6 py-2.5 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" %>
   </div>
+<% end %>
+
+<!-- Delete Image Forms (outside main form to avoid nesting issues) -->
+<% if @product.persisted? && @product.product_images.any? %>
+  <% @product.product_images.each do |img| %>
+    <form id="delete-image-form-<%= img.id %>"
+          action="<%= admin_product_product_image_path(@product, img, locale: I18n.locale) %>"
+          method="post"
+          data-turbo="true"
+          onsubmit="return confirm('<%= t("admin.actions.confirm") %>')">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <%= hidden_field_tag :_method, 'delete' %>
+    </form>
+  <% end %>
 <% end %>
 

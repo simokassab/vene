@@ -50,7 +50,7 @@ class Admin::ProductsController < Admin::BaseController
 
   def product_params
     params.require(:product).permit(:name_en, :name_ar, :description_en, :description_ar, :price, :sub_category_id,
-                                    :stock_quantity, :metal, :diamonds, :gemstones, :active, :slug,
+                                    :stock_quantity, :metal, :diamonds, :gemstones, :others, :active, :slug,
                                     :featured, :on_sale, :sale_price, :video, :remove_video,
                                     :allow_preorder, :preorder_estimated_delivery_date, :preorder_note_en, :preorder_note_ar,
                                     related_product_ids: [],

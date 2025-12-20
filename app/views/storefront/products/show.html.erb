@@ -633,6 +633,12 @@
               <div class="text-sm text-gray-500 mb-1"><%= t("products.gemstones", default: "Gemstones") %></div>
               <div class="font-semibold text-gray-900"><%= @product.gemstones.presence || '-' %></div>
             </div>
+            <% if @product.others.present? %>
+              <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
+                <div class="text-sm text-gray-500 mb-1"><%= t("products.others", default: "Others") %></div>
+                <div class="font-semibold text-gray-900"><%= @product.others %></div>
+              </div>
+            <% end %>
             <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
               <div class="text-sm text-gray-500 mb-1"><%= t("products.category", default: "Category") %></div>
               <div class="font-semibold text-gray-900"><%= @product.category.name(I18n.locale) %></div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_16_213457) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_20_102056) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,6 +185,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_16_213457) do
     t.text "preorder_note_en"
     t.text "preorder_note_ar"
     t.bigint "sub_category_id", null: false
+    t.string "others"
     t.index ["allow_preorder"], name: "index_products_on_allow_preorder"
     t.index ["slug"], name: "index_products_on_slug", unique: true
     t.index ["sub_category_id"], name: "index_products_on_sub_category_id"

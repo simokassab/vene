@@ -39,6 +39,9 @@ gem "ransack"
 # Pagination
 gem "pagy", "~> 9.0"
 
+# Country select
+gem "country_select"
+
 # Mailer preview in development
 gem "letter_opener", group: :development
 
