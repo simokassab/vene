@@ -196,7 +196,7 @@
                  class="group relative animate-fade-in"
                  style="animation-delay: <%= index * 50 %>ms;">
               <!-- Product Card -->
-              <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 group-hover:shadow-2xl"
+              <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl"
                    :class="hoveredProduct === <%= index %> ? 'transform -translate-y-2' : ''">
 
                 <!-- Product Image -->
@@ -266,7 +266,7 @@
              x-transition:enter-end="opacity-100"
              class="space-y-6">
           <% @products.each_with_index do |product, index| %>
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 animate-fade-in"
+            <div class="bg-white rounded-md shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 animate-fade-in"
                  style="animation-delay: <%= index * 50 %>ms;">
               <div class="flex flex-col md:flex-row">
                 <!-- Product Image -->

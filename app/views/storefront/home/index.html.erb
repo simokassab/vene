@@ -194,7 +194,7 @@
       <% if @featured_products.any? %>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <% @featured_products.each_with_index do |product, index| %>
-            <div class="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
+            <div class="group bg-white rounded-md overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
               <!-- Product Image with Badge -->
               <div class="relative aspect-square bg-gray-50 overflow-hidden">
                 <% if product.primary_image %>
@@ -264,7 +264,7 @@
             <% (@scrolling_featured_products.to_a * 3).each do |product| %>
               <div class="flex-none w-80 group">
                 <!-- Product Image -->
-                <div class="relative aspect-square bg-gray-50 mb-4 overflow-hidden rounded-lg">
+                <div class="relative aspect-square bg-gray-50 mb-4 overflow-hidden rounded-md shadow-sm">
                   <% if product.primary_image %>
                     <%= link_to product_path(product.slug, locale: I18n.locale) do %>
                       <%= image_tag product.primary_image.image.url,

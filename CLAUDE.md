@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Rails 8.0 e-commerce application for Vene Jewelry, featuring a bilingual (English/Arabic) storefront and admin panel. The application uses PostgreSQL, Tailwind CSS, and Hotwire (Turbo + Stimulus).
+This is a Rails 8.0 e-commerce application for Vene Jewelry, featuring a bilingual (English/Arabic) storefront and admin panel. 
+The application uses PostgreSQL, Tailwind CSS, and Hotwire (Turbo + Stimulus).
 
 **Ruby Version:** 3.4.1
 **Rails Version:** 8.0.3

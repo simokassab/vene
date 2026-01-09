@@ -27,7 +27,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <% @products.each_with_index do |product, index| %>
           <div class="group relative animate-fade-in" style="animation-delay: <%= index * 50 %>ms;">
-            <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
+            <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
               <div class="relative aspect-square overflow-hidden bg-gray-100">
                 <% if product.primary_image&.image&.url %>
                   <%= link_to product_path(product.slug, locale: I18n.locale) do %>
