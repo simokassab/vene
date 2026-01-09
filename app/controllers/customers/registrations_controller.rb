@@ -1,7 +1,19 @@
 class Customers::RegistrationsController < Devise::RegistrationsController
   layout "application"
 
+  before_action :set_settings
+
+  helper_method :current_settings
+
   private
+
+  def set_settings
+    @settings = Setting.current
+  end
+
+  def current_settings
+    @settings || Setting.current
+  end
 
   def sign_up_params
     params.require(:user).permit(:name, :email, :phone, :password, :password_confirmation, :default_country, :default_city, :default_address)
