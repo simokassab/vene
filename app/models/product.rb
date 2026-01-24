@@ -1,4 +1,6 @@
 class Product < ApplicationRecord
+  include WishlistNotifiable
+
   belongs_to :sub_category
   has_one :category, through: :sub_category
   has_many :product_images, dependent: :destroy
@@ -6,6 +8,7 @@ class Product < ApplicationRecord
   has_many :order_items
   has_many :product_relations, dependent: :destroy
   has_many :related_products, through: :product_relations, source: :related_product
+  has_many :wishlist_items, dependent: :destroy
 
   mount_uploader :video, ProductVideoUploader
 

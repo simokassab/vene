@@ -45,6 +45,8 @@ Rails.application.routes.draw do
       end
     end
     resources :pages, only: [:show], controller: "storefront/pages", param: :slug
+    resources :wishlist_items, only: [:index, :create, :destroy],
+              controller: "storefront/wishlists", path: "wishlist"
 
     namespace :admin do
       root to: "dashboard#index"
@@ -68,6 +70,7 @@ Rails.application.routes.draw do
         end
       end
       resources :preorders, only: [:index]
+      resources :wishlists, only: [:index]
       resource :setting, only: %i[show update]
       resources :pages
     end

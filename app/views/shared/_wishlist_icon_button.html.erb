@@ -1,0 +1,42 @@
+<%#
+  Wishlist Icon Button (Compact version for product grids)
+  Usage: render "shared/wishlist_icon_button", product: @product, variant: @variant
+%>
+
+<% variant ||= nil %>
+<% in_wishlist = user_signed_in? && current_user.product_in_wishlist?(product, variant) %>
+<% wishlist_item = in_wishlist ? current_user.wishlist_item_for(product, variant) : nil %>
+
+<% if user_signed_in? %>
+  <% if in_wishlist %>
+    <%# Remove from Wishlist - Filled red heart %>
+    <%= button_to wishlist_item_path(wishlist_item, locale: I18n.locale),
+      method: :delete,
+      class: "w-10 h-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 group transform hover:scale-110",
+      title: t("wishlist.remove") do %>
+      <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+    <% end %>
+  <% else %>
+    <%# Add to Wishlist - Empty heart %>
+    <%= button_to wishlist_items_path(locale: I18n.locale),
+      method: :post,
+      params: { product_id: product.id, product_variant_id: variant&.id },
+      class: "w-10 h-10 bg-white/90 hover:bg-red-500 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 group transform hover:scale-110",
+      title: t("wishlist.add") do %>
+      <svg class="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+    <% end %>
+  <% end %>
+<% else %>
+  <%# Login Required %>
+  <%= link_to new_user_session_path(locale: I18n.locale),
+    class: "w-10 h-10 bg-white/90 hover:bg-red-500 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 group transform hover:scale-110",
+    title: t("wishlist.login_required") do %>
+    <svg class="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+    </svg>
+  <% end %>
+<% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_24_203545) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_24_223808) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -280,6 +280,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_24_203545) do
     t.index ["name"], name: "index_variant_types_on_name", unique: true
   end
 
+  create_table "wishlist_items", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "product_variant_id"
+    t.decimal "price_when_added", precision: 10, scale: 2, null: false
+    t.datetime "back_in_stock_notified_at"
+    t.datetime "price_drop_notified_at"
+    t.decimal "last_notified_price", precision: 10, scale: 2
+    t.boolean "notify_back_in_stock", default: true, null: false
+    t.boolean "notify_price_drop", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_wishlist_items_on_product_id"
+    t.index ["product_variant_id"], name: "index_wishlist_items_on_product_variant_id"
+    t.index ["user_id", "product_id", "product_variant_id"], name: "idx_wishlist_user_product_variant", unique: true
+    t.index ["user_id"], name: "index_wishlist_items_on_user_id"
+  end
+
   add_foreign_key "banners", "products", on_delete: :nullify
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "product_variants"
@@ -298,4 +316,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_24_203545) do
   add_foreign_key "user_coupons", "orders"
   add_foreign_key "user_coupons", "users"
   add_foreign_key "variant_options", "variant_types"
+  add_foreign_key "wishlist_items", "product_variants"
+  add_foreign_key "wishlist_items", "products"
+  add_foreign_key "wishlist_items", "users"
 end

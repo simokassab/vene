@@ -346,6 +346,11 @@
         <span class="text-sm text-gray-600">(4.9) • 127 reviews</span>
       </div>
 
+      <!-- Wishlist Button -->
+      <div class="pt-2">
+        <%= render "shared/wishlist_button", product: @product %>
+      </div>
+
       <!-- Variant Selector (if product has variants) -->
       <% if @product.has_variants? %>
         <%

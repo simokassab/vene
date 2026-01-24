@@ -1,0 +1,195 @@
+<!-- Page Header -->
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.wishlists.title", default: "Wishlists") %></h1>
+  <p class="mt-1 text-sm text-gray-600"><%= t("admin.wishlists.subtitle", default: "View all customer wishlisted products") %></p>
+</div>
+
+<!-- Stats Summary -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <div class="flex items-center">
+      <div class="p-2 bg-pink-100 rounded-lg">
+        <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500"><%= t("admin.wishlists.total_items", default: "Total Items") %></p>
+        <p class="text-2xl font-semibold text-gray-900"><%= WishlistItem.count %></p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <div class="flex items-center">
+      <div class="p-2 bg-blue-100 rounded-lg">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500"><%= t("admin.wishlists.unique_customers", default: "Unique Customers") %></p>
+        <p class="text-2xl font-semibold text-gray-900"><%= WishlistItem.select(:user_id).distinct.count %></p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <div class="flex items-center">
+      <div class="p-2 bg-emerald-100 rounded-lg">
+        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500"><%= t("admin.wishlists.unique_products", default: "Unique Products") %></p>
+        <p class="text-2xl font-semibold text-gray-900"><%= WishlistItem.select(:product_id).distinct.count %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Wishlist Items Table -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <% if @wishlist_items.any? %>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.customer", default: "Customer") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.product", default: "Product") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.variant", default: "Variant") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.price_when_added", default: "Price When Added") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.current_price", default: "Current Price") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.notifications", default: "Notifications") %>
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= t("admin.wishlists.added_on", default: "Added On") %>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @wishlist_items.each do |item| %>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4">
+                <% if item.user %>
+                  <div class="text-sm font-medium text-gray-900"><%= item.user.name %></div>
+                  <div class="text-xs text-gray-500"><%= item.user.email %></div>
+                <% else %>
+                  <span class="text-xs text-gray-400 italic"><%= t("admin.wishlists.deleted_user", default: "Deleted User") %></span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4">
+                <% if item.product %>
+                  <div class="flex items-center">
+                    <% if item.product.product_images.any? %>
+                      <div class="h-10 w-10 flex-shrink-0">
+                        <%= image_tag item.product.product_images.first.image.url(:thumb), class: "h-10 w-10 rounded-lg object-cover", alt: item.product.name(I18n.locale) %>
+                      </div>
+                    <% else %>
+                      <div class="h-10 w-10 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </div>
+                    <% end %>
+                    <div class="ml-3">
+                      <div class="text-sm font-medium text-gray-900"><%= item.product.name(I18n.locale) %></div>
+                      <% if item.product.sub_category %>
+                        <div class="text-xs text-gray-500"><%= item.product.sub_category.name(I18n.locale) %></div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% else %>
+                  <span class="text-xs text-gray-400 italic"><%= t("admin.wishlists.deleted_product", default: "Deleted Product") %></span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% if item.product_variant %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <% if item.product_variant.variant_option %>
+                      <%= item.product_variant.variant_option.name(I18n.locale) %>
+                    <% else %>
+                      <%= item.product_variant.name %>
+                    <% end %>
+                  </span>
+                <% else %>
+                  <span class="text-xs text-gray-400">-</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900"><%= number_to_currency(item.price_when_added) %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% if item.product %>
+                  <div class="text-sm font-medium <%= item.price_dropped? ? 'text-emerald-600' : 'text-gray-900' %>">
+                    <%= number_to_currency(item.current_price) %>
+                    <% if item.price_dropped? %>
+                      <span class="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                        -<%= item.price_drop_percentage %>%
+                      </span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-xs text-gray-400">-</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex flex-col gap-1">
+                  <% if item.notify_back_in_stock? %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                      </svg>
+                      <%= t("admin.wishlists.stock_alert", default: "Stock Alert") %>
+                    </span>
+                  <% end %>
+                  <% if item.notify_price_drop? %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                      </svg>
+                      <%= t("admin.wishlists.price_alert", default: "Price Alert") %>
+                    </span>
+                  <% end %>
+                  <% unless item.notify_back_in_stock? || item.notify_price_drop? %>
+                    <span class="text-xs text-gray-400">-</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500"><%= item.created_at.strftime('%b %d, %Y') %></div>
+                <div class="text-xs text-gray-400"><%= item.created_at.strftime('%I:%M %p') %></div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @pagy.pages > 1 %>
+      <div class="px-6 py-4 border-t border-gray-200">
+        <%== pagy_nav(@pagy) %>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900"><%= t("admin.wishlists.no_items", default: "No Wishlist Items") %></h3>
+      <p class="mt-1 text-sm text-gray-500"><%= t("admin.wishlists.no_items_subtitle", default: "Customers haven't added any products to their wishlists yet.") %></p>
+    </div>
+  <% end %>
+</div>

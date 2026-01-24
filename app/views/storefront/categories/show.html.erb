@@ -223,11 +223,9 @@
                   </div>
 
                   <!-- Wishlist Button -->
-                  <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[black] hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                    </svg>
-                  </button>
+                  <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <%= render "shared/wishlist_icon_button", product: product %>
+                  </div>
                 </div>
 
                 <!-- Product Info -->
@@ -318,7 +316,8 @@
                     <span class="text-3xl font-bold text-[black]">
                       <%= number_to_currency(product.price, unit: current_settings.default_currency) %>
                     </span>
-                    <div class="flex gap-3">
+                    <div class="flex items-center gap-3">
+                      <%= render "shared/wishlist_button", product: product %>
                       <%= link_to product_path(product.slug, locale: I18n.locale),
                         class: "px-6 py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-full hover:bg-gray-900 hover:text-white transition-all duration-300" do %>
                         <%= t("common.view_details", default: "View Details") %>

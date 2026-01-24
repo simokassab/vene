@@ -9,6 +9,8 @@ class User < ApplicationRecord
   has_many :orders, dependent: :nullify
   has_many :user_coupons, dependent: :destroy
   has_many :coupons, through: :user_coupons
+  has_many :wishlist_items, dependent: :destroy
+  has_many :wishlisted_products, through: :wishlist_items, source: :product
 
   validates :name, presence: true
   validates :role, inclusion: { in: ROLES }
@@ -20,6 +22,14 @@ class User < ApplicationRecord
 
   def admin?
     role == "admin"
+  end
+
+  def product_in_wishlist?(product, variant = nil)
+    wishlist_items.exists?(product_id: product.id, product_variant_id: variant&.id)
+  end
+
+  def wishlist_item_for(product, variant = nil)
+    wishlist_items.find_by(product_id: product.id, product_variant_id: variant&.id)
   end
 
   private

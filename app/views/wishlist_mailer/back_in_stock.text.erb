@@ -1,0 +1,16 @@
+<%= I18n.t("mailers.wishlist_mailer.back_in_stock.greeting", name: @user.name) %>
+
+<%= I18n.t("mailers.wishlist_mailer.back_in_stock.body", product: @product.name) %>
+
+=====================================
+<%= @product.name %>
+<% if @variant %>
+  <%= @variant.display_name %>
+<% end %>
+<%= I18n.t("wishlist.current_price") %>: <%= number_to_currency(@wishlist_item.current_price) %>
+=====================================
+
+<%= I18n.t("mailers.wishlist_mailer.back_in_stock.cta") %>:
+<%= product_url(@product.slug, locale: I18n.locale) %>
+
+<%= I18n.t("mailers.wishlist_mailer.common.footer") %>

@@ -55,6 +55,12 @@
                       </svg>
                       <%= t("nav.my_orders", default: "My Orders") %>
                     <% end %>
+                    <%= link_to wishlist_items_path(locale: I18n.locale), class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" do %>
+                      <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                      </svg>
+                      <%= t("wishlist.title") %>
+                    <% end %>
                     <%= button_to destroy_user_session_path(locale: I18n.locale), method: :delete, class: "flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", form: { class: "w-full" } do %>
                       <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -219,6 +225,7 @@
           <div class="space-y-2 pt-2 border-t border-gray-700 text-white">
             <% if user_signed_in? %>
               <%= link_to t("nav.my_orders", default: "My Orders"), orders_path(locale: I18n.locale), class: "block py-2 text-sm hover:text-gray-300" %>
+              <%= link_to t("wishlist.title"), wishlist_items_path(locale: I18n.locale), class: "block py-2 text-sm hover:text-gray-300" %>
               <%= button_to t("nav.logout", default: "Logout"), destroy_user_session_path(locale: I18n.locale), method: :delete, class: "block w-full text-left py-2 text-sm hover:text-gray-300" %>
             <% else %>
               <%= link_to t("nav.login"), new_user_session_path(locale: I18n.locale), class: "block py-2 text-sm hover:text-gray-300" %>
