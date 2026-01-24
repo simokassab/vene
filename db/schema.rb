@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_20_102056) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_24_203545) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -104,6 +104,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_102056) do
     t.string "coupon_code"
     t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0", null: false
     t.bigint "coupon_id"
+    t.string "currency", default: "USD", null: false
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
     t.index ["dhl_tracking_id"], name: "index_orders_on_dhl_tracking_id"

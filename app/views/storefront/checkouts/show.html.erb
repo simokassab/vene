@@ -46,7 +46,7 @@
     </div>
 
     <!-- Checkout Form -->
-    <%= form_with model: @order, url: checkout_path(locale: I18n.locale), method: :post, local: true do |form| %>
+    <%= form_with model: @order, url: checkout_path(locale: I18n.locale), method: :post, data: { turbo: false } do |form| %>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         <!-- LEFT: Shipping Information Form -->

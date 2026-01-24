@@ -62,10 +62,15 @@ class Storefront::CheckoutsController < ApplicationController
     end
 
     result = Montypay::Client.new(@order).start_payment
+
     if result.success?
-      redirect_to success_storefront_payments_path(locale: I18n.locale, order_id: @order.id)
+      # Redirect to MontyPay hosted checkout
+      redirect_to result.redirect_url, allow_other_host: true
     else
-      redirect_to failure_storefront_payments_path(locale: I18n.locale, order_id: @order.id)
+      # Payment initiation failed - show error
+      @order.update(payment_status: "failed")
+      redirect_to order_path(@order, locale: I18n.locale),
+                  alert: t("payments.initialization_failed", error: result.error)
     end
   rescue ActiveRecord::RecordInvalid
     render :show, status: :unprocessable_entity

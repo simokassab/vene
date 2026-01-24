@@ -1,0 +1,11 @@
+include:
+  - "**/*.rb"
+exclude:
+  - spec/**/*
+  - test/**/*
+  - vendor/**/*
+  - node_modules/**/*
+reporters:
+  - rubocop
+  - require_not_found
+max_files: 5000

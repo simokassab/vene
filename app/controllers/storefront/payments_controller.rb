@@ -2,19 +2,84 @@ class Storefront::PaymentsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :webhook
 
   def success
-    @order = current_user.orders.find(params[:order_id]) if user_signed_in?
-    @order ||= Order.find(params[:order_id])
-    @order.update(payment_status: "paid", paid_at: Time.current, status: "paid")
+    @order = find_order_for_redirect
+
+    # Update payment status if webhook hasn't already (fallback for development/testing)
+    if @order.payment_status == "pending"
+      @order.update(
+        payment_status: "paid",
+        status: "paid",
+        paid_at: Time.current
+      )
+    end
+
     redirect_to order_path(@order, locale: I18n.locale), notice: t("payments.success")
   end
 
   def failure
     @order = Order.find(params[:order_id])
-    @order.update(payment_status: "failed")
+    # Only update if still pending (webhook may have already updated)
+    @order.update(payment_status: "failed") if @order.payment_status == "pending"
     redirect_to order_path(@order, locale: I18n.locale), alert: t("payments.failure")
   end
 
   def webhook
+    verifier = Montypay::WebhookVerifier.new(webhook_params)
+
+    unless verifier.valid?
+      Rails.logger.warn("MontyPay webhook signature invalid: #{webhook_params.to_h}")
+      return head :unauthorized
+    end
+
+    order = Order.find_by(id: webhook_params[:order_number])
+    unless order
+      Rails.logger.warn("MontyPay webhook: order not found - #{webhook_params[:order_number]}")
+      return head :not_found
+    end
+
+    process_webhook(order)
     head :ok
+  end
+
+  private
+
+  def find_order_for_redirect
+    if user_signed_in?
+      current_user.orders.find(params[:order_id])
+    else
+      Order.find(params[:order_id])
+    end
+  end
+
+  def webhook_params
+    params.permit(
+      :id, :order_number, :order_amount, :order_currency, :order_description,
+      :order_status, :type, :status, :reason, :card, :hash, :date,
+      :customer_name, :customer_email
+    )
+  end
+
+  def process_webhook(order)
+    case webhook_params[:status]
+    when "success"
+      order.update!(
+        payment_status: "paid",
+        status: "paid",
+        paid_at: Time.current,
+        montypay_transaction_id: webhook_params[:id],
+        payment_reference: webhook_params[:order_number]
+      )
+      Rails.logger.info("Order #{order.id} payment successful via webhook")
+    when "fail"
+      order.update!(
+        payment_status: "failed",
+        montypay_transaction_id: webhook_params[:id]
+      )
+      Rails.logger.info("Order #{order.id} payment failed via webhook: #{webhook_params[:reason]}")
+    when "waiting"
+      Rails.logger.info("Order #{order.id} payment pending via webhook")
+    else
+      Rails.logger.warn("Order #{order.id} received unknown webhook status: #{webhook_params[:status]}")
+    end
   end
 end

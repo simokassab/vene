@@ -75,8 +75,9 @@ ar:
     preorder: "طلب مسبق"
     preorder_ships_by: "يشحن بحلول %{date}"
   payments:
-    success: "تم استلام الدفع"
-    failure: "فشل الدفع"
+    success: "تم الدفع بنجاح! شكراً لطلبك."
+    failure: "لم يتم إتمام الدفع. يرجى المحاولة مرة أخرى."
+    initialization_failed: "تعذر بدء الدفع: %{error}"
   admin:
     nav:
       dashboard: "لوحة التحكم"

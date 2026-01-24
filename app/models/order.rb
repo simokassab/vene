@@ -164,5 +164,6 @@ class Order < ApplicationRecord
     self.status ||= "payment_pending"
     self.payment_status ||= "pending"
     self.shipping_method ||= "DHL"
+    self.currency ||= Setting.current.default_currency
   end
 end
