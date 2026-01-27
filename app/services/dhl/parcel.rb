@@ -79,9 +79,9 @@ module Dhl
     def self.from_order(order, sender:)
       recipient = Recipient.new(
         name: order.name,
-        street: extract_street(order.address),
-        number: extract_number(order.address),
-        postal_code: extract_postal_code(order.address),
+        street: order.street_address || extract_street(order.address_text),
+        number: order.building || extract_number(order.address_text),
+        postal_code: order.postal_code.presence || extract_postal_code(order.address_text),
         city: order.city,
         country_code: country_code_for(order.country),
         email: order.email,

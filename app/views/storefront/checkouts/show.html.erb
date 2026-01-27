@@ -1,11 +1,60 @@
 <% content_for :full_width, true %>
 
+<script>
+  window.noPostalCountries = <%= @no_postal_countries.to_json.html_safe %>;
+</script>
+
 <!-- Alpine.js State Management -->
 <div x-data="{
-  currentStep: 1,
-  formValid: false,
-  paymentMethod: 'montypay',
-  showOrderSummary: false
+  showOrderSummary: false,
+  addressMode: '<%= @addresses.any? ? 'saved' : 'new' %>',
+  selectedAddressId: '<%= @addresses.find_by(is_default: true)&.id || @addresses.first&.id %>',
+  selectedCountry: '<%= @order.country %>',
+  get showPostalCode() { return !window.noPostalCountries.includes(this.selectedCountry) },
+  cityValue: '<%= j @order.city.to_s %>',
+  cityStatus: 'idle',
+  cityError: '',
+  citySuggestions: [],
+  cityTimer: null,
+  validateCity() {
+    clearTimeout(this.cityTimer);
+    if (!this.cityValue || this.cityValue.length < 2 || !this.selectedCountry) {
+      this.cityStatus = 'idle';
+      this.cityError = '';
+      this.citySuggestions = [];
+      return;
+    }
+    this.cityStatus = 'loading';
+    this.cityTimer = setTimeout(() => {
+      const token = document.querySelector('meta[name=&quot;csrf-token&quot;]')?.content;
+      fetch('<%= validate_city_checkout_path(locale: I18n.locale) %>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token, 'Accept': 'application/json' },
+        body: JSON.stringify({ country: this.selectedCountry, city: this.cityValue })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) {
+          this.cityStatus = 'valid';
+          this.cityError = '';
+          this.citySuggestions = [];
+          if (data.postal_code && this.$refs.postalCode && !this.$refs.postalCode.value) {
+            this.$refs.postalCode.value = data.postal_code;
+          }
+        } else {
+          this.cityStatus = 'invalid';
+          this.cityError = 'City not recognized by DHL';
+          this.citySuggestions = data.suggestions || [];
+        }
+      })
+      .catch(() => { this.cityStatus = 'idle'; });
+    }, 600);
+  },
+  applySuggestion(name) {
+    this.cityValue = name;
+    this.$refs.cityInput.value = name;
+    this.validateCity();
+  }
 }" class="min-h-screen bg-gray-50 pb-12">
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-36">
@@ -23,6 +72,7 @@
     <div class="mb-12">
       <div class="max-w-3xl mx-auto">
         <div class="flex items-center justify-between">
+          <!-- Step 1: Information (Active) -->
           <div class="flex flex-col items-center flex-1">
             <div class="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold shadow-lg">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,30 +80,241 @@
               </svg>
             </div>
             <span class="text-sm font-medium text-gray-900 mt-2"><%= t("checkout.step_info", default: "Information") %></span>
-            <div class="h-1 bg-gray-900 absolute left-0 right-1/2 top-6 hidden sm:block" style="width: calc(50% - 3rem); margin-left: 3rem;"></div>
           </div>
 
+          <!-- Step 2: Review & Pay (Inactive) -->
           <div class="flex flex-col items-center flex-1">
             <div class="w-12 h-12 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
               </svg>
             </div>
-            <span class="text-sm font-medium text-gray-600 mt-2"><%= t("checkout.step_payment", default: "Payment") %></span>
+            <span class="text-sm font-medium text-gray-600 mt-2"><%= t("checkout.step_review", default: "Review & Pay") %></span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Checkout Form -->
-    <%= form_with model: @order, url: checkout_path(locale: I18n.locale), method: :post, data: { turbo: false } do |form| %>
+    <%= form_with url: review_checkout_path(locale: I18n.locale), method: :post, data: { turbo: false } do |form| %>
+      <!-- Hidden field for selected saved address -->
+      <input type="hidden" name="address_id" x-bind:value="addressMode === 'saved' ? selectedAddressId : ''" />
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         <!-- LEFT: Shipping Information Form -->
         <div class="lg:col-span-2">
           <div class="bg-white rounded-2xl shadow-xl p-8 space-y-8">
-            <!-- Contact Information -->
-            <div>
+
+            <% if @addresses.any? %>
+              <!-- Saved Addresses Section -->
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <%= t("checkout.shipping_address", default: "Shipping Address") %>
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <% @addresses.each do |addr| %>
+                    <label class="cursor-pointer" @click="addressMode = 'saved'; selectedAddressId = '<%= addr.id %>'">
+                      <div class="p-4 border-2 rounded-xl transition-all"
+                           :class="addressMode === 'saved' && selectedAddressId === '<%= addr.id %>' ? 'border-gray-900 bg-gray-50 shadow-md' : 'border-gray-200 hover:border-gray-400'">
+                        <div class="flex items-start justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                 :class="addressMode === 'saved' && selectedAddressId === '<%= addr.id %>' ? 'border-gray-900' : 'border-gray-300'">
+                              <div class="w-3 h-3 rounded-full"
+                                   :class="addressMode === 'saved' && selectedAddressId === '<%= addr.id %>' ? 'bg-gray-900' : ''"
+                              ></div>
+                            </div>
+                            <span class="font-semibold text-gray-900"><%= addr.name %></span>
+                          </div>
+                          <% if addr.label.present? %>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"><%= addr.label %></span>
+                          <% end %>
+                        </div>
+                        <div class="ml-7 text-sm text-gray-600 space-y-0.5">
+                          <div><%= addr.street_address %></div>
+                          <% if addr.building.present? %>
+                            <div><%= addr.building %></div>
+                          <% end %>
+                          <div><%= [addr.city, addr.postal_code].compact_blank.join(", ") %></div>
+                          <div><%= addr.country %></div>
+                          <div class="text-gray-500"><%= addr.phone %></div>
+                        </div>
+                        <% if addr.is_default? %>
+                          <div class="ml-7 mt-2">
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full"><%= t("checkout.default_address", default: "Default") %></span>
+                          </div>
+                        <% end %>
+                      </div>
+                    </label>
+                  <% end %>
+
+                  <!-- Add New Address Card -->
+                  <label class="cursor-pointer" @click="addressMode = 'new'">
+                    <div class="p-4 border-2 border-dashed rounded-xl transition-all h-full flex items-center justify-center min-h-[120px]"
+                         :class="addressMode === 'new' ? 'border-gray-900 bg-gray-50' : 'border-gray-300 hover:border-gray-400'">
+                      <div class="text-center">
+                        <div class="flex items-center justify-center gap-2 mb-1">
+                          <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                               :class="addressMode === 'new' ? 'border-gray-900' : 'border-gray-300'">
+                            <div class="w-3 h-3 rounded-full"
+                                 :class="addressMode === 'new' ? 'bg-gray-900' : ''"
+                            ></div>
+                          </div>
+                          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><%= t("checkout.add_new_address", default: "Add new address") %></span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            <% end %>
+
+            <!-- New Address Form -->
+            <div x-show="addressMode === 'new'" x-cloak>
+              <% unless @addresses.any? %>
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <%= t("checkout.shipping_address", default: "Shipping Address") %>
+                </h2>
+              <% end %>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.full_name", default: "Full Name") %> <span class="text-red-500">*</span>
+                  </label>
+                  <input type="text" name="order[name]" value="<%= @order.name %>" required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                    placeholder="<%= t("checkout.name_placeholder", default: "John Doe") %>" />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.phone", default: "Phone Number") %> <span class="text-red-500">*</span>
+                  </label>
+                  <input type="text" name="order[phone]" value="<%= @order.phone %>" required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                    placeholder="+1234567890" />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.country", default: "Country") %> <span class="text-red-500">*</span>
+                  </label>
+                  <%= country_select "order", "country",
+                    { priority_countries: [current_settings.local_country], except: %w[IL IR CU RU KP], selected: @order.country },
+                    { required: true,
+                      "x-model": "selectedCountry",
+                      "@change": "validateCity()",
+                      class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all" } %>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.city", default: "City") %> <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="text" name="order[city]"
+                      x-model="cityValue" x-ref="cityInput"
+                      @input="validateCity()" @change="validateCity()"
+                      required
+                      class="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-gray-700 transition-all pr-10"
+                      :class="{
+                        'border-green-500': cityStatus === 'valid',
+                        'border-red-400': cityStatus === 'invalid',
+                        'border-gray-300': cityStatus === 'idle' || cityStatus === 'loading'
+                      }"
+                      placeholder="<%= t("checkout.city_placeholder", default: "New York") %>" />
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <template x-if="cityStatus === 'loading'">
+                        <svg class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                      </template>
+                      <template x-if="cityStatus === 'valid'">
+                        <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                      </template>
+                      <template x-if="cityStatus === 'invalid'">
+                        <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                      </template>
+                    </div>
+                  </div>
+                  <p x-show="cityStatus === 'invalid'" x-cloak class="mt-1 text-sm text-red-600" x-text="cityError"></p>
+                  <div x-show="citySuggestions.length > 0" x-cloak class="mt-2">
+                    <p class="text-xs text-gray-500 mb-1"><%= t("checkout.did_you_mean", default: "Did you mean:") %></p>
+                    <div class="flex flex-wrap gap-2">
+                      <template x-for="s in citySuggestions" :key="s">
+                        <button type="button" @click="applySuggestion(s)"
+                          class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 cursor-pointer"
+                          x-text="s"></button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <div x-show="showPostalCode" x-cloak>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.postal_code", default: "Postal Code") %>
+                  </label>
+                  <input type="text" name="order[postal_code]" value="<%= @order.postal_code %>"
+                    x-ref="postalCode"
+                    x-bind:disabled="!showPostalCode"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                    placeholder="<%= t("checkout.postal_code_placeholder", default: "10001") %>" />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.street_address", default: "Street Address") %> <span class="text-red-500">*</span>
+                  </label>
+                  <input type="text" name="order[street_address]" value="<%= @order.street_address %>" required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                    placeholder="<%= t("checkout.street_placeholder", default: "123 Main Street") %>" />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <%= t("checkout.building", default: "Building / Apt / Suite") %>
+                  </label>
+                  <input type="text" name="order[building]" value="<%= @order.building %>"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                    placeholder="<%= t("checkout.building_placeholder", default: "Apt 4B, Floor 2") %>" />
+                </div>
+              </div>
+
+              <!-- Save Address Checkbox -->
+              <div class="mt-4 flex items-center gap-2">
+                <input type="checkbox" name="save_address" value="1" checked id="save_address_checkbox"
+                  class="w-4 h-4 text-gray-700 border-gray-300 rounded focus:ring-gray-700" />
+                <label for="save_address_checkbox" class="text-sm text-gray-600">
+                  <%= t("checkout.save_address", default: "Save this address for future orders") %>
+                </label>
+              </div>
+            </div>
+
+            <!-- Contact Section (always shown) -->
+            <div class="pt-8 border-t border-gray-200">
               <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
                   <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,109 +324,13 @@
                 <%= t("checkout.contact_info", default: "Contact Information") %>
               </h2>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="md:col-span-2">
-                  <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.full_name", default: "Full Name") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.text_field :name,
-                    required: true,
-                    class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all",
-                    placeholder: t("checkout.name_placeholder", default: "John Doe") %>
-                </div>
-
-                <div>
-                  <%= form.label :email, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.email", default: "Email") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.email_field :email,
-                    required: true,
-                    class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all",
-                    placeholder: "john@example.com" %>
-                </div>
-
-                <div>
-                  <%= form.label :phone, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.phone", default: "Phone Number") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.text_field :phone,
-                    required: true,
-                    class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all",
-                    placeholder: "+1234567890" %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Shipping Address -->
-            <div class="pt-8 border-t border-gray-200">
-              <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
-                  <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                </div>
-                <%= t("checkout.shipping_address", default: "Shipping Address") %>
-              </h2>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <%= form.label :country, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.country", default: "Country") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.country_select :country,
-                    { priority_countries: [current_settings.local_country], except: %w[IL IR CU RU KP] },
-                    { required: true,
-                      class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all" } %>
-                </div>
-
-                <div>
-                  <%= form.label :city, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.city", default: "City") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.text_field :city,
-                    required: true,
-                    class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all",
-                    placeholder: t("checkout.city_placeholder", default: "New York") %>
-                </div>
-
-                <div class="md:col-span-2">
-                  <%= form.label :address, class: "block text-sm font-medium text-gray-700 mb-2" do %>
-                    <%= t("checkout.address", default: "Street Address") %> <span class="text-red-500">*</span>
-                  <% end %>
-                  <%= form.text_field :address,
-                    required: true,
-                    class: "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all",
-                    placeholder: t("checkout.address_placeholder", default: "123 Main Street, Apt 4B") %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Payment Method -->
-            <div class="pt-8 border-t border-gray-200">
-              <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
-                  <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                  </svg>
-                </div>
-                <%= t("checkout.payment_method", default: "Payment Method") %>
-              </h2>
-
-              <div class="space-y-3">
-                <label class="flex items-center p-4 border-2 border-gray-700 bg-gray-700/5 rounded-xl cursor-pointer">
-                  <input type="radio" name="payment_method" value="montypay" checked class="w-5 h-5 text-gray-700" />
-                  <div class="ml-4 flex-1 flex items-center justify-between">
-                    <div>
-                      <div class="font-semibold text-gray-900">MontyPay</div>
-                      <div class="text-sm text-gray-600"><%= t("checkout.secure_payment", default: "Secure payment gateway") %></div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="px-3 py-1 bg-white rounded-lg text-xs font-medium">Visa</span>
-                      <span class="px-3 py-1 bg-white rounded-lg text-xs font-medium">Mastercard</span>
-                    </div>
-                  </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <%= t("checkout.email", default: "Email") %> <span class="text-red-500">*</span>
                 </label>
+                <input type="email" name="order[email]" value="<%= @order.email %>" required
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
+                  placeholder="john@example.com" />
               </div>
             </div>
           </div>
@@ -220,8 +385,6 @@
               </div>
 
               <!-- Price Breakdown -->
-              <% grand_total = @cart.grand_total(current_settings.shipping_flat_rate) %>
-
               <div class="space-y-3">
                 <div class="flex justify-between text-gray-600">
                   <span><%= t("orders.subtotal", default: "Subtotal") %></span>
@@ -235,8 +398,8 @@
                     <%= t("orders.shipping", default: "Shipping") %>
                     <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">DHL</span>
                   </span>
-                  <span class="font-semibold text-gray-900">
-                    <%= number_to_currency(current_settings.shipping_flat_rate, unit: current_settings.default_currency) %>
+                  <span class="font-semibold text-gray-500 text-sm">
+                    <%= t("checkout.calculated_next_step", default: "Calculated next step") %>
                   </span>
                 </div>
 
@@ -257,20 +420,22 @@
               <!-- Total -->
               <div class="pt-6 border-t-2 border-gray-200">
                 <div class="flex justify-between items-baseline mb-6">
-                  <span class="text-lg font-semibold text-gray-900"><%= t("orders.total", default: "Total") %></span>
+                  <span class="text-lg font-semibold text-gray-900"><%= t("orders.subtotal", default: "Subtotal") %></span>
                   <div class="text-right">
                     <div class="text-3xl font-bold text-gray-700">
-                      <%= number_to_currency(grand_total, unit: current_settings.default_currency) %>
+                      <%= number_to_currency(@cart.total_after_discount, unit: current_settings.default_currency) %>
                     </div>
                     <div class="text-sm text-gray-500">
-                      <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
+                      <%= t("checkout.shipping_added_next", default: "Shipping added in next step") %>
                     </div>
                   </div>
                 </div>
 
-                <!-- Place Order Button -->
-                <%= form.submit t("checkout.pay", default: "Place Order & Pay"),
-                  class: "w-full bg-gray-700 hover:bg-gray-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer" %>
+                <!-- Continue to Payment Button -->
+                <button type="submit"
+                  class="w-full bg-gray-700 hover:bg-gray-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer">
+                  <%= t("checkout.continue_to_payment", default: "Continue to Payment") %>
+                </button>
               </div>
 
               <!-- Security Badge -->

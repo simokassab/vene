@@ -1,5 +1,5 @@
 class Admin::OrdersController < Admin::BaseController
-  before_action :set_order, only: %i[show edit update destroy update_status update_payment_status]
+  before_action :set_order, only: %i[show edit update destroy update_status update_payment_status create_shipment tracking]
 
   def index
     @orders = Order.includes(:user, order_items: :product).order(created_at: :desc)
@@ -40,8 +40,32 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def update_payment_status
-    @order.update(payment_status: params[:payment_status])
+    if params[:payment_status] == "paid" && @order.payment_status != "paid"
+      @order.confirm_payment!
+    else
+      @order.update(payment_status: params[:payment_status])
+    end
     redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.payment_updated")
+  end
+
+  def create_shipment
+    if @order.dhl_tracking_id.present?
+      redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.shipment_already_exists", default: "Shipment already exists for this order.")
+      return
+    end
+
+    shipment = @order.create_dhl_shipment
+    if shipment.success?
+      redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.shipment_created", default: "DHL shipment created. Tracking: %{tracking}") % { tracking: shipment.tracking_number }
+    else
+      redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.shipment_failed", default: "Failed to create DHL shipment.")
+    end
+  rescue Dhl::Client::Error => e
+    redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.shipment_error", default: "DHL Error: %{error}") % { error: e.message }
+  end
+
+  def tracking
+    @tracking_info = @order.dhl_tracking_info
   end
 
   def invoice

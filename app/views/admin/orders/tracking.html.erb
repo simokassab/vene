@@ -1,0 +1,133 @@
+<!-- Page Header -->
+<div class="mb-8">
+  <div class="flex items-center justify-between mb-2">
+    <%= link_to admin_order_path(@order, locale: I18n.locale), class: "inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors" do %>
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <%= t("admin.orders.back_to_order", default: "Back to Order") %>
+    <% end %>
+  </div>
+
+  <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+    <%= t("admin.orders.tracking_details", default: "Tracking Details") %>
+    <span class="text-2xl text-gray-400">#<%= @order.id %></span>
+  </h1>
+  <p class="text-sm text-gray-500 mt-1">
+    DHL Tracking ID: <span class="font-mono font-semibold"><%= @order.dhl_tracking_id %></span>
+  </p>
+</div>
+
+<% if @tracking_info.present? %>
+  <!-- Status Summary -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+          <%= t("admin.orders.current_status", default: "Current Status") %>
+        </div>
+        <div class="text-lg font-semibold text-gray-900">
+          <%= @tracking_info.status_description %>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+          <%= t("admin.orders.origin", default: "Origin") %>
+        </div>
+        <div class="text-lg font-semibold text-gray-900">
+          <%= @tracking_info.origin || "—" %>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+          <%= t("admin.orders.destination", default: "Destination") %>
+        </div>
+        <div class="text-lg font-semibold text-gray-900">
+          <%= @tracking_info.destination || "—" %>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+          <%= t("admin.orders.estimated_delivery", default: "Estimated Delivery") %>
+        </div>
+        <div class="text-lg font-semibold text-gray-900">
+          <%= @tracking_info.estimated_delivery&.strftime("%B %d, %Y") || "—" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracking Events Timeline -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <%= t("admin.orders.tracking_events", default: "Tracking Events") %>
+      </h2>
+    </div>
+
+    <div class="p-6">
+      <% if @tracking_info.events.any? %>
+        <div class="relative">
+          <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+          <div class="space-y-6">
+            <% @tracking_info.events.each_with_index do |event, index| %>
+              <div class="relative flex items-start gap-4 pl-10">
+                <div class="absolute left-2.5 w-3 h-3 rounded-full border-2 <%= index == 0 ? 'bg-[#465FFF] border-[#465FFF]' : 'bg-white border-gray-300' %>"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-semibold text-gray-900">
+                      <%= event.description %>
+                    </p>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-4">
+                      <%= event.formatted_time %>
+                    </span>
+                  </div>
+                  <% if event.location.present? %>
+                    <p class="text-sm text-gray-500 mt-0.5 flex items-center">
+                      <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      <%= event.location %>
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-8">
+          <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm text-gray-500"><%= t("admin.orders.no_tracking_events", default: "No tracking events available yet.") %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <!-- No Tracking Info -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <h3 class="text-lg font-semibold text-gray-700 mb-2">
+      <%= t("admin.orders.tracking_unavailable", default: "Tracking Information Unavailable") %>
+    </h3>
+    <p class="text-sm text-gray-500 mb-4">
+      <%= t("admin.orders.tracking_unavailable_description", default: "Could not retrieve tracking information from DHL. The shipment may not have been picked up yet, or the tracking service may be temporarily unavailable.") %>
+    </p>
+    <%= link_to admin_order_path(@order, locale: I18n.locale),
+      class: "inline-flex items-center px-4 py-2.5 bg-[#465FFF] text-white font-medium rounded-lg hover:bg-[#3651E6] transition-all" do %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      <%= t("admin.orders.back_to_order", default: "Back to Order") %>
+    <% end %>
+  </div>
+<% end %>

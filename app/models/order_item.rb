@@ -10,13 +10,24 @@ class OrderItem < ApplicationRecord
 
   before_validation :set_preorder_flag
   before_validation :set_prices
-  after_create :decrement_stock
+  # Stock is decremented only after payment confirmation via Order#decrement_stock!
 
   scope :preorders, -> { where(is_preorder: true) }
   scope :regular_orders, -> { where(is_preorder: false) }
 
   def variant_display_name
     product_variant&.display_name
+  end
+
+  # Called explicitly by Order#decrement_stock! after payment confirmation
+  def decrement_stock!
+    return if is_preorder?
+
+    if product_variant_id.present?
+      product_variant.decrement!(:stock_quantity, quantity)
+    else
+      product.decrement!(:stock_quantity, quantity)
+    end
   end
 
   private
@@ -39,18 +50,15 @@ class OrderItem < ApplicationRecord
       variant = product_variant
       return unless variant
 
-      # Check if purchasable (in stock OR allows preorder)
       unless variant.purchasable?
         errors.add(:base, "#{variant.display_name} is not available for purchase")
         return
       end
 
-      # For in-stock items, validate quantity
       if variant.stock_quantity > 0 && variant.stock_quantity < quantity
         errors.add(:base, "Not enough stock available for #{variant.display_name}. Only #{variant.stock_quantity} available.")
       end
     else
-      # Same logic for products without variants
       unless product.purchasable?
         errors.add(:base, "#{product.name(I18n.locale)} is not available for purchase")
         return
@@ -59,19 +67,6 @@ class OrderItem < ApplicationRecord
       if product.stock_quantity > 0 && product.stock_quantity < quantity
         errors.add(:base, "Not enough stock available. Only #{product.stock_quantity} available.")
       end
-    end
-  end
-
-  def decrement_stock
-    # CRITICAL: Do NOT decrement stock for pre-orders
-    return if is_preorder?
-
-    if product_variant_id.present?
-      # Decrement variant stock
-      product_variant.decrement!(:stock_quantity, quantity)
-    else
-      # Decrement product stock
-      product.decrement!(:stock_quantity, quantity)
     end
   end
 

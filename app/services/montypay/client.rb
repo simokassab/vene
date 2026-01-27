@@ -116,7 +116,7 @@ module Montypay
       {
         country: @order.country,
         city: @order.city,
-        address: @order.address,
+        address: @order.address_text,
         phone: @order.phone
       }
     end

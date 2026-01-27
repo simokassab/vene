@@ -5,7 +5,9 @@ module Dhl
   class ShipmentRequest
     attr_accessor :planned_shipping_date, :product_code, :accounts,
                   :shipper, :receiver, :packages, :content_description,
-                  :incoterm, :is_customs_declarable, :output_image_properties
+                  :incoterm, :is_customs_declarable, :output_image_properties,
+                  :declared_value, :declared_value_currency, :unit_of_measurement,
+                  :export_line_items
 
     def initialize(
       planned_shipping_date: nil,
@@ -13,7 +15,10 @@ module Dhl
       accounts: [],
       content_description: nil,
       incoterm: "DAP",
-      is_customs_declarable: true
+      is_customs_declarable: true,
+      declared_value: 0,
+      declared_value_currency: "USD",
+      unit_of_measurement: "metric"
     )
       @planned_shipping_date = planned_shipping_date || Time.current.strftime("%Y-%m-%dT%H:%M:%S GMT%:z")
       @product_code = product_code
@@ -24,6 +29,10 @@ module Dhl
       @content_description = content_description
       @incoterm = incoterm
       @is_customs_declarable = is_customs_declarable
+      @declared_value = declared_value
+      @declared_value_currency = declared_value_currency
+      @unit_of_measurement = unit_of_measurement
+      @export_line_items = []
       @output_image_properties = default_output_image_properties
     end
 
@@ -92,7 +101,9 @@ module Dhl
 
       request = new(
         content_description: "Jewelry Order ##{order.id}",
-        product_code: "P" # DHL Express Worldwide
+        product_code: "P", # DHL Express Worldwide
+        declared_value: order.subtotal,
+        declared_value_currency: order.currency || "USD"
       )
 
       request.with_shipper(address: shipper_address, contact: shipper_contact)
@@ -100,8 +111,23 @@ module Dhl
       request.with_account(account_number)
 
       # Add packages based on order items (estimate 0.5 KG per item)
-      total_weight = order.order_items.sum(:quantity) * 0.5
-      request.add_package(Package.new(weight: total_weight))
+      total_weight = [order.order_items.sum(:quantity) * 0.5, 0.5].max
+      request.add_package(Package.new(weight: total_weight, length: 20, width: 15, height: 10))
+
+      # Build export declaration line items
+      order.order_items.includes(:product).each_with_index do |item, index|
+        product_name = item.product.name_en.presence || item.product.name_ar.presence || "Jewelry"
+        request.export_line_items << {
+          number: index + 1,
+          description: product_name.truncate(50),
+          price: item.unit_price.to_f,
+          quantity: { value: item.quantity, unitOfMeasurement: "PCS" },
+          weight: { netValue: (item.quantity * 0.5).round(2), grossValue: (item.quantity * 0.5).round(2) },
+          commodityCodes: [{ typeCode: "outbound", value: "711319" }], # HS code for jewelry
+          manufacturerCountry: shipper_address.country_code,
+          exportReasonType: "permanent"
+        }
+      end
 
       request
     end
@@ -130,12 +156,29 @@ module Dhl
     end
 
     def content_details
-      {
+      details = {
         packages: @packages.map(&:to_hash),
         isCustomsDeclarable: @is_customs_declarable,
         description: @content_description || "General Goods",
-        incoterm: @incoterm
+        incoterm: @incoterm,
+        unitOfMeasurement: @unit_of_measurement,
+        declaredValue: @declared_value.to_f,
+        declaredValueCurrency: @declared_value_currency
       }
+
+      if @is_customs_declarable && @export_line_items.any?
+        details[:exportDeclaration] = {
+          lineItems: @export_line_items,
+          invoice: {
+            number: "INV-#{Time.current.strftime('%Y%m%d')}",
+            date: Time.current.strftime("%Y-%m-%d")
+          },
+          exportReason: "Sale",
+          exportReasonType: "permanent"
+        }
+      end
+
+      details
     end
 
     def default_output_image_properties

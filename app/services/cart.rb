@@ -101,6 +101,10 @@ class Cart
     items.sum(&:line_total)
   end
 
+  def total_items_quantity
+    items.sum(&:quantity)
+  end
+
   # Coupon methods
   def apply_coupon(code, user)
     return { success: false, error: I18n.t("coupons.errors.code_required", default: "Coupon code is required") } if code.blank?

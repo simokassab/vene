@@ -1,6 +1,7 @@
 class Order < ApplicationRecord
   belongs_to :user
   belongs_to :coupon, optional: true
+  belongs_to :address, optional: true
   has_many :order_items, dependent: :destroy
 
   accepts_nested_attributes_for :order_items
@@ -8,30 +9,50 @@ class Order < ApplicationRecord
   STATUSES = %w[pending payment_pending paid shipped delivered canceled].freeze
   PAYMENT_STATUSES = %w[pending paid failed].freeze
 
-  validates :name, :email, :phone, :country, :city, :address, presence: true
+  validates :name, :email, :phone, :country, :city, :street_address, presence: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
 
   before_validation :set_defaults
 
-  def update_totals!(settings)
+  def update_totals!(settings, shipping_override: nil)
     self.subtotal = order_items.sum(&:line_total)
     self.tax_amount = 0 # Prices include tax
-    self.shipping_amount = settings.shipping_flat_rate || 0
+    self.shipping_amount = shipping_override || settings.shipping_flat_rate || 0
     self.total_amount = subtotal - discount_amount + shipping_amount
     save!
+  end
+
+  # Called after payment is confirmed (via webhook or success redirect)
+  def confirm_payment!
+    return if payment_status == "paid"
+
+    transaction do
+      update!(payment_status: "paid", status: "paid", paid_at: Time.current)
+      decrement_stock!
+    end
+
+    # Create DHL shipment in the background
+    CreateDhlShipmentJob.perform_later(id)
+  end
+
+  # Decrement stock for all order items (only for non-preorder items)
+  def decrement_stock!
+    order_items.regular_orders.each(&:decrement_stock!)
   end
 
   def cancel_order!
     return false if status == "canceled"
 
     transaction do
-      # Restore stock ONLY for regular orders (not pre-orders)
-      order_items.regular_orders.each do |item|
-        if item.product_variant_id.present?
-          item.product_variant.increment!(:stock_quantity, item.quantity)
-        else
-          item.product.increment!(:stock_quantity, item.quantity)
+      # Only restore stock if payment was confirmed (stock was decremented)
+      if payment_status == "paid"
+        order_items.regular_orders.each do |item|
+          if item.product_variant_id.present?
+            item.product_variant.increment!(:stock_quantity, item.quantity)
+          else
+            item.product.increment!(:stock_quantity, item.quantity)
+          end
         end
       end
 
@@ -39,6 +60,15 @@ class Order < ApplicationRecord
     end
 
     true
+  end
+
+  # Legacy address string (avoids conflict with belongs_to :address association)
+  def address_text
+    if street_address.present?
+      [street_address, building].compact_blank.join(", ")
+    else
+      read_attribute(:address)
+    end
   end
 
   # Pre-order helper methods
@@ -165,5 +195,12 @@ class Order < ApplicationRecord
     self.payment_status ||= "pending"
     self.shipping_method ||= "DHL"
     self.currency ||= Setting.current.default_currency
+    populate_legacy_address
+  end
+
+  def populate_legacy_address
+    if street_address.present? && read_attribute(:address).blank?
+      write_attribute(:address, [street_address, building].compact_blank.join(", "))
+    end
   end
 end

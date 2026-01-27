@@ -10,9 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_24_223808) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_27_105253) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "label"
+    t.string "name", null: false
+    t.string "phone", null: false
+    t.string "country", null: false
+    t.string "country_code", limit: 2, null: false
+    t.string "city", null: false
+    t.string "postal_code"
+    t.string "street_address", null: false
+    t.string "building"
+    t.boolean "is_default", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "is_default"], name: "index_addresses_on_user_id_and_is_default"
+    t.index ["user_id"], name: "index_addresses_on_user_id"
+  end
 
   create_table "banners", force: :cascade do |t|
     t.string "image", null: false
@@ -105,6 +123,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_24_223808) do
     t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0", null: false
     t.bigint "coupon_id"
     t.string "currency", default: "USD", null: false
+    t.bigint "address_id"
+    t.string "postal_code"
+    t.string "street_address"
+    t.string "building"
+    t.string "country_code", limit: 2
+    t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
     t.index ["dhl_tracking_id"], name: "index_orders_on_dhl_tracking_id"
@@ -298,10 +322,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_24_223808) do
     t.index ["user_id"], name: "index_wishlist_items_on_user_id"
   end
 
+  add_foreign_key "addresses", "users"
   add_foreign_key "banners", "products", on_delete: :nullify
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "product_variants"
   add_foreign_key "order_items", "products"
+  add_foreign_key "orders", "addresses"
   add_foreign_key "orders", "coupons", on_delete: :nullify
   add_foreign_key "orders", "users"
   add_foreign_key "product_images", "products"

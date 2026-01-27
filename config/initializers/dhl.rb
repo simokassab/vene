@@ -31,20 +31,20 @@ Rails.application.config.to_prepare do
   Dhl.configure do |config|
     # Shipper Address
     config.default_shipper_address = Dhl::Address.new(
-      city_name: "Beirut",              # Your city
-      country_code: "LB",               # Your country code (LB=Lebanon, SA=Saudi Arabia, AE=UAE)
-      postal_code: "1234",              # Your postal code
-      address_line1: "Your Street Name, Building Number",  # Full address
-      address_line2: nil,               # Optional additional address line
-      country_name: "Lebanon"           # Full country name
+      city_name: "Beirut",
+      country_code: "LB",
+      postal_code: "1103",
+      address_line1: "Kurdly building, Ahmad Al Jammal street",
+      address_line2: "Mosaytibeh, 6th floor",
+      country_name: "Lebanon"
     )
 
     # Shipper Contact
     config.default_shipper_contact = Dhl::Contact.new(
-      full_name: "Vene Jewelry",        # Your business name or contact person
-      company_name: "Vene Jewelry",     # Your company name
-      phone: "+961-X-XXXXXX",           # Your phone with country code
-      email: "shipping@venejewelry.com" # Your email
+      full_name: "Nadin Kaakati",
+      company_name: "Golden Arch for Commercial",
+      phone: "0096178729590",
+      email: "admin@venejewelry.com"
     )
   end
 end

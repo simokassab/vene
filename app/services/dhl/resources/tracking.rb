@@ -7,21 +7,16 @@ module Dhl
         @client = client
       end
 
-      # Get tracking information by tracking number using DHL unified tracking API
+      # Get tracking information by tracking number using MyDHL Express API
       # @param tracking_number [String] The tracking number
       # @return [Dhl::TrackingInfo] Tracking information
       def get(tracking_number)
         response = @client.request(
           :get,
-          "/track/shipments?trackingNumber=#{tracking_number}",
-          base_url: Dhl::Client::TRACKING_BASE_URL
+          "/shipments/#{tracking_number}/tracking"
         )
 
-        # The response contains an array of shipments
-        shipments = response["shipments"] || []
-        return nil if shipments.empty?
-
-        TrackingInfo.from_api_response(shipments.first)
+        TrackingInfo.from_api_response(response)
       end
 
       # Get tracking information for multiple tracking numbers

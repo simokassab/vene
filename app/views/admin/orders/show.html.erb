@@ -285,9 +285,18 @@
 
       <div class="p-6">
         <div class="text-gray-900 space-y-1">
-          <div class="font-medium"><%= @order.address %></div>
-          <div><%= @order.city %></div>
-          <div><%= @order.country %></div>
+          <% if @order.street_address.present? %>
+            <div class="font-medium"><%= @order.street_address %></div>
+            <% if @order.building.present? %>
+              <div><%= @order.building %></div>
+            <% end %>
+            <div><%= [@order.city, @order.postal_code].compact_blank.join(", ") %></div>
+            <div><%= @order.country %></div>
+          <% else %>
+            <div class="font-medium"><%= @order.address_text %></div>
+            <div><%= @order.city %></div>
+            <div><%= @order.country %></div>
+          <% end %>
         </div>
       </div>
     </div>
@@ -306,7 +315,7 @@
 
       <div class="p-6">
         <% if @order.dhl_tracking_id.present? %>
-          <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+          <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200 mb-4">
             <div>
               <div class="text-xs text-purple-600 font-medium uppercase tracking-wide">DHL Tracking ID</div>
               <div class="text-sm font-mono font-semibold text-purple-900 mt-1"><%= @order.dhl_tracking_id %></div>
@@ -315,13 +324,29 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
+          <%= link_to tracking_admin_order_path(@order, locale: I18n.locale),
+            class: "w-full inline-flex items-center justify-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-all" do %>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <%= t("admin.orders.view_tracking", default: "View Tracking") %>
+          <% end %>
         <% else %>
-          <div class="text-center py-4">
+          <div class="text-center py-4 mb-4">
             <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
             </svg>
-            <p class="text-sm text-gray-500"><%= t("admin.orders.no_tracking", default: "No tracking information yet") %></p>
+            <p class="text-sm text-gray-500 mb-4"><%= t("admin.orders.no_tracking", default: "No tracking information yet") %></p>
           </div>
+          <%= button_to create_shipment_admin_order_path(@order, locale: I18n.locale),
+            method: :post,
+            form: { data: { turbo_confirm: t("admin.orders.confirm_create_shipment", default: "Create a DHL shipment for this order?") } },
+            class: "w-full inline-flex items-center justify-center px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-all" do %>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+            <%= t("admin.orders.create_shipment", default: "Create DHL Shipment") %>
+          <% end %>
         <% end %>
       </div>
     </div>

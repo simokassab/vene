@@ -37,7 +37,10 @@ Rails.application.routes.draw do
       post :apply_coupon
       delete :remove_coupon
     end
-    resource :checkout, only: [:show, :create], controller: "storefront/checkouts"
+    resource :checkout, only: [:show, :create], controller: "storefront/checkouts" do
+      post :review
+      post :validate_city
+    end
     resources :orders, only: [:index, :show], controller: "storefront/orders" do
       member do
         get :invoice
@@ -67,6 +70,8 @@ Rails.application.routes.draw do
           get :invoice
           patch :update_status
           patch :update_payment_status
+          post :create_shipment
+          get :tracking
         end
       end
       resources :preorders, only: [:index]

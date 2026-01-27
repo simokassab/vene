@@ -6,6 +6,7 @@ class User < ApplicationRecord
 
   ROLES = %w[customer admin].freeze
 
+  has_many :addresses, dependent: :destroy
   has_many :orders, dependent: :nullify
   has_many :user_coupons, dependent: :destroy
   has_many :coupons, through: :user_coupons
@@ -26,6 +27,10 @@ class User < ApplicationRecord
 
   def product_in_wishlist?(product, variant = nil)
     wishlist_items.exists?(product_id: product.id, product_variant_id: variant&.id)
+  end
+
+  def default_address_record
+    addresses.find_by(is_default: true) || addresses.order(updated_at: :desc).first
   end
 
   def wishlist_item_for(product, variant = nil)

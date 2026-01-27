@@ -62,8 +62,15 @@ class InvoiceGenerator
     pdf.fill_color "000000"
     pdf.move_down 5
     pdf.font_size(10) do
-      pdf.text @order.address
-      pdf.text "#{@order.city}, #{@order.country}"
+      if @order.street_address.present?
+        pdf.text @order.street_address
+        pdf.text @order.building if @order.building.present?
+        pdf.text [@order.city, @order.postal_code].compact_blank.join(", ")
+        pdf.text @order.country
+      else
+        pdf.text @order.address_text
+        pdf.text "#{@order.city}, #{@order.country}"
+      end
     end
 
     pdf.move_down 30

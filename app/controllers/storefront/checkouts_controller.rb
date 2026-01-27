@@ -3,16 +3,180 @@ class Storefront::CheckoutsController < ApplicationController
 
   def show
     @cart = Cart.new(session)
-    @order = Order.new(name: current_user.name, email: current_user.email, phone: current_user.phone,
-                       country: current_user.default_country, city: current_user.default_city, address: current_user.default_address)
+    @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
+    @no_postal_countries = countries_without_postal_codes
+    default_addr = current_user.default_address_record
+
+    if default_addr
+      @order = Order.new(
+        name: default_addr.name,
+        email: current_user.email,
+        phone: default_addr.phone,
+        country: default_addr.country,
+        country_code: default_addr.country_code,
+        city: default_addr.city,
+        postal_code: default_addr.postal_code,
+        street_address: default_addr.street_address,
+        building: default_addr.building
+      )
+    else
+      @order = Order.new(
+        name: current_user.name,
+        email: current_user.email,
+        phone: current_user.phone,
+        country: current_user.default_country,
+        city: current_user.default_city,
+        street_address: current_user.default_address
+      )
+    end
+  end
+
+  def review
+    @cart = Cart.new(session)
+    return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
+
+    @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
+
+    if params[:address_id].present?
+      # User selected a saved address
+      address = current_user.addresses.find(params[:address_id])
+      @order = Order.new(
+        name: address.name,
+        email: params.dig(:order, :email) || current_user.email,
+        phone: address.phone,
+        country: address.country,
+        country_code: address.country_code,
+        city: address.city,
+        postal_code: address.postal_code,
+        street_address: address.street_address,
+        building: address.building,
+        address_id: address.id
+      )
+    else
+      # New address entered
+      @order = Order.new(order_params)
+      @order.country_code = Dhl::Address.country_code_for(@order.country) if @order.country.present? && @order.country_code.blank?
+
+      # Save address if requested
+      if params[:save_address] == "1" && @order.street_address.present?
+        addr = current_user.addresses.build(
+          label: params[:address_label],
+          name: @order.name,
+          phone: @order.phone,
+          country: @order.country,
+          country_code: @order.country_code,
+          city: @order.city,
+          postal_code: @order.postal_code,
+          street_address: @order.street_address,
+          building: @order.building,
+          is_default: current_user.addresses.none?
+        )
+        addr.save
+        @order.address_id = addr.id if addr.persisted?
+      end
+    end
+
+    # Validate required fields
+    required_fields = %i[name email phone country city street_address]
+    missing = required_fields.select { |f| @order.send(f).blank? }
+    if missing.any?
+      missing.each { |f| @order.errors.add(f, :blank) }
+      render :show, status: :unprocessable_entity
+      return
+    end
+
+    # Validate city against DHL (safety net - front-end already validates)
+    begin
+      dest_code = @order.country_code.presence || Dhl::Address.country_code_for(@order.country)
+      cache_key = "dhl_city/#{dest_code}/#{@order.city.downcase.strip}"
+      city_result = Rails.cache.fetch(cache_key, expires_in: 24.hours) do
+        Dhl.client.address_validate.validate(country_code: dest_code, city_name: @order.city)
+      end
+
+      if city_result[:valid]
+        # Auto-fill postal code if user left it blank
+        if @order.postal_code.blank? && city_result[:postal_code].present?
+          @order.postal_code = city_result[:postal_code]
+        end
+      else
+        @order.errors.add(:city, "is not recognized by DHL shipping. Please check the spelling.")
+        @no_postal_countries = countries_without_postal_codes
+        render :show, status: :unprocessable_entity
+        return
+      end
+    rescue Dhl::Client::Error => e
+      Rails.logger.warn("DHL city validation unavailable: #{e.message}")
+      # Don't block checkout - rate fetch will catch issues
+    end
+
+    # Store checkout params in session for the create step
+    session[:checkout_params] = {
+      name: @order.name,
+      email: @order.email,
+      phone: @order.phone,
+      country: @order.country,
+      country_code: @order.country_code,
+      city: @order.city,
+      postal_code: @order.postal_code,
+      street_address: @order.street_address,
+      building: @order.building,
+      address_id: @order.address_id
+    }
+
+    # Calculate DHL shipping rate
+    @shipping_rate = fetch_dhl_shipping_rate(@order, @cart)
+    @shipping_estimated = @shipping_rate[:estimated]
+    @shipping_amount = @shipping_rate[:amount]
+
+    # Store shipping rate in session
+    session[:dhl_shipping_rate] = @shipping_amount.to_s
+    session[:dhl_shipping_estimated] = @shipping_estimated
+  end
+
+  def validate_city
+    country_name = params[:country]
+    city_name = params[:city]
+
+    if country_name.blank? || city_name.blank?
+      return render json: { valid: false, error: "Country and city required" }, status: :unprocessable_entity
+    end
+
+    country_code = Dhl::Address.country_code_for(country_name)
+    cache_key = "dhl_city/#{country_code}/#{city_name.downcase.strip}"
+
+    result = Rails.cache.fetch(cache_key, expires_in: 24.hours) do
+      Dhl.client.address_validate.validate(country_code: country_code, city_name: city_name)
+    end
+
+    render json: {
+      valid: result[:valid],
+      postal_code: result[:postal_code],
+      city_name: result[:city_name],
+      suggestions: result[:addresses].map { |a| a["cityName"] }.uniq.first(5)
+    }
+  rescue StandardError => e
+    Rails.logger.error("DHL address validation error: #{e.message}")
+    render json: { valid: false, error: "Validation service unavailable" }, status: :service_unavailable
   end
 
   def create
     @cart = Cart.new(session)
     return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
 
-    @order = current_user.orders.new(order_params)
+    # Read params from session (set during review step) or fall back to direct params
+    saved_params = session[:checkout_params]
+    permitted_keys = %i[name email phone country country_code city postal_code street_address building address_id]
+    current_order_params = if saved_params.present?
+      ActionController::Parameters.new(saved_params).permit(*permitted_keys)
+    else
+      order_params
+    end
+
+    @order = current_user.orders.new(current_order_params)
     @order.status = "payment_pending"
+
+    # Read shipping rate from session (set during review step)
+    shipping_override = session[:dhl_shipping_rate].present? ? BigDecimal(session[:dhl_shipping_rate]) : nil
 
     ActiveRecord::Base.transaction do
       @cart.items.each do |item|
@@ -25,7 +189,7 @@ class Storefront::CheckoutsController < ApplicationController
       end
 
       @order.save!
-      @order.update_totals!(current_settings)
+      @order.update_totals!(current_settings, shipping_override: shipping_override)
 
       # Handle coupon if applied (after order is saved)
       if @cart.has_coupon?
@@ -56,10 +220,14 @@ class Storefront::CheckoutsController < ApplicationController
         end
       end
 
-      OrderConfirmationJob.perform_later(@order.id)
-      session[:cart] = {}
-      @cart.remove_coupon # Clear coupon from session
+      # Store order ID in session so we can clear cart after payment
+      session[:pending_order_id] = @order.id
     end
+
+    # Clean up checkout session data
+    session.delete(:checkout_params)
+    session.delete(:dhl_shipping_rate)
+    session.delete(:dhl_shipping_estimated)
 
     result = Montypay::Client.new(@order).start_payment
 
@@ -79,6 +247,67 @@ class Storefront::CheckoutsController < ApplicationController
   private
 
   def order_params
-    params.require(:order).permit(:name, :email, :phone, :country, :city, :address)
+    params.require(:order).permit(:name, :email, :phone, :country, :country_code, :city, :postal_code, :street_address, :building, :address_id)
+  end
+
+  def countries_without_postal_codes
+    ISO3166::Country.all.reject(&:postal_code).map { |c| c.translations["en"] || c.common_name }.compact.sort
+  end
+
+  def fetch_dhl_shipping_rate(order, cart)
+    shipper_address = Dhl.default_shipper_address
+    account_number = ENV["DHL_EXPRESS_ACCOUNT_NUMBER"]
+
+    if shipper_address.nil? || account_number.blank?
+      Rails.logger.warn("DHL shipping rate: missing shipper configuration, using flat rate")
+      return { amount: current_settings.shipping_flat_rate || 0, estimated: true }
+    end
+
+    # Estimate 0.5 KG per item, minimum 0.5
+    total_weight = [cart.total_items_quantity * 0.5, 0.5].max
+
+    dest_country_code = order.country_code.presence || Dhl::Address.country_code_for(order.country)
+
+    # Build GET /rates query parameters per DHL Express API
+    rate_params = {
+      accountNumber: account_number,
+      originCountryCode: shipper_address.country_code,
+      originCityName: shipper_address.city_name,
+      originPostalCode: shipper_address.postal_code,
+      destinationCountryCode: dest_country_code,
+      destinationCityName: order.city,
+      weight: total_weight,
+      length: 20,
+      width: 15,
+      height: 10,
+      plannedShippingDate: Date.current.strftime("%Y-%m-%d"),
+      isCustomsDeclarable: shipper_address.country_code != dest_country_code,
+      unitOfMeasurement: "metric"
+    }
+
+    # Use "00000" for countries without postal codes, otherwise use user-provided value
+    rate_params[:destinationPostalCode] = order.postal_code.presence || "00000"
+
+    client = Dhl.client
+    products = client.shipments.get_rates(rate_params)
+
+    # Find EXPRESS WORLDWIDE (product code "P")
+    express_product = products.find { |p| p["productCode"] == "P" }
+    if express_product && express_product["totalPrice"]
+      price = express_product["totalPrice"].first
+      amount = BigDecimal(price["price"].to_s)
+      { amount: amount, estimated: false }
+    elsif products.any?
+      # Fall back to first available product
+      price = products.first["totalPrice"]&.first
+      amount = price ? BigDecimal(price["price"].to_s) : (current_settings.shipping_flat_rate || 0)
+      { amount: amount, estimated: price.nil? }
+    else
+      Rails.logger.warn("DHL shipping rate: no products returned, using flat rate")
+      { amount: current_settings.shipping_flat_rate || 0, estimated: true }
+    end
+  rescue StandardError => e
+    Rails.logger.error("DHL shipping rate error: #{e.message}")
+    { amount: current_settings.shipping_flat_rate || 0, estimated: true }
   end
 end

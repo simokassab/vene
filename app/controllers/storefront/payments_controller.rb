@@ -4,14 +4,14 @@ class Storefront::PaymentsController < ApplicationController
   def success
     @order = find_order_for_redirect
 
-    # Update payment status if webhook hasn't already (fallback for development/testing)
+    # Confirm payment if webhook hasn't already (decrements stock + marks paid)
     if @order.payment_status == "pending"
-      @order.update(
-        payment_status: "paid",
-        status: "paid",
-        paid_at: Time.current
-      )
+      @order.confirm_payment!
+      OrderConfirmationJob.perform_later(@order.id)
     end
+
+    # Clear cart and coupon now that payment is confirmed
+    clear_cart_and_session
 
     redirect_to order_path(@order, locale: I18n.locale), notice: t("payments.success")
   end
@@ -20,6 +20,7 @@ class Storefront::PaymentsController < ApplicationController
     @order = Order.find(params[:order_id])
     # Only update if still pending (webhook may have already updated)
     @order.update(payment_status: "failed") if @order.payment_status == "pending"
+    # Don't clear cart — user may want to try again
     redirect_to order_path(@order, locale: I18n.locale), alert: t("payments.failure")
   end
 
@@ -62,13 +63,13 @@ class Storefront::PaymentsController < ApplicationController
   def process_webhook(order)
     case webhook_params[:status]
     when "success"
+      was_pending = order.payment_status != "paid"
+      order.confirm_payment! if was_pending
       order.update!(
-        payment_status: "paid",
-        status: "paid",
-        paid_at: Time.current,
         montypay_transaction_id: webhook_params[:id],
         payment_reference: webhook_params[:order_number]
       )
+      OrderConfirmationJob.perform_later(order.id) if was_pending
       Rails.logger.info("Order #{order.id} payment successful via webhook")
     when "fail"
       order.update!(
@@ -81,5 +82,13 @@ class Storefront::PaymentsController < ApplicationController
     else
       Rails.logger.warn("Order #{order.id} received unknown webhook status: #{webhook_params[:status]}")
     end
+  end
+
+  def clear_cart_and_session
+    session[:cart] = {}
+    session.delete(:coupon_code)
+    session.delete(:coupon_id)
+    session.delete(:discount_amount)
+    session.delete(:pending_order_id)
   end
 end

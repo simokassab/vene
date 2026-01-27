@@ -26,12 +26,11 @@ module Dhl
         @client.request(:get, "/shipments/#{tracking_number}")
       end
 
-      # Get shipping rates for a shipment
-      # @param rate_request [Dhl::RateRequest] The rate request
-      # @return [Array<Hash>] Available rates
-      def get_rates(rate_request)
-        payload = rate_request.to_hash
-        response = @client.request(:post, "/rates", body: payload)
+      # Get shipping rates via DHL Express Rating API (GET /rates)
+      # @param rate_params [Hash] Query parameters for the rate request
+      # @return [Array<Hash>] Available products with rates
+      def get_rates(rate_params)
+        response = @client.request(:get, "/rates", params: rate_params)
         response["products"] || []
       end
 

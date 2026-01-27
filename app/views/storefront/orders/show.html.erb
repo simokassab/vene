@@ -44,7 +44,7 @@
       <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
         <h2 class="text-lg font-semibold text-gray-900 mb-2"><%= t("orders.shipping_address", default: "Shipping Address") %></h2>
         <p class="text-sm text-gray-800"><%= @order.name %></p>
-        <p class="text-sm text-gray-600"><%= @order.address %>, <%= @order.city %>, <%= @order.country %></p>
+        <p class="text-sm text-gray-600"><%= @order.address_text %>, <%= @order.city %>, <%= @order.country %></p>
         <p class="text-sm text-gray-600"><%= @order.phone %></p>
       </div>
     </div>

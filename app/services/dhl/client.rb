@@ -11,6 +11,7 @@ module Dhl
 
     # DHL Express API URLs
     BASE_URL = "https://express.api.dhl.com/mydhlapi"
+    TEST_BASE_URL = "https://express.api.dhl.com/mydhlapi/test"
     TRACKING_BASE_URL = "https://api-eu.dhl.com"
 
     attr_accessor :api_key, :api_secret, :account_number
@@ -38,11 +39,25 @@ module Dhl
       @service_points ||= Resources::ServicePoints.new(self)
     end
 
+    def address_validate
+      @address_validate ||= Resources::AddressValidate.new(self)
+    end
+
+    def test_mode?
+      ENV["DHL_EXPRESS_TEST_MODE"] == "true"
+    end
+
+    def default_base_url
+      test_mode? ? TEST_BASE_URL : BASE_URL
+    end
+
     # HTTP request method
-    def request(method, path, body: nil, headers: {}, base_url: BASE_URL)
+    def request(method, path, body: nil, params: nil, headers: {}, base_url: nil)
+      base_url ||= default_base_url
       validate_credentials!
 
-      uri = URI.join(base_url, path)
+      uri = URI.parse("#{base_url}#{path}")
+      uri.query = URI.encode_www_form(params) if params
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       http.read_timeout = 30
@@ -67,7 +82,9 @@ module Dhl
 
       headers.each { |key, value| request[key] = value }
 
+      Rails.logger.debug("[DHL] #{method.to_s.upcase} #{uri}")
       response = http.request(request)
+      Rails.logger.debug("[DHL] Response #{response.code}: #{response.body&.truncate(500)}")
       handle_response(response)
     rescue StandardError => e
       raise RequestError, "DHL Express API request failed: #{e.message}"

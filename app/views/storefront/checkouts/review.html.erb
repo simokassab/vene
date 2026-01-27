@@ -1,0 +1,292 @@
+<% content_for :full_width, true %>
+
+<div class="min-h-screen bg-gray-50 pb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-36">
+    <!-- Page Header -->
+    <div class="mb-12 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        <%= t("checkout.review_title", default: "Review Your Order") %>
+      </h1>
+      <p class="text-gray-600 text-lg">
+        <%= t("checkout.review_subtitle", default: "Confirm your details and complete your purchase") %>
+      </p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="mb-12">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex items-center justify-between">
+          <!-- Step 1: Information (Completed) -->
+          <div class="flex flex-col items-center flex-1">
+            <div class="w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold shadow-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-green-700 mt-2"><%= t("checkout.step_info", default: "Information") %></span>
+          </div>
+
+          <!-- Step 2: Review & Pay (Active) -->
+          <div class="flex flex-col items-center flex-1">
+            <div class="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold shadow-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-900 mt-2"><%= t("checkout.step_review", default: "Review & Pay") %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- LEFT: Order Details -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Shipping Address Summary -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <%= t("checkout.shipping_details", default: "Shipping Details") %>
+            </h2>
+            <%= link_to checkout_path(locale: I18n.locale), class: "text-sm font-medium text-gray-700 hover:text-gray-900 underline transition-colors" do %>
+              <%= t("common.edit", default: "Edit") %>
+            <% end %>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.full_name", default: "Full Name") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.name %></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.email", default: "Email") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.email %></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.phone", default: "Phone Number") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.phone %></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.country", default: "Country") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.country %></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.city", default: "City") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.city %></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1"><%= t("checkout.street_address", default: "Street Address") %></div>
+              <div class="font-semibold text-gray-900"><%= @order.street_address %></div>
+            </div>
+            <% if @order.building.present? %>
+              <div>
+                <div class="text-sm text-gray-500 mb-1"><%= t("checkout.building", default: "Building / Apt / Suite") %></div>
+                <div class="font-semibold text-gray-900"><%= @order.building %></div>
+              </div>
+            <% end %>
+            <% if @order.postal_code.present? %>
+              <div>
+                <div class="text-sm text-gray-500 mb-1"><%= t("checkout.postal_code", default: "Postal Code") %></div>
+                <div class="font-semibold text-gray-900"><%= @order.postal_code %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+              </svg>
+            </div>
+            <%= t("checkout.order_items", default: "Order Items") %>
+            <span class="ml-2 text-sm font-normal text-gray-500">(<%= @cart.items.count %> <%= t("cart.items_count", default: "items") %>)</span>
+          </h2>
+
+          <div class="space-y-4">
+            <% @cart.items.each do |item| %>
+              <div class="flex gap-4 py-4 border-b border-gray-100 last:border-0">
+                <div class="relative flex-shrink-0">
+                  <% if item.product.primary_image&.image&.url %>
+                    <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+                      <%= image_tag item.product.primary_image.image.url, class: "w-full h-full object-cover" %>
+                    </div>
+                    <div class="absolute -top-2 -right-2 w-6 h-6 bg-gray-700 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                      <%= item.quantity %>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-gray-900 line-clamp-2">
+                    <%= item.product.name(I18n.locale) %>
+                  </h4>
+                  <p class="text-sm text-gray-600 mt-1">
+                    <%= item.product.category.name(I18n.locale) %>
+                  </p>
+                  <% if item.product_variant %>
+                    <p class="text-sm font-medium text-gray-700 mt-1">
+                      <%= item.product_variant.display_name %>
+                    </p>
+                  <% end %>
+                  <% if item.is_preorder? %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mt-1">
+                      <%= t("orders.preorder", default: "Pre-Order") %>
+                    </span>
+                  <% end %>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-gray-900">
+                    <%= number_to_currency(item.line_total, unit: current_settings.default_currency) %>
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <%= number_to_currency(item.unit_price, unit: current_settings.default_currency) %> x <%= item.quantity %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <div class="w-10 h-10 bg-gray-700/10 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </div>
+            <%= t("checkout.payment_method", default: "Payment Method") %>
+          </h2>
+
+          <div class="flex items-center p-4 border-2 border-gray-700 bg-gray-700/5 rounded-xl">
+            <div class="w-5 h-5 rounded-full border-2 border-gray-700 flex items-center justify-center mr-4">
+              <div class="w-3 h-3 rounded-full bg-gray-700"></div>
+            </div>
+            <div class="flex-1 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-gray-900">MontyPay</div>
+                <div class="text-sm text-gray-600"><%= t("checkout.secure_payment", default: "Secure payment gateway") %></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-white rounded-lg text-xs font-medium">Visa</span>
+                <span class="px-3 py-1 bg-white rounded-lg text-xs font-medium">Mastercard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Price Summary & Place Order -->
+      <div class="lg:sticky lg:top-24 lg:self-start">
+        <div class="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+          <h2 class="text-2xl font-bold text-gray-900">
+            <%= t("checkout.price_summary", default: "Price Summary") %>
+          </h2>
+
+          <!-- Price Breakdown -->
+          <div class="space-y-3">
+            <div class="flex justify-between text-gray-600">
+              <span><%= t("orders.subtotal", default: "Subtotal") %></span>
+              <span class="font-semibold text-gray-900">
+                <%= number_to_currency(@cart.subtotal, unit: current_settings.default_currency) %>
+              </span>
+            </div>
+
+            <div class="flex justify-between text-gray-600">
+              <span class="flex items-center gap-2">
+                <% if @shipping_estimated %>
+                  <%= t("checkout.estimated_shipping", default: "Estimated Shipping") %>
+                <% else %>
+                  <%= t("orders.shipping", default: "Shipping") %>
+                <% end %>
+                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">DHL Express</span>
+              </span>
+              <span class="font-semibold text-gray-900">
+                <%= number_to_currency(@shipping_amount, unit: current_settings.default_currency) %>
+              </span>
+            </div>
+
+            <!-- Discount (if coupon applied) -->
+            <% if @cart.has_coupon? && @cart.discount_amount > 0 %>
+              <div class="flex justify-between text-green-600">
+                <span class="flex items-center gap-2">
+                  <%= t("coupons.discount", default: "Discount") %>
+                  <span class="text-xs font-mono font-bold"><%= @cart.coupon&.code %></span>
+                </span>
+                <span class="font-semibold">
+                  -<%= number_to_currency(@cart.discount_amount, unit: current_settings.default_currency) %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+
+          <% review_total = @cart.total_after_discount + @shipping_amount %>
+
+          <!-- Total -->
+          <div class="pt-6 border-t-2 border-gray-200">
+            <div class="flex justify-between items-baseline mb-6">
+              <span class="text-lg font-semibold text-gray-900"><%= t("orders.total", default: "Total") %></span>
+              <div class="text-right">
+                <div class="text-3xl font-bold text-gray-700">
+                  <%= number_to_currency(review_total, unit: current_settings.default_currency) %>
+                </div>
+                <div class="text-sm text-gray-500">
+                  <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Place Order Form (hidden fields + submit) -->
+            <%= form_with url: checkout_path(locale: I18n.locale), method: :post, data: { turbo: false } do |form| %>
+              <%= hidden_field_tag "order[name]", @order.name %>
+              <%= hidden_field_tag "order[email]", @order.email %>
+              <%= hidden_field_tag "order[phone]", @order.phone %>
+              <%= hidden_field_tag "order[country]", @order.country %>
+              <%= hidden_field_tag "order[country_code]", @order.country_code %>
+              <%= hidden_field_tag "order[city]", @order.city %>
+              <%= hidden_field_tag "order[postal_code]", @order.postal_code %>
+              <%= hidden_field_tag "order[street_address]", @order.street_address %>
+              <%= hidden_field_tag "order[building]", @order.building %>
+              <%= hidden_field_tag "order[address_id]", @order.address_id %>
+
+              <%= form.submit t("checkout.place_order", default: "Place Order & Pay"),
+                class: "w-full bg-gray-700 hover:bg-gray-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer" %>
+            <% end %>
+          </div>
+
+          <% if @shipping_estimated %>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p class="text-xs text-amber-800">
+                  <%= t("checkout.estimated_shipping_note", default: "Shipping cost is estimated. The actual rate from DHL could not be retrieved at this time.") %>
+                </p>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Security Badge -->
+          <div class="pt-6 border-t border-gray-200">
+            <div class="flex items-center justify-center gap-2 text-sm text-gray-600">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <%= t("checkout.secure_checkout", default: "Secure encrypted checkout") %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

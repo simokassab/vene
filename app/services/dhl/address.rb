@@ -43,14 +43,13 @@ module Dhl
     def self.from_order(order)
       new(
         city_name: order.city,
-        country_code: country_code_for(order.country),
-        postal_code: extract_postal_code(order.address),
-        address_line1: order.address,
+        country_code: order.country_code.presence || country_code_for(order.country),
+        postal_code: order.postal_code.presence || extract_postal_code(order.address_text),
+        address_line1: order.street_address || order.address_text,
+        address_line2: order.building,
         country_name: order.country
       )
     end
-
-    private
 
     # Convert country name to ISO code
     def self.country_code_for(country)
