@@ -27,5 +27,31 @@ module.exports = {
     out_file: '/root/.pm2/logs/vene_jewelry-out.log',
     log_file: '/root/.pm2/logs/vene_jewelry-combined.log',
     time: true
+  },
+  {
+    name: 'vene_sidekiq',
+    cwd: '/var/www/vene',
+    script: '/root/.rbenv/shims/bundle',
+    args: 'exec sidekiq',
+    interpreter: 'none',
+    env: {
+      RAILS_ENV: 'production',
+      RAILS_MASTER_KEY: '957a8b123ce5187fb8674dadcbb52217',
+      DATABASE_HOST: '127.0.0.1',
+      DATABASE_PORT: '5432',
+      DATABASE_USERNAME: 'x_care_user',
+      DATABASE_PASSWORD: 'Sama2022',
+      DATABASE_NAME: 'vene_production',
+      REDIS_URL: 'redis://localhost:6379/1',
+    },
+    instances: 1,
+    exec_mode: 'fork',
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    error_file: '/root/.pm2/logs/vene_sidekiq-error.log',
+    out_file: '/root/.pm2/logs/vene_sidekiq-out.log',
+    log_file: '/root/.pm2/logs/vene_sidekiq-combined.log',
+    time: true
   }]
 };
