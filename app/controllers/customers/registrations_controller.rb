@@ -5,6 +5,19 @@ class Customers::RegistrationsController < Devise::RegistrationsController
 
   helper_method :current_settings
 
+  protected
+
+  def update_resource(resource, params)
+    if params[:password].blank? && params[:password_confirmation].blank?
+      params.delete(:current_password)
+      params.delete(:password)
+      params.delete(:password_confirmation)
+      resource.update_without_password(params)
+    else
+      super
+    end
+  end
+
   private
 
   def set_settings
@@ -28,6 +41,6 @@ class Customers::RegistrationsController < Devise::RegistrationsController
   end
 
   def after_update_path_for(resource)
-    root_path(locale: I18n.locale)
+    orders_path(locale: I18n.locale)
   end
 end

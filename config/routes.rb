@@ -11,7 +11,7 @@ Rails.application.routes.draw do
       sessions: "admin/sessions"
     }
 
-    authenticate :user, ->(u) { u.admin? } do
+    authenticate :admin_user, ->(u) { u.admin? } do
       mount Sidekiq::Web => "/admin/sidekiq"
     end
 
@@ -45,6 +45,11 @@ Rails.application.routes.draw do
       member do
         get :invoice
         patch :cancel
+      end
+    end
+    resources :addresses, only: [:create, :update, :destroy], controller: "storefront/addresses" do
+      member do
+        patch :set_default
       end
     end
     resources :pages, only: [:show], controller: "storefront/pages", param: :slug

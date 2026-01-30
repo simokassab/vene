@@ -2,27 +2,20 @@ class Admin::BaseController < ApplicationController
   include Pagy::Backend
 
   layout "admin"
-  before_action :require_admin_access!
+  before_action :authenticate_admin!
 
   private
 
-  def require_admin_access!
-    user = if admin_user_signed_in?
-             current_admin_user
-           elsif user_signed_in?
-             current_user
-           end
-
-    unless user
-      redirect_to new_admin_user_session_path(locale: I18n.locale), alert: t("errors.not_authorized")
+  def authenticate_admin!
+    if user_signed_in? && current_user.admin?
       return
+    elsif admin_user_signed_in? && current_admin_user.admin?
+      return
+    elsif user_signed_in? || admin_user_signed_in?
+      redirect_to root_path(locale: I18n.locale), alert: t("errors.not_authorized")
+    else
+      redirect_to new_admin_user_session_path(locale: I18n.locale), alert: t("errors.not_authorized")
     end
-
-    return if user.admin?
-
-    sign_out(:admin_user) if admin_user_signed_in?
-    sign_out(:user) if user_signed_in?
-    redirect_to new_admin_user_session_path(locale: I18n.locale), alert: t("errors.not_authorized")
   end
 
   def after_sign_out_path_for(resource_or_scope)

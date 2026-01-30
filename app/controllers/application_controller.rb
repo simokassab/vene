@@ -51,16 +51,8 @@ class ApplicationController < ActionController::Base
     # Skip if maintenance mode is off
     return unless current_settings.maintenance_mode
 
-    # Allow access for admin users (check both devise scopes)
-    admin_logged_in = false
-
-    if respond_to?(:current_user) && user_signed_in?
-      admin_logged_in = current_user.admin?
-    elsif respond_to?(:current_admin_user) && admin_user_signed_in?
-      admin_logged_in = current_admin_user.admin?
-    end
-
-    return if admin_logged_in
+    # Only admin-scope sessions bypass maintenance mode
+    return if admin_user_signed_in? && current_admin_user.admin?
 
     # Show maintenance page for non-admin users
     render "shared/maintenance", layout: "maintenance", status: :service_unavailable

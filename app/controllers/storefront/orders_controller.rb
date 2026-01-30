@@ -5,6 +5,7 @@ class Storefront::OrdersController < ApplicationController
 
   def index
     @orders = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).order(created_at: :desc)
+    @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
   end
 
   def show; end

@@ -1,7 +1,7 @@
 <% content_for :full_width, true %>
 
-<div x-data="{ activeTab: 'orders' }" class="min-h-screen bg-gray-50 pb-10">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-36">
+<div x-data="{ activeTab: '<%= params[:tab].presence || 'orders' %>', showAddAddress: false, editingAddressId: null }" class="min-h-screen bg-gray-50 pb-10">
+  <div class="w-full mx-auto px-4 sm:px-8 lg:px-12 pt-32 md:pt-36">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
       <div>
@@ -29,6 +29,7 @@
         <% nav_items = [
           { key: 'orders', label: t("orders.my_orders", default: "My Orders"), icon: 'M3 3h18v18H3z' },
           { key: 'profile', label: t("profile.details", default: "Profile"), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+          { key: 'addresses', label: t("addresses.title", default: "Addresses"), icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' },
           { key: 'security', label: t("profile.security", default: "Password"), icon: 'M12 11c-1.657 0-3 1.343-3 3v3h6v-3c0-1.657-1.343-3-3-3z M8 11V9a4 4 0 118 0v2' }
         ] %>
         <% nav_items.each do |item| %>
@@ -123,38 +124,214 @@
             <h2 class="text-2xl font-bold text-gray-900"><%= t("profile.details", default: "Profile Details") %></h2>
             <p class="text-gray-600 text-sm"><%= t("profile.details_sub", default: "Update your personal information") %></p>
           </div>
-          <%= form_with model: current_user, url: user_registration_path(locale: I18n.locale), method: :put, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+          <%= form_with model: current_user, url: user_registration_path(locale: I18n.locale), method: :put, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-6" do |f| %>
             <div>
-              <%= f.label :name, class: "text-sm text-gray-600" %>
-              <%= f.text_field :name, class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.text_field :name, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div>
-              <%= f.label :email, class: "text-sm text-gray-600" %>
-              <%= f.email_field :email, class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :email, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.email_field :email, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div>
-              <%= f.label :phone, class: "text-sm text-gray-600" %>
-              <%= f.text_field :phone, class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :phone, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.text_field :phone, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div>
-              <%= f.label :default_country, t("profile.country", default: "Country"), class: "text-sm text-gray-600" %>
-              <%= f.text_field :default_country, class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :default_country, t("profile.country", default: "Country"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.text_field :default_country, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div>
-              <%= f.label :default_city, t("profile.city", default: "City"), class: "text-sm text-gray-600" %>
-              <%= f.text_field :default_city, class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :default_city, t("profile.city", default: "City"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.text_field :default_city, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div class="md:col-span-2">
-              <%= f.label :default_address, t("profile.address", default: "Address"), class: "text-sm text-gray-600" %>
-              <%= f.text_field :default_address, class: "mt-1 w-full rounded-lg border-gray-300" %>
-            </div>
-            <div class="md:col-span-2">
-              <%= f.label :current_password, t("devise.current_password", default: "Current password"), class: "text-sm text-gray-600" %>
-              <%= f.password_field :current_password, autocomplete: "current-password", class: "mt-1 w-full rounded-lg border-gray-300" %>
-              <p class="text-xs text-gray-500 mt-1"><%= t("profile.current_password_hint", default: "Required to save profile changes") %></p>
+              <%= f.label :default_address, t("profile.address", default: "Address"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.text_field :default_address, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div class="md:col-span-2 flex justify-end">
-              <%= f.submit t("profile.save", default: "Save Changes"), class: "px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black" %>
+              <%= f.submit t("profile.save", default: "Save Changes"), class: "inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#465FFF] hover:bg-[#3651E6] rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF] shadow-sm" %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Addresses Tab -->
+        <div x-show="activeTab === 'addresses'" x-transition class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900"><%= t("addresses.title", default: "My Addresses") %></h2>
+              <p class="text-gray-600 text-sm"><%= t("addresses.subtitle", default: "Manage your saved delivery addresses") %></p>
+            </div>
+            <button @click="showAddAddress = !showAddAddress; editingAddressId = null"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#465FFF] hover:bg-[#3651E6] rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF] shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              <%= t("addresses.add_new", default: "Add Address") %>
+            </button>
+          </div>
+
+          <!-- Add Address Form -->
+          <div x-show="showAddAddress" x-cloak x-transition class="border border-gray-200 rounded-xl p-6 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4"><%= t("addresses.new_address", default: "New Address") %></h3>
+            <%= form_with model: Address.new, url: addresses_path(locale: I18n.locale), method: :post, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-6" do |f| %>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.label", default: "Label") %></label>
+                <%= f.text_field :label, placeholder: t("addresses.label_placeholder", default: "e.g. Home, Office"), class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.full_name", default: "Full Name") %> <span class="text-red-500">*</span></label>
+                <%= f.text_field :name, required: true, value: current_user.name, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.phone", default: "Phone") %> <span class="text-red-500">*</span></label>
+                <%= f.telephone_field :phone, required: true, value: current_user.phone, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.country", default: "Country") %> <span class="text-red-500">*</span></label>
+                <%= f.country_select :country, { priority_countries: [current_settings.local_country], except: %w[IL IR CU RU KP], include_blank: t("common.select_country", default: "Select a country") }, { required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" } %>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.city", default: "City") %> <span class="text-red-500">*</span></label>
+                <%= f.text_field :city, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.postal_code", default: "Postal Code") %></label>
+                <%= f.text_field :postal_code, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.street_address", default: "Street Address") %> <span class="text-red-500">*</span></label>
+                <%= f.text_field :street_address, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.building", default: "Building / Apt / Suite") %></label>
+                <%= f.text_field :building, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+              </div>
+              <div class="md:col-span-2 flex items-center justify-between">
+                <label class="flex items-center gap-2">
+                  <%= f.check_box :is_default, class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+                  <span class="text-sm text-gray-700"><%= t("addresses.set_as_default", default: "Set as default address") %></span>
+                </label>
+                <div class="flex gap-3">
+                  <button type="button" @click="showAddAddress = false" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all duration-200">
+                    <%= t("common.cancel", default: "Cancel") %>
+                  </button>
+                  <%= f.submit t("addresses.save", default: "Save Address"), class: "inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#465FFF] hover:bg-[#3651E6] rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF] shadow-sm" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Address Cards -->
+          <% if @addresses.any? %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <% @addresses.each do |addr| %>
+                <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow duration-200 relative">
+                  <!-- Display Mode -->
+                  <div x-show="editingAddressId !== <%= addr.id %>">
+                    <div class="flex items-start justify-between mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-900"><%= addr.name %></span>
+                        <% if addr.label.present? %>
+                          <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"><%= addr.label %></span>
+                        <% end %>
+                        <% if addr.is_default? %>
+                          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full"><%= t("addresses.default", default: "Default") %></span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="text-sm text-gray-600 space-y-0.5 mb-4">
+                      <div><%= addr.street_address %></div>
+                      <% if addr.building.present? %>
+                        <div><%= addr.building %></div>
+                      <% end %>
+                      <div><%= [addr.city, addr.postal_code].compact_blank.join(", ") %></div>
+                      <div><%= addr.country %></div>
+                      <div class="text-gray-500"><%= addr.phone %></div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
+                      <button @click="editingAddressId = <%= addr.id %>; showAddAddress = false"
+                              class="text-sm font-medium text-[#465FFF] hover:text-[#3651E6] transition-colors">
+                        <%= t("common.edit", default: "Edit") %>
+                      </button>
+                      <% unless addr.is_default? %>
+                        <span class="text-gray-300">|</span>
+                        <%= button_to set_default_address_path(addr, locale: I18n.locale), method: :patch,
+                              form: { class: "inline" },
+                              class: "text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" do %>
+                          <%= t("addresses.make_default", default: "Make Default") %>
+                        <% end %>
+                      <% end %>
+                      <span class="text-gray-300">|</span>
+                      <%= button_to address_path(addr, locale: I18n.locale), method: :delete,
+                            form: { data: { turbo_confirm: t("addresses.confirm_delete", default: "Remove this address?") }, class: "inline" },
+                            class: "text-sm font-medium text-red-600 hover:text-red-700 transition-colors" do %>
+                        <%= t("common.delete", default: "Delete") %>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <!-- Edit Mode -->
+                  <div x-show="editingAddressId === <%= addr.id %>" x-cloak>
+                    <%= form_with model: addr, url: address_path(addr, locale: I18n.locale), method: :patch, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.label", default: "Label") %></label>
+                        <%= f.text_field :label, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.full_name", default: "Full Name") %> <span class="text-red-500">*</span></label>
+                        <%= f.text_field :name, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.phone", default: "Phone") %> <span class="text-red-500">*</span></label>
+                        <%= f.telephone_field :phone, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.country", default: "Country") %> <span class="text-red-500">*</span></label>
+                        <%= f.country_select :country, { priority_countries: [current_settings.local_country], except: %w[IL IR CU RU KP], include_blank: t("common.select_country", default: "Select a country") }, { required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" } %>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.city", default: "City") %> <span class="text-red-500">*</span></label>
+                        <%= f.text_field :city, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.postal_code", default: "Postal Code") %></label>
+                        <%= f.text_field :postal_code, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.street_address", default: "Street Address") %> <span class="text-red-500">*</span></label>
+                        <%= f.text_field :street_address, required: true, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><%= t("addresses.building", default: "Building / Apt / Suite") %></label>
+                        <%= f.text_field :building, class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+                      </div>
+                      <div class="md:col-span-2 flex justify-end gap-3">
+                        <button type="button" @click="editingAddressId = null" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all duration-200">
+                          <%= t("common.cancel", default: "Cancel") %>
+                        </button>
+                        <%= f.submit t("addresses.update", default: "Update Address"), class: "inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#465FFF] hover:bg-[#3651E6] rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF] shadow-sm" %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div x-show="!showAddAddress" class="text-center py-12 border border-dashed border-gray-300 rounded-2xl bg-gray-50">
+              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <p class="text-lg font-semibold text-gray-900 mb-2"><%= t("addresses.empty", default: "No saved addresses") %></p>
+              <p class="text-gray-600 mb-6"><%= t("addresses.empty_cta", default: "Add an address for faster checkout") %></p>
+              <button @click="showAddAddress = true"
+                      class="inline-flex items-center gap-2 px-6 py-3 bg-[#465FFF] text-white rounded-lg font-medium hover:bg-[#3651E6] transition-all duration-200 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <%= t("addresses.add_first", default: "Add Your First Address") %>
+              </button>
             </div>
           <% end %>
         </div>
@@ -165,21 +342,22 @@
             <h2 class="text-2xl font-bold text-gray-900"><%= t("profile.security", default: "Password & Security") %></h2>
             <p class="text-gray-600 text-sm"><%= t("profile.security_sub", default: "Update your password to keep your account safe") %></p>
           </div>
-          <%= form_with model: current_user, url: user_registration_path(locale: I18n.locale), method: :put, local: true, class: "space-y-4 max-w-xl" do |f| %>
+          <%= form_with model: current_user, url: user_registration_path(locale: I18n.locale), method: :put, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-6" do |f| %>
             <div>
-              <%= f.label :current_password, t("devise.current_password", default: "Current password"), class: "text-sm text-gray-600" %>
-              <%= f.password_field :current_password, autocomplete: "current-password", class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :current_password, t("devise.current_password", default: "Current password"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.password_field :current_password, autocomplete: "current-password", class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
+            </div>
+            <div class="hidden md:block"></div>
+            <div>
+              <%= f.label :password, t("devise.password", default: "New password"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.password_field :password, autocomplete: "new-password", class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
             <div>
-              <%= f.label :password, t("devise.password", default: "New password"), class: "text-sm text-gray-600" %>
-              <%= f.password_field :password, autocomplete: "new-password", class: "mt-1 w-full rounded-lg border-gray-300" %>
+              <%= f.label :password_confirmation, t("devise.password_confirmation", default: "Confirm new password"), class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
             </div>
-            <div>
-              <%= f.label :password_confirmation, t("devise.password_confirmation", default: "Confirm new password"), class: "text-sm text-gray-600" %>
-              <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "mt-1 w-full rounded-lg border-gray-300" %>
-            </div>
-            <div class="flex justify-end">
-              <%= f.submit t("profile.update_password", default: "Update Password"), class: "px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black" %>
+            <div class="md:col-span-2 flex justify-end">
+              <%= f.submit t("profile.update_password", default: "Update Password"), class: "inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#465FFF] hover:bg-[#3651E6] rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF] shadow-sm" %>
             </div>
           <% end %>
         </div>
