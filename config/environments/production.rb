@@ -25,13 +25,13 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = false
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = false
+  config.force_ssl = true
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Skip http-to-https redirect for the health check endpoint (Render uses this)
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -57,10 +57,10 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "161.97.162.62", port: 8000, protocol: 'http' }
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "venejewelry.com"), protocol: 'https' }
 
   # Set default URL options for all controllers
-  config.action_controller.default_url_options = { host: "161.97.162.62", port: 8000, protocol: 'http' }
+  config.action_controller.default_url_options = { host: ENV.fetch("APP_HOST", "venejewelry.com"), protocol: 'https' }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
   # config.action_mailer.smtp_settings = {
@@ -85,7 +85,11 @@ Rails.application.configure do
   config.hosts = [
     "161.97.162.62",           # Allow requests from IP
     /161\.97\.162\.62/,        # Allow requests with IP and any port
-    "localhost"                # Allow localhost
+    "localhost",               # Allow localhost
+    "vene-web.onrender.com",   # Render deployment
+    ".onrender.com",           # Any Render subdomain
+    "venejewelry.com",         # Main domain
+    "www.venejewelry.com"      # WWW subdomain
   ]
 
   # Allow requests from port 8000 (nginx proxy)
