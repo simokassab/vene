@@ -1,23 +1,8 @@
 <% content_for :title, "#{t('nav.login')} - VENE Jewelry" %>
+<% content_for :main_class, "bg-gradient-to-br from-white via-gray-50 to-gray-100" %>
 
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full space-y-8" x-data="{ showPassword: false }">
-    <!-- Logo & Header -->
-    <div class="text-center">
-      <div class="flex justify-center">
-        <%= link_to root_path(locale: I18n.locale) do %>
-          <%= image_tag "logo.jpg", alt: "VENE Jewelry", class: "h-20 w-auto object-contain" %>
-        <% end %>
-      </div>
-      <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
-        <%= t("nav.login") %>
-      </h2>
-      <p class="mt-2 text-sm text-gray-600">
-        Or
-        <%= link_to t("nav.register"), new_user_registration_path(locale: I18n.locale), class: "font-medium text-gray-900 hover:text-gray-700 underline" %>
-      </p>
-    </div>
-
     <!-- Login Form -->
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "mt-8 space-y-6" }) do |f| %>
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 space-y-6">
@@ -75,7 +60,7 @@
             <div class="w-full border-t border-gray-300"></div>
           </div>
           <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500">New to VENE?</span>
+            <span class="px-2 bg-white text-gray-500"><%= t("auth.new_to_vene") %></span>
           </div>
         </div>
 
@@ -91,10 +76,10 @@
     <!-- Footer -->
     <div class="text-center">
       <p class="text-xs text-gray-500">
-        By signing in, you agree to our
-        <%= link_to "Terms", page_path("terms-and-conditions", locale: I18n.locale), class: "underline hover:text-gray-700" %>
-        and
-        <%= link_to "Privacy Policy", page_path("privacy-policy", locale: I18n.locale), class: "underline hover:text-gray-700" %>
+        <%= t("auth.agree_signin") %>
+        <%= link_to t("auth.terms"), page_path("terms-and-conditions", locale: I18n.locale), class: "underline hover:text-gray-700" %>
+        <%= t("auth.and") %>
+        <%= link_to t("auth.privacy_policy"), page_path("privacy-policy", locale: I18n.locale), class: "underline hover:text-gray-700" %>
       </p>
     </div>
   </div>

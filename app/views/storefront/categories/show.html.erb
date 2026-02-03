@@ -47,8 +47,8 @@
   </section>
 
   <!-- Filters & Sort Bar -->
-  <section class="sticky top-20 z-20 bg-white border-b shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  <section class="sticky top-20 z-20 bg-white border-b border-gray-300 shadow-sm">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <!-- Left: Results Count + Mobile Filter Toggle -->
         <div class="flex items-center gap-4">
@@ -57,13 +57,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
-            Filter
+            <%= t("common.filter") %>
           </button>
           <h2 class="text-lg font-semibold text-gray-900">
             <%= @products.count %> <%= t("common.products", default: "Products") %>
             <% if @selected_subcategory %>
               <span class="text-sm font-normal text-gray-600">
-                in <%= @selected_subcategory.name(I18n.locale) %>
+                <%= t("common.in_category", name: @selected_subcategory.name(I18n.locale)) %>
               </span>
             <% end %>
           </h2>
@@ -113,7 +113,7 @@
 
   <!-- Products Section with Sidebar -->
   <section class="py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex gap-8">
 
         <!-- Sidebar Filter (Desktop) -->
@@ -156,7 +156,7 @@
              @click="filterOpen = false">
           <div @click.stop class="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-lg font-semibold text-gray-900">Subcategories</h3>
+              <h3 class="text-lg font-semibold text-gray-900"><%= t("common.subcategories", default: "Subcategories") %></h3>
               <button @click="filterOpen = false" class="text-gray-400 hover:text-gray-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -166,7 +166,7 @@
             <div class="space-y-2">
               <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort),
                 class: "flex items-center justify-between px-3 py-2 rounded-lg #{params[:subcategory].blank? ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}" do %>
-                <span class="text-sm font-medium">All Products</span>
+                <span class="text-sm font-medium"><%= t("common.all_products", default: "All Products") %></span>
                 <span class="text-xs"><%= @category.products.active.count %></span>
               <% end %>
 
@@ -319,16 +319,20 @@
                     <div class="flex items-center gap-3">
                       <%= render "shared/wishlist_button", product: product %>
                       <%= link_to product_path(product.slug, locale: I18n.locale),
-                        class: "px-6 py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-full hover:bg-gray-900 hover:text-white transition-all duration-300" do %>
-                        <%= t("common.view_details", default: "View Details") %>
+                        class: "group flex items-center gap-2 px-4 py-2 border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300" do %>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span class="text-sm font-medium"><%= t("common.view_details", default: "View Details") %></span>
                       <% end %>
                       <%= button_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
                         method: :post,
-                        class: "px-6 py-3 bg-gray-900 text-white font-semibold rounded-full hover:bg-[black] transition-all duration-300 flex items-center gap-2" do %>
+                        class: "group flex items-center gap-2 px-4 py-2 border-2 border-gray-900 bg-gray-900 text-white hover:bg-[black] rounded-lg transition-all duration-300" do %>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
-                        <%= t("products.add_to_cart", default: "Add to Cart") %>
+                        <span class="text-sm font-medium"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
                       <% end %>
                     </div>
                   </div>

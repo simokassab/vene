@@ -34,7 +34,7 @@
       </h1>
       <p class="text-gray-600">
         <% if @cart.items.any? %>
-          <%= @cart.items.count %> <%= t("cart.items_count", default: "items") %> in your cart
+          <%= @cart.items.count %> <%= t("cart.items_count") %> <%= t("cart.in_cart") %>
         <% else %>
           <%= t("cart.empty_subtitle", default: "Your cart is currently empty") %>
         <% end %>
@@ -132,7 +132,7 @@
                         <%= number_to_currency(item.line_total, unit: current_settings.default_currency) %>
                       </div>
                       <div class="text-sm text-gray-500">
-                        <%= number_to_currency(item.product.price, unit: current_settings.default_currency) %> each
+                        <%= number_to_currency(item.product.price, unit: current_settings.default_currency) %> <%= t("cart.each") %>
                       </div>
                     </div>
                   </div>
@@ -239,7 +239,7 @@
               <div class="flex justify-between text-gray-600">
                 <span class="flex items-center gap-2">
                   <%= t("orders.shipping", default: "Shipping") %>
-                  <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">DHL Express</span>
+                  <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"><%= t("products.shipping_title") %></span>
                 </span>
                 <span class="font-semibold text-gray-500 text-sm">
                   <%= t("checkout.calculated_at_checkout", default: "Calculated at checkout") %>
