@@ -103,7 +103,7 @@
                 </span>
               <% end %>
             <% end %>
-            <div class="hidden md:flex items-center text-sm gap-1">
+            <div class="flex items-center text-sm gap-1">
               <%= link_to "EN", url_for(locale: :en), class: "#{I18n.locale == :en ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>
               <span class="text-gray-500">/</span>
               <%= link_to "AR", url_for(locale: :ar), class: "#{I18n.locale == :ar ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>
@@ -238,6 +238,11 @@
                 </span>
               <% end %>
             <% end %>
+          </div>
+          <div class="flex items-center gap-3 pt-2 border-t border-gray-700">
+            <%= link_to "English", url_for(locale: :en), class: "py-2 text-sm #{I18n.locale == :en ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>
+            <span class="text-gray-500">|</span>
+            <%= link_to "العربية", url_for(locale: :ar), class: "py-2 text-sm #{I18n.locale == :ar ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>
           </div>
         </div>
       </div>

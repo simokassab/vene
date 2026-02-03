@@ -342,6 +342,12 @@ ar:
     required: "مطلوب"
     select_option: "اختر"
     please_select: "الرجاء اختيار %{option} للمتابعة"
+  storefront:
+    home:
+      top_product: "أفضل المنتجات"
+      new_arrivals: "وصل حديثاً"
+      featured_products: "منتجات مميزة"
+      must_have: "لا غنى عنها"
   common:
     yes: "نعم"
     no: "لا"
@@ -352,6 +358,10 @@ ar:
     close: "إغلاق"
     cancel: "إلغاء"
     filter: "تصفية"
+    shop_now: "تسوق الآن"
+    view_all: "عرض الكل"
+    sale_up_to: "خصم يصل إلى"
+    "off": "تخفيض"
     in_category: "في %{name}"
     prices_include_tax: "الأسعار تشمل جميع الضرائب المطبقة"
     select_country: "اختر الدولة"

@@ -342,6 +342,12 @@ en:
     required: "Required"
     select_option: "Select Option"
     please_select: "Please select %{option} to continue"
+  storefront:
+    home:
+      top_product: "Top Product"
+      new_arrivals: "New Arrivals"
+      featured_products: "Featured Products"
+      must_have: "Must Have"
   common:
     yes: "Yes"
     no: "No"
@@ -352,6 +358,10 @@ en:
     close: "Close"
     cancel: "Cancel"
     filter: "Filter"
+    shop_now: "Shop Now"
+    view_all: "View All"
+    sale_up_to: "SALE UP TO"
+    "off": "OFF"
     in_category: "in %{name}"
     prices_include_tax: "Prices include all applicable taxes"
     select_country: "Select a country"
