@@ -29,5 +29,10 @@ module VeneJewelry
     config.i18n.fallbacks = true
 
     config.active_job.queue_adapter = :sidekiq
+
+    # Serve uploads from persistent disk on Render
+    if ENV["RENDER"].present?
+      config.middleware.use ActionDispatch::Static, "/var/data", headers: { "cache-control" => "public, max-age=#{1.year.to_i}" }
+    end
   end
 end
