@@ -89,6 +89,7 @@ ar:
     pay: "ادفع الآن"
     calculated_at_checkout: "يحسب عند الدفع"
     shipping_calculated_next: "يحسب الشحن عند الدفع"
+    at_checkout: "عند الدفع"
   orders:
     my_orders: "طلباتي"
     view: "عرض"

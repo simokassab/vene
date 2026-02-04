@@ -89,6 +89,7 @@ en:
     pay: "Pay Securely"
     calculated_at_checkout: "Calculated at checkout"
     shipping_calculated_next: "Shipping calculated at checkout"
+    at_checkout: "At checkout"
   orders:
     my_orders: "My Orders"
     view: "View"
