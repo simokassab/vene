@@ -65,14 +65,17 @@ module Montypay
       {
         number: @order.id.to_s,
         amount: format_amount(@order.total_amount),
-        currency: @settings.default_currency,
+        currency: @order.currency,
         description: "Order ##{@order.id} - VENE Jewelry"
       }
     end
 
     def format_amount(amount)
-      # USD is 2-exponent currency: XX.XX format
-      format("%.2f", amount)
+      if ExchangeRateService.three_decimal?(@order.currency)
+        format("%.3f", amount)
+      else
+        format("%.2f", amount)
+      end
     end
 
     def generate_hash

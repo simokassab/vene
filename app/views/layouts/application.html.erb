@@ -8,9 +8,14 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <%= favicon_link_tag "favicon.ico" %>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="<%= content_for(:title) || "VENÈ Jewelry" %>">
+    <meta property="og:description" content="<%= content_for(:og_description) || t("brand.tagline") %>">
+    <meta property="og:image" content="<%= content_for(:og_image) || image_url("logo.jpg") %>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="VENÈ Jewelry">
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -103,6 +108,27 @@
                 </span>
               <% end %>
             <% end %>
+            <!-- Currency Selector -->
+            <div class="relative" x-data="{ currencyOpen: false }" @click.away="currencyOpen = false">
+              <button @click="currencyOpen = !currencyOpen" class="flex items-center gap-1 text-sm text-white hover:text-gray-300 transition-colors font-medium">
+                <span><%= visitor_flag %> <%= visitor_currency %></span>
+                <svg class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': currencyOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <div x-show="currencyOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-36 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 py-1" style="display: none;">
+                <% currency_options.each do |opt| %>
+                  <%= link_to url_for(set_currency: opt[:code]), class: "flex items-center gap-2 px-4 py-2 text-sm #{ visitor_currency == opt[:code] ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700 hover:bg-gray-50' }", data: { turbo: false } do %>
+                    <span><%= opt[:flag] %></span>
+                    <span><%= opt[:label] %></span>
+                    <% if visitor_currency == opt[:code] %>
+                      <svg class="w-4 h-4 ml-auto text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+            <span class="text-gray-600">|</span>
             <div class="flex items-center text-sm gap-1">
               <%= link_to "EN", url_for(locale: :en), class: "#{I18n.locale == :en ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>
               <span class="text-gray-500">/</span>
@@ -238,6 +264,17 @@
                 </span>
               <% end %>
             <% end %>
+          </div>
+          <!-- Mobile Currency Selector -->
+          <div class="pt-2 border-t border-gray-700">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2"><%= t("nav.currency", default: "Currency") %></div>
+            <div class="flex flex-wrap gap-2">
+              <% currency_options.each do |opt| %>
+                <%= link_to url_for(set_currency: opt[:code]), class: "px-3 py-1.5 rounded-full text-sm font-medium transition-colors #{ visitor_currency == opt[:code] ? 'bg-white text-gray-900' : 'text-gray-400 hover:text-white border border-gray-600' }", data: { turbo: false } do %>
+                  <%= opt[:flag] %> <%= opt[:label] %>
+                <% end %>
+              <% end %>
+            </div>
           </div>
           <div class="flex items-center gap-3 pt-2 border-t border-gray-700">
             <%= link_to "English", url_for(locale: :en), class: "py-2 text-sm #{I18n.locale == :en ? 'font-semibold text-white' : 'text-gray-400 hover:text-gray-300'} transition-colors" %>

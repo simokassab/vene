@@ -58,9 +58,9 @@
                   </h3>
                 <% end %>
                 <div class="text-lg font-bold text-gray-900">
-                  <%= number_to_currency(product.current_price, unit: current_settings.default_currency) %>
+                  <%= display_price(product.current_price) %>
                   <% if product.on_sale_with_price? %>
-                    <span class="text-sm text-gray-400 line-through ml-2"><%= number_to_currency(product.price, unit: current_settings.default_currency) %></span>
+                    <span class="text-sm text-gray-400 line-through ml-2"><%= display_price(product.price) %></span>
                   <% end %>
                 </div>
               </div>

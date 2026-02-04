@@ -10,6 +10,8 @@ en:
     register: "Register"
     my_account: "My Account"
     logout: "Logout"
+    currency: "Currency"
+    currency_toggle: "Switch currency"
   footer:
     legal: "Legal"
     contact: "Contact"

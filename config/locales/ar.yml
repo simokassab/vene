@@ -10,6 +10,8 @@ ar:
     register: "إنشاء حساب"
     my_account: "حسابي"
     logout: "تسجيل الخروج"
+    currency: "العملة"
+    currency_toggle: "تغيير العملة"
   footer:
     legal: "سياسة"
     contact: "تواصل"

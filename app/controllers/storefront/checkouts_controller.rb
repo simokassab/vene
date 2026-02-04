@@ -175,16 +175,30 @@ class Storefront::CheckoutsController < ApplicationController
     @order = current_user.orders.new(current_order_params)
     @order.status = "payment_pending"
 
-    # Read shipping rate from session (set during review step)
-    shipping_override = session[:dhl_shipping_rate].present? ? BigDecimal(session[:dhl_shipping_rate]) : nil
+    # Set currency and exchange rate from visitor session
+    @order.currency = visitor_currency
+    rate = ExchangeRateService.rate_for(visitor_currency)
+    @order.exchange_rate = rate
+
+    # Read shipping rate from session (set during review step) — DHL returns USD
+    precision = ExchangeRateService.three_decimal?(visitor_currency) ? 3 : 2
+    shipping_usd = session[:dhl_shipping_rate].present? ? BigDecimal(session[:dhl_shipping_rate]) : nil
+    # Always convert shipping to order currency (DHL rate or flat rate fallback)
+    if shipping_usd
+      shipping_override = (shipping_usd * rate).round(precision)
+    else
+      flat_rate = current_settings.shipping_flat_rate || 0
+      shipping_override = (flat_rate * rate).round(precision)
+    end
 
     ActiveRecord::Base.transaction do
       @cart.items.each do |item|
+        converted_price = (item.unit_price * rate).round(precision)
         @order.order_items.build(
           product: item.product,
           product_variant: item.product_variant,
           quantity: item.quantity,
-          unit_price: item.unit_price
+          unit_price: converted_price
         )
       end
 
@@ -199,6 +213,11 @@ class Storefront::CheckoutsController < ApplicationController
           validation = coupon.valid_for_use?(user: current_user, subtotal: @order.subtotal)
           if validation[:valid]
             discount = coupon.calculate_discount(@order.subtotal)
+            # For fixed amount coupons, convert the discount to the order's currency
+            if coupon.discount_type == "fixed" && rate != 1.0
+              converted_fixed = (coupon.discount_value * rate).round(precision)
+              discount = [converted_fixed, @order.subtotal].min
+            end
             @order.update!(
               coupon: coupon,
               coupon_code: coupon.code,

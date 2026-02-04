@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_27_105253) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_203437) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -128,6 +128,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_105253) do
     t.string "street_address"
     t.string "building"
     t.string "country_code", limit: 2
+    t.decimal "exchange_rate", precision: 12, scale: 6, default: "1.0", null: false
     t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"

@@ -42,6 +42,10 @@ gem "pagy", "~> 9.0"
 # Country select
 gem "country_select"
 
+# IP geolocation & currency
+gem "geocoder"
+gem "money-rails"
+
 # Mailer preview in development
 gem "letter_opener", group: :development
 

@@ -377,7 +377,7 @@
                     </div>
                     <div class="text-right">
                       <div class="font-semibold text-gray-900">
-                        <%= number_to_currency(item.line_total, unit: current_settings.default_currency) %>
+                        <%= display_price(item.line_total) %>
                       </div>
                     </div>
                   </div>
@@ -389,7 +389,7 @@
                 <div class="flex justify-between text-gray-600">
                   <span><%= t("orders.subtotal", default: "Subtotal") %></span>
                   <span class="font-semibold text-gray-900">
-                    <%= number_to_currency(@cart.subtotal, unit: current_settings.default_currency) %>
+                    <%= display_price(@cart.subtotal) %>
                   </span>
                 </div>
 
@@ -411,7 +411,7 @@
                       <span class="text-xs font-mono font-bold"><%= @cart.coupon&.code %></span>
                     </span>
                     <span class="font-semibold">
-                      -<%= number_to_currency(@cart.discount_amount, unit: current_settings.default_currency) %>
+                      -<%= display_price(@cart.discount_amount) %>
                     </span>
                   </div>
                 <% end %>
@@ -423,7 +423,7 @@
                   <span class="text-lg font-semibold text-gray-900"><%= t("orders.subtotal", default: "Subtotal") %></span>
                   <div class="text-right">
                     <div class="text-3xl font-bold text-gray-700">
-                      <%= number_to_currency(@cart.total_after_discount, unit: current_settings.default_currency) %>
+                      <%= display_price(@cart.total_after_discount) %>
                     </div>
                     <div class="text-sm text-gray-500">
                       <%= t("checkout.shipping_added_next", default: "Shipping added in next step") %>

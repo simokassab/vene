@@ -238,7 +238,7 @@
 
                   <div class="flex items-center justify-between mt-4">
                     <span class="text-2xl font-bold text-[black]">
-                      <%= number_to_currency(product.price, unit: current_settings.default_currency) %>
+                      <%= display_price(product.price) %>
                     </span>
                     <%= button_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
                       method: :post,
@@ -314,7 +314,7 @@
 
                   <div class="flex items-center justify-between">
                     <span class="text-3xl font-bold text-[black]">
-                      <%= number_to_currency(product.price, unit: current_settings.default_currency) %>
+                      <%= display_price(product.price) %>
                     </span>
                     <div class="flex items-center gap-3">
                       <%= render "shared/wishlist_button", product: product %>

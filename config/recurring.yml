@@ -1,0 +1,3 @@
+refresh_exchange_rates:
+  class: RefreshExchangeRatesJob
+  schedule: every 6 hours

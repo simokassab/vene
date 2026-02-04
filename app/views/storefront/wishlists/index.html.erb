@@ -133,11 +133,11 @@
               <!-- Price -->
               <div class="flex items-baseline gap-2 mb-4">
                 <span class="text-xl font-bold text-gray-900">
-                  <%= number_to_currency(item.current_price, unit: current_settings.default_currency) %>
+                  <%= display_price(item.current_price) %>
                 </span>
                 <% if item.price_dropped? %>
                   <span class="text-sm text-gray-400 line-through">
-                    <%= number_to_currency(item.price_when_added, unit: current_settings.default_currency) %>
+                    <%= display_price(item.price_when_added) %>
                   </span>
                 <% end %>
               </div>

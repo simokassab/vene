@@ -187,7 +187,10 @@ class InvoiceGenerator
   private
 
   def as_currency(amount)
-    ActionController::Base.helpers.number_to_currency(amount, unit: current_settings.default_currency)
+    currency = @order.currency.presence || "USD"
+    symbol = ExchangeRateService.symbol_for(currency)
+    precision = ExchangeRateService.three_decimal?(currency) ? 3 : 2
+    ActionController::Base.helpers.number_to_currency(amount, unit: symbol, precision: precision)
   end
 
   def current_settings
