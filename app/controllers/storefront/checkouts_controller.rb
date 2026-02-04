@@ -163,6 +163,20 @@ class Storefront::CheckoutsController < ApplicationController
     @cart = Cart.new(session)
     return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
 
+    # Fraud detection - check velocity limits and risk score
+    fraud_result = FraudDetectionService.analyze(
+      user: current_user,
+      ip_address: request.remote_ip,
+      user_agent: request.user_agent,
+      order_total: @cart.subtotal
+    )
+
+    unless fraud_result.allowed
+      Rails.logger.warn("[Checkout] Blocked by fraud detection: user_id=#{current_user.id} score=#{fraud_result.risk_score}")
+      return redirect_to cart_path(locale: I18n.locale),
+                        alert: t("checkout.order_blocked", default: "Unable to process order. Please contact support.")
+    end
+
     # Read params from session (set during review step) or fall back to direct params
     saved_params = session[:checkout_params]
     permitted_keys = %i[name email phone country country_code city postal_code street_address building address_id]
@@ -174,6 +188,8 @@ class Storefront::CheckoutsController < ApplicationController
 
     @order = current_user.orders.new(current_order_params)
     @order.status = "payment_pending"
+    @order.ip_address = request.remote_ip
+    @order.user_agent = request.user_agent&.truncate(500)
 
     # Set currency and exchange rate from visitor session
     @order.currency = visitor_currency

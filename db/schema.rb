@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_203437) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_223239) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -129,10 +129,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_203437) do
     t.string "building"
     t.string "country_code", limit: 2
     t.decimal "exchange_rate", precision: 12, scale: 6, default: "1.0", null: false
+    t.string "ip_address"
+    t.string "user_agent"
     t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
     t.index ["dhl_tracking_id"], name: "index_orders_on_dhl_tracking_id"
+    t.index ["ip_address"], name: "index_orders_on_ip_address"
     t.index ["payment_status"], name: "index_orders_on_payment_status"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
@@ -148,6 +151,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_203437) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_pages_on_slug", unique: true
+  end
+
+  create_table "processed_webhooks", force: :cascade do |t|
+    t.string "webhook_id", null: false
+    t.string "webhook_type", null: false
+    t.string "order_id"
+    t.jsonb "payload", default: {}
+    t.datetime "processed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_processed_webhooks_on_order_id"
+    t.index ["webhook_id", "webhook_type"], name: "index_processed_webhooks_on_webhook_id_and_webhook_type", unique: true
   end
 
   create_table "product_images", force: :cascade do |t|
@@ -281,8 +296,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_203437) do
     t.string "default_address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.string "unlock_token"
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
   create_table "variant_options", force: :cascade do |t|

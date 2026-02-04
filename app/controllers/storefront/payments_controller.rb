@@ -32,10 +32,31 @@ class Storefront::PaymentsController < ApplicationController
       return head :unauthorized
     end
 
+    # Idempotency check - skip if already processed
+    webhook_id = webhook_params[:id]
+    if ProcessedWebhook.processed?(webhook_id, webhook_type: "montypay")
+      Rails.logger.info("MontyPay webhook already processed: #{webhook_id}")
+      return head :ok
+    end
+
     order = Order.find_by(id: webhook_params[:order_number])
     unless order
       Rails.logger.warn("MontyPay webhook: order not found - #{webhook_params[:order_number]}")
       return head :not_found
+    end
+
+    # Record webhook before processing (race condition safe)
+    recorded = ProcessedWebhook.record!(
+      webhook_id,
+      webhook_type: "montypay",
+      order_id: order.id.to_s,
+      payload: webhook_params.to_h
+    )
+
+    # If another process beat us to it, skip processing
+    unless recorded
+      Rails.logger.info("MontyPay webhook concurrently processed: #{webhook_id}")
+      return head :ok
     end
 
     process_webhook(order)

@@ -22,6 +22,9 @@ gem "jbuilder"
 # Auth
 gem "devise"
 
+# Rate limiting & throttling
+gem "rack-attack"
+
 # File uploads
 gem "carrierwave", "~> 3.0"
 gem "mini_magick"
