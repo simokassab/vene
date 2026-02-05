@@ -70,9 +70,9 @@
         </div>
 
         <!-- Right: View & Sort Options -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 sm:gap-4">
           <!-- View Mode Toggle -->
-          <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <div class="hidden sm:flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button @click="viewMode = 'grid'"
                     :class="viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-600'"
                     class="px-3 py-2 rounded transition-all duration-200">
@@ -98,7 +98,7 @@
                 t("common.sort_price_high", default: "Price: High to Low") => "price_high",
                 t("common.sort_newest", default: "Newest") => "newest"
               }, @sort),
-              class: "appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm font-medium focus:ring-2 focus:ring-[black] focus:border-[black] cursor-pointer",
+              class: "appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm font-medium focus:ring-2 focus:ring-[black] focus:border-[black] cursor-pointer",
               onchange: "this.form.submit()" %>
             <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
               <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,9 +266,9 @@
           <% @products.each_with_index do |product, index| %>
             <div class="bg-white rounded-md shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 animate-fade-in"
                  style="animation-delay: <%= index * 50 %>ms;">
-              <div class="flex flex-col md:flex-row">
+              <div class="flex flex-col sm:flex-row">
                 <!-- Product Image -->
-                <div class="md:w-80 aspect-square overflow-hidden bg-gray-100">
+                <div class="w-full sm:w-48 md:w-64 lg:w-80 aspect-square sm:aspect-auto sm:min-h-48 overflow-hidden bg-gray-100 flex-shrink-0">
                   <% if product.primary_image&.image&.url %>
                     <%= link_to product_path(product.slug, locale: I18n.locale) do %>
                       <%= image_tag product.primary_image.image.url,
@@ -284,55 +284,55 @@
                 </div>
 
                 <!-- Product Details -->
-                <div class="flex-1 p-8 flex flex-col justify-between">
+                <div class="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between">
                   <div>
                     <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                      <h3 class="text-2xl font-bold text-gray-900 mb-2 hover:text-[black] transition-colors">
+                      <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 hover:text-[black] transition-colors">
                         <%= product.name(I18n.locale) %>
                       </h3>
                     <% end %>
                     <% if product.respond_to?(:short_description) && product.short_description(I18n.locale).present? %>
-                      <p class="text-gray-600 mb-4 line-clamp-3">
+                      <p class="text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
                         <%= product.short_description(I18n.locale) %>
                       </p>
                     <% end %>
 
                     <!-- Specifications -->
-                    <div class="flex flex-wrap gap-3 mb-4">
+                    <div class="flex flex-wrap gap-2 sm:gap-3 mb-4">
                       <% if product.metal.present? %>
-                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                        <span class="px-2 sm:px-3 py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-700">
                           <%= product.metal %>
                         </span>
                       <% end %>
                       <% if product.diamonds.present? %>
-                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                        <span class="px-2 sm:px-3 py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-700">
                           <%= product.diamonds %>
                         </span>
                       <% end %>
                     </div>
                   </div>
 
-                  <div class="flex items-center justify-between">
-                    <span class="text-3xl font-bold text-[black]">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span class="text-2xl md:text-3xl font-bold text-[black]">
                       <%= display_price(product.price) %>
                     </span>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3">
                       <%= render "shared/wishlist_button", product: product %>
                       <%= link_to product_path(product.slug, locale: I18n.locale),
-                        class: "group flex items-center gap-2 px-4 py-2 border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300" do %>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class: "group flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300" do %>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                         </svg>
-                        <span class="text-sm font-medium"><%= t("common.view_details", default: "View Details") %></span>
+                        <span class="text-xs sm:text-sm font-medium"><%= t("common.view_details", default: "View Details") %></span>
                       <% end %>
                       <%= button_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
                         method: :post,
-                        class: "group flex items-center gap-2 px-4 py-2 border-2 border-gray-900 bg-gray-900 text-white hover:bg-[black] rounded-lg transition-all duration-300" do %>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class: "group flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-gray-900 bg-gray-900 text-white hover:bg-[black] rounded-lg transition-all duration-300" do %>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
-                        <span class="text-sm font-medium"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
+                        <span class="text-xs sm:text-sm font-medium"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
                       <% end %>
                     </div>
                   </div>
