@@ -134,8 +134,12 @@ class Storefront::CheckoutsController < ApplicationController
       address_id: @order.address_id
     }
 
-    # Calculate DHL shipping rate
-    @shipping_rate = fetch_dhl_shipping_rate(@order, @cart)
+    # Calculate DHL shipping rate (free shipping for product 157)
+    if @cart.items.all? { |item| item.product.id == 157 }
+      @shipping_rate = { amount: 0, estimated: false }
+    else
+      @shipping_rate = fetch_dhl_shipping_rate(@order, @cart)
+    end
     @shipping_estimated = @shipping_rate[:estimated]
     @shipping_amount = @shipping_rate[:amount]
 
@@ -187,6 +191,24 @@ class Storefront::CheckoutsController < ApplicationController
       Rails.logger.warn("[Checkout] Blocked by fraud detection: #{user_info} score=#{fraud_result.risk_score}")
       return redirect_to cart_path(locale: I18n.locale),
                         alert: t("checkout.order_blocked", default: "Unable to process order. Please contact support.")
+    end
+
+    # Reuse existing pending order to prevent duplicates on retry/back-button
+    if session[:pending_order_id].present?
+      existing = Order.find_by(id: session[:pending_order_id], status: "payment_pending")
+      if existing
+        result = Montypay::Client.new(existing).start_payment
+        if result.success?
+          return redirect_to result.redirect_url, allow_other_host: true
+        else
+          existing.update(payment_status: "failed")
+          session.delete(:pending_order_id)
+          return redirect_to order_path(existing, locale: I18n.locale),
+                            alert: t("payments.initialization_failed", error: result.error)
+        end
+      else
+        session.delete(:pending_order_id)
+      end
     end
 
     # Read params from session (set during review step) or fall back to direct params

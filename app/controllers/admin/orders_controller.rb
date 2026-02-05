@@ -1,5 +1,5 @@
 class Admin::OrdersController < Admin::BaseController
-  before_action :set_order, only: %i[show edit update destroy update_status update_payment_status create_shipment tracking]
+  before_action :set_order, only: %i[show edit update destroy update_status update_payment_status create_shipment tracking invoice]
 
   def index
     @orders = Order.includes(:user, order_items: :product).order(created_at: :desc)

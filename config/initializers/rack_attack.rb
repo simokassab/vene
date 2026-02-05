@@ -53,8 +53,8 @@ class Rack::Attack
     end
   end
 
-  # Checkout throttle - 10 per hour per IP
-  throttle("checkout/ip", limit: 10, period: 1.hour) do |req|
+  # Checkout throttle - 30 per hour per IP
+  throttle("checkout/ip", limit: 30, period: 1.hour) do |req|
     if req.path.match?(%r{/checkout}) && req.post?
       req.ip
     end

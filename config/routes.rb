@@ -39,6 +39,7 @@ Rails.application.routes.draw do
     end
     resource :checkout, only: [:show, :create], controller: "storefront/checkouts" do
       post :review
+      get :review, to: redirect { |_params, req| "/#{req.params[:locale] || 'en'}/checkout" }
       post :validate_city
     end
     resources :orders, only: [:index, :show], controller: "storefront/orders" do
