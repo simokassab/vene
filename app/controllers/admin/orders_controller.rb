@@ -58,10 +58,15 @@ class Admin::OrdersController < Admin::BaseController
     if shipment.success?
       redirect_to admin_order_path(@order, locale: I18n.locale), notice: t("admin.orders.shipment_created", default: "DHL shipment created. Tracking: %{tracking}") % { tracking: shipment.tracking_number }
     else
+      Rails.logger.error("[DHL Shipment] Failed for order ##{@order.id}: no tracking number returned")
       redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.shipment_failed", default: "Failed to create DHL shipment.")
     end
   rescue Dhl::Client::Error => e
+    Rails.logger.error("[DHL Shipment] Error for order ##{@order.id}: #{e.message}")
     redirect_to admin_order_path(@order, locale: I18n.locale), alert: t("admin.orders.shipment_error", default: "DHL Error: %{error}") % { error: e.message }
+  rescue StandardError => e
+    Rails.logger.error("[DHL Shipment] Unexpected error for order ##{@order.id}: #{e.class} - #{e.message}")
+    redirect_to admin_order_path(@order, locale: I18n.locale), alert: "DHL Error: #{e.message}"
   end
 
   def tracking
