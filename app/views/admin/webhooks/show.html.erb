@@ -1,0 +1,200 @@
+<% payload = @webhook.payload || {} %>
+<% status = payload["status"] || payload[:status] %>
+
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <%= link_to admin_webhooks_path(locale: I18n.locale), class: "inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors" do %>
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      <% end %>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.webhooks.details", default: "Webhook Details") %></h1>
+        <p class="text-sm text-gray-500 mt-1 font-mono"><%= @webhook.webhook_id %></p>
+      </div>
+    </div>
+    <% status_colors = {
+      "success" => "bg-green-100 text-green-800 border-green-200",
+      "fail" => "bg-red-100 text-red-800 border-red-200",
+      "waiting" => "bg-yellow-100 text-yellow-800 border-yellow-200"
+    } %>
+    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border <%= status_colors[status] || 'bg-gray-100 text-gray-800 border-gray-200' %>">
+      <%= status || "unknown" %>
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Info -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Overview Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.overview", default: "Overview") %></h2>
+        </div>
+        <div class="p-6">
+          <dl class="grid grid-cols-2 gap-6">
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.webhook_id", default: "Webhook ID") %></dt>
+              <dd class="mt-1 text-sm text-gray-900 font-mono break-all"><%= @webhook.webhook_id %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.type", default: "Type") %></dt>
+              <dd class="mt-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <%= @webhook.webhook_type %>
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.order", default: "Order") %></dt>
+              <dd class="mt-1 text-sm">
+                <% if @order %>
+                  <%= link_to "##{@order.id}", admin_order_path(@order, locale: I18n.locale), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+                <% elsif @webhook.order_id.present? %>
+                  <span class="text-gray-500">#<%= @webhook.order_id %> (not found)</span>
+                <% else %>
+                  <span class="text-gray-400">-</span>
+                <% end %>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.received_at", default: "Received") %></dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @webhook.processed_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Payment Details Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.payment_details", default: "Payment Details") %></h2>
+        </div>
+        <div class="p-6">
+          <dl class="grid grid-cols-2 gap-6">
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.amount", default: "Amount") %></dt>
+              <dd class="mt-1 text-lg font-semibold text-gray-900">
+                <%= payload["order_amount"] || payload[:order_amount] || "-" %>
+                <span class="text-sm font-normal text-gray-500"><%= payload["order_currency"] || payload[:order_currency] %></span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.payment_status", default: "Payment Status") %></dt>
+              <dd class="mt-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= status_colors[status] || 'bg-gray-100 text-gray-800' %>">
+                  <%= status || "unknown" %>
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.card", default: "Card") %></dt>
+              <dd class="mt-1 text-sm text-gray-900 font-mono"><%= payload["card"] || payload[:card] || "-" %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.transaction_date", default: "Transaction Date") %></dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= payload["date"] || payload[:date] || "-" %></dd>
+            </div>
+            <% if (payload["reason"] || payload[:reason]).present? %>
+              <div class="col-span-2">
+                <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.reason", default: "Reason") %></dt>
+                <dd class="mt-1 text-sm text-red-600"><%= payload["reason"] || payload[:reason] %></dd>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Customer Info Card -->
+      <% if (payload["customer_name"] || payload[:customer_name] || payload["customer_email"] || payload[:customer_email]).present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.customer_info", default: "Customer Info") %></h2>
+          </div>
+          <div class="p-6">
+            <dl class="grid grid-cols-2 gap-6">
+              <div>
+                <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.customer_name", default: "Name") %></dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= payload["customer_name"] || payload[:customer_name] || "-" %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500"><%= t("admin.webhooks.customer_email", default: "Email") %></dt>
+                <dd class="mt-1 text-sm text-gray-900"><%= payload["customer_email"] || payload[:customer_email] || "-" %></dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Raw Payload Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.raw_payload", default: "Raw Payload") %></h2>
+          <button onclick="copyPayload()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <%= t("admin.webhooks.copy", default: "Copy") %>
+          </button>
+        </div>
+        <div class="p-6">
+          <pre id="payload-json" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm font-mono"><%= JSON.pretty_generate(payload) %></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.quick_actions", default: "Quick Actions") %></h2>
+        </div>
+        <div class="p-4 space-y-3">
+          <% if @order %>
+            <%= link_to admin_order_path(@order, locale: I18n.locale), class: "flex items-center w-full px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors" do %>
+              <svg class="w-5 h-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+              </svg>
+              <span class="text-sm font-medium text-gray-700"><%= t("admin.webhooks.view_order", default: "View Order") %></span>
+            <% end %>
+          <% end %>
+          <%= link_to admin_webhooks_path(locale: I18n.locale), class: "flex items-center w-full px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors" do %>
+            <svg class="w-5 h-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span class="text-sm font-medium text-gray-700"><%= t("admin.webhooks.all_webhooks", default: "All Webhooks") %></span>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Timestamps -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 class="text-lg font-semibold text-gray-900"><%= t("admin.webhooks.timestamps", default: "Timestamps") %></h2>
+        </div>
+        <div class="p-4 space-y-4">
+          <div>
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t("admin.webhooks.processed_at", default: "Processed At") %></dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @webhook.processed_at.strftime("%Y-%m-%d %H:%M:%S") %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t("admin.webhooks.created_at", default: "Created At") %></dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @webhook.created_at.strftime("%Y-%m-%d %H:%M:%S") %></dd>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyPayload() {
+  const payload = document.getElementById('payload-json').textContent;
+  navigator.clipboard.writeText(payload).then(() => {
+    alert('<%= t("admin.webhooks.copied", default: "Payload copied to clipboard!") %>');
+  });
+}
+</script>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_223239) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_05_110643) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,7 +98,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_223239) do
   end
 
   create_table "orders", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.string "name", null: false
     t.string "email", null: false
     t.string "phone", null: false
@@ -131,11 +131,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_223239) do
     t.decimal "exchange_rate", precision: 12, scale: 6, default: "1.0", null: false
     t.string "ip_address"
     t.string "user_agent"
+    t.boolean "is_guest", default: false, null: false
     t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
     t.index ["dhl_tracking_id"], name: "index_orders_on_dhl_tracking_id"
+    t.index ["email"], name: "index_orders_on_email"
     t.index ["ip_address"], name: "index_orders_on_ip_address"
+    t.index ["is_guest"], name: "index_orders_on_is_guest"
     t.index ["payment_status"], name: "index_orders_on_payment_status"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["user_id"], name: "index_orders_on_user_id"

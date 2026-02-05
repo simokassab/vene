@@ -1,33 +1,41 @@
 class Storefront::CheckoutsController < ApplicationController
-  before_action :authenticate_user!
+  before_action :ensure_cart_not_empty, only: [:show, :review, :create]
 
   def show
     @cart = Cart.new(session)
-    @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
     @no_postal_countries = countries_without_postal_codes
-    default_addr = current_user.default_address_record
+    @is_guest = !user_signed_in?
 
-    if default_addr
-      @order = Order.new(
-        name: default_addr.name,
-        email: current_user.email,
-        phone: default_addr.phone,
-        country: default_addr.country,
-        country_code: default_addr.country_code,
-        city: default_addr.city,
-        postal_code: default_addr.postal_code,
-        street_address: default_addr.street_address,
-        building: default_addr.building
-      )
+    if user_signed_in?
+      @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
+      default_addr = current_user.default_address_record
+
+      if default_addr
+        @order = Order.new(
+          name: default_addr.name,
+          email: current_user.email,
+          phone: default_addr.phone,
+          country: default_addr.country,
+          country_code: default_addr.country_code,
+          city: default_addr.city,
+          postal_code: default_addr.postal_code,
+          street_address: default_addr.street_address,
+          building: default_addr.building
+        )
+      else
+        @order = Order.new(
+          name: current_user.name,
+          email: current_user.email,
+          phone: current_user.phone,
+          country: current_user.default_country,
+          city: current_user.default_city,
+          street_address: current_user.default_address
+        )
+      end
     else
-      @order = Order.new(
-        name: current_user.name,
-        email: current_user.email,
-        phone: current_user.phone,
-        country: current_user.default_country,
-        city: current_user.default_city,
-        street_address: current_user.default_address
-      )
+      # Guest checkout - empty form
+      @addresses = []
+      @order = Order.new
     end
   end
 
@@ -35,9 +43,9 @@ class Storefront::CheckoutsController < ApplicationController
     @cart = Cart.new(session)
     return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
 
-    @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
+    @is_guest = !user_signed_in?
 
-    if params[:address_id].present?
+    if user_signed_in? && params[:address_id].present?
       # User selected a saved address
       address = current_user.addresses.find(params[:address_id])
       @order = Order.new(
@@ -53,12 +61,12 @@ class Storefront::CheckoutsController < ApplicationController
         address_id: address.id
       )
     else
-      # New address entered
+      # New address entered (both guest and authenticated)
       @order = Order.new(order_params)
       @order.country_code = Dhl::Address.country_code_for(@order.country) if @order.country.present? && @order.country_code.blank?
 
-      # Save address if requested
-      if params[:save_address] == "1" && @order.street_address.present?
+      # Save address if requested (only for authenticated users)
+      if user_signed_in? && params[:save_address] == "1" && @order.street_address.present?
         addr = current_user.addresses.build(
           label: params[:address_label],
           name: @order.name,
@@ -81,6 +89,8 @@ class Storefront::CheckoutsController < ApplicationController
     missing = required_fields.select { |f| @order.send(f).blank? }
     if missing.any?
       missing.each { |f| @order.errors.add(f, :blank) }
+      @addresses = user_signed_in? ? current_user.addresses.order(is_default: :desc, updated_at: :desc) : []
+      @no_postal_countries = countries_without_postal_codes
       render :show, status: :unprocessable_entity
       return
     end
@@ -100,6 +110,7 @@ class Storefront::CheckoutsController < ApplicationController
         end
       else
         @order.errors.add(:city, "is not recognized by DHL shipping. Please check the spelling.")
+        @addresses = user_signed_in? ? current_user.addresses.order(is_default: :desc, updated_at: :desc) : []
         @no_postal_countries = countries_without_postal_codes
         render :show, status: :unprocessable_entity
         return
@@ -163,16 +174,17 @@ class Storefront::CheckoutsController < ApplicationController
     @cart = Cart.new(session)
     return redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty") if @cart.items.empty?
 
-    # Fraud detection - check velocity limits and risk score
+    # Fraud detection - works for both guest and authenticated
     fraud_result = FraudDetectionService.analyze(
-      user: current_user,
+      user: current_user,  # Will be nil for guests
       ip_address: request.remote_ip,
       user_agent: request.user_agent,
       order_total: @cart.subtotal
     )
 
     unless fraud_result.allowed
-      Rails.logger.warn("[Checkout] Blocked by fraud detection: user_id=#{current_user.id} score=#{fraud_result.risk_score}")
+      user_info = user_signed_in? ? "user_id=#{current_user.id}" : "guest_email=#{session[:checkout_params]&.dig('email')}"
+      Rails.logger.warn("[Checkout] Blocked by fraud detection: #{user_info} score=#{fraud_result.risk_score}")
       return redirect_to cart_path(locale: I18n.locale),
                         alert: t("checkout.order_blocked", default: "Unable to process order. Please contact support.")
     end
@@ -186,7 +198,14 @@ class Storefront::CheckoutsController < ApplicationController
       order_params
     end
 
-    @order = current_user.orders.new(current_order_params)
+    # Build order - either for user or as guest
+    if user_signed_in?
+      @order = current_user.orders.new(current_order_params)
+    else
+      @order = Order.new(current_order_params)
+      @order.is_guest = true
+    end
+
     @order.status = "payment_pending"
     @order.ip_address = request.remote_ip
     @order.user_agent = request.user_agent&.truncate(500)
@@ -242,8 +261,10 @@ class Storefront::CheckoutsController < ApplicationController
             # Recalculate total with discount
             @order.update!(total_amount: @order.subtotal - discount + @order.shipping_amount)
 
-            # Create user coupon record and increment usage
-            UserCoupon.create!(user: current_user, coupon: coupon, order: @order)
+            # Only create UserCoupon for authenticated users
+            if user_signed_in?
+              UserCoupon.create!(user: current_user, coupon: coupon, order: @order)
+            end
             coupon.increment_usage!
           else
             # Coupon is no longer valid, remove from session
@@ -280,6 +301,13 @@ class Storefront::CheckoutsController < ApplicationController
   end
 
   private
+
+  def ensure_cart_not_empty
+    cart = Cart.new(session)
+    if cart.items.empty?
+      redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty")
+    end
+  end
 
   def order_params
     params.require(:order).permit(:name, :email, :phone, :country, :country_code, :city, :postal_code, :street_address, :building, :address_id)

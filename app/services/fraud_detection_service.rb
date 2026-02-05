@@ -28,8 +28,9 @@ class FraudDetectionService
 
   Result = Data.define(:allowed, :risk_score, :risk_level, :reasons)
 
+  # @param user [User, nil] The user placing the order (nil for guest checkout)
   def initialize(user:, ip_address:, user_agent: nil, order_total: 0)
-    @user = user
+    @user = user  # Can be nil for guests
     @ip_address = ip_address
     @user_agent = user_agent
     @order_total = order_total
@@ -69,6 +70,8 @@ class FraudDetectionService
   private
 
   def check_order_velocity_user
+    return if @user.nil?  # Skip for guests
+
     count = recent_orders_by_user(1.hour)
     if count >= VELOCITY_LIMITS[:orders_per_user_1h]
       add_risk(:high_order_velocity_user, "#{count} orders by user in last hour")
@@ -83,6 +86,8 @@ class FraudDetectionService
   end
 
   def check_daily_order_limit
+    return if @user.nil?  # Skip for guests
+
     count = recent_orders_by_user(24.hours)
     if count >= VELOCITY_LIMITS[:orders_per_user_24h]
       add_risk(:daily_order_limit_exceeded, "#{count} orders by user in last 24 hours")
@@ -90,6 +95,8 @@ class FraudDetectionService
   end
 
   def check_failed_payments_user
+    return if @user.nil?  # Skip for guests
+
     count = failed_payments_by_user(1.hour)
     if count >= VELOCITY_LIMITS[:failed_payments_user_1h]
       add_risk(:high_failed_payments_user, "#{count} failed payments by user in last hour")
@@ -111,6 +118,8 @@ class FraudDetectionService
   end
 
   def recent_orders_by_user(period)
+    return 0 if @user.nil?
+
     @user.orders
       .where(created_at: period.ago..)
       .where.not(status: "canceled")
@@ -127,6 +136,8 @@ class FraudDetectionService
   end
 
   def failed_payments_by_user(period)
+    return 0 if @user.nil?
+
     @user.orders
       .where(payment_status: "failed")
       .where(created_at: period.ago..)
@@ -143,6 +154,8 @@ class FraudDetectionService
   end
 
   def first_order?
+    return true if @user.nil?  # Guests are always "first order"
+
     @user.orders.where.not(status: "canceled").count.zero?
   end
 
@@ -163,7 +176,7 @@ class FraudDetectionService
 
   def log_analysis(risk_level, allowed)
     log_data = {
-      user_id: @user.id,
+      user_id: @user&.id,  # Safe navigation for nil
       ip_address: @ip_address,
       order_total: @order_total,
       risk_score: @risk_score,

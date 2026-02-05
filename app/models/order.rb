@@ -1,5 +1,5 @@
 class Order < ApplicationRecord
-  belongs_to :user
+  belongs_to :user, optional: true
   belongs_to :coupon, optional: true
   belongs_to :address, optional: true
   has_many :order_items, dependent: :destroy
@@ -12,6 +12,11 @@ class Order < ApplicationRecord
   validates :name, :email, :phone, :country, :city, :street_address, presence: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
+  validate :user_or_guest_required
+
+  # Scopes for guest vs registered orders
+  scope :guest, -> { where(is_guest: true) }
+  scope :registered, -> { where(is_guest: false) }
 
   before_validation :set_defaults
 
@@ -201,6 +206,12 @@ class Order < ApplicationRecord
   def populate_legacy_address
     if street_address.present? && read_attribute(:address).blank?
       write_attribute(:address, [street_address, building].compact_blank.join(", "))
+    end
+  end
+
+  def user_or_guest_required
+    if user_id.blank? && !is_guest?
+      errors.add(:base, "Order must belong to a user or be a guest order")
     end
   end
 end

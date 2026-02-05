@@ -47,6 +47,7 @@ Rails.application.routes.draw do
         patch :cancel
       end
     end
+    resource :guest_registration, only: [:new, :create], controller: "storefront/guest_registrations"
     resources :addresses, only: [:create, :update, :destroy], controller: "storefront/addresses" do
       member do
         patch :set_default
@@ -81,6 +82,7 @@ Rails.application.routes.draw do
       end
       resources :preorders, only: [:index]
       resources :wishlists, only: [:index]
+      resources :webhooks, only: [:index, :show]
       resource :setting, only: %i[show update]
       resources :pages
     end
