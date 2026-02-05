@@ -108,6 +108,7 @@ module Dhl
       when 401
         raise AuthenticationError, "Invalid DHL Express credentials - check API key and secret"
       when 400..499
+        Rails.logger.error("[DHL] Full error response (#{response.code}): #{response.body}")
         error_message = parse_error_message(response.body)
         raise RequestError, "Client error (#{response.code}): #{error_message}"
       when 500..599

@@ -99,11 +99,17 @@ module Dhl
         email: order.email
       )
 
+      dest_country = receiver_address.country_code
+      is_domestic = shipper_address.country_code == dest_country
+      # "N" = DHL Express Domestic, "P" = DHL Express Worldwide
+      product_code = is_domestic ? "N" : "P"
+
       request = new(
         content_description: "Jewelry Order ##{order.id}",
-        product_code: "P", # DHL Express Worldwide
+        product_code: product_code,
         declared_value: order.subtotal,
-        declared_value_currency: order.currency || "USD"
+        declared_value_currency: order.currency || "USD",
+        is_customs_declarable: !is_domestic
       )
 
       request.with_shipper(address: shipper_address, contact: shipper_contact)
@@ -114,19 +120,21 @@ module Dhl
       total_weight = [order.order_items.sum(:quantity) * 0.5, 0.5].max
       request.add_package(Package.new(weight: total_weight, length: 20, width: 15, height: 10))
 
-      # Build export declaration line items
-      order.order_items.includes(:product).each_with_index do |item, index|
-        product_name = item.product.name_en.presence || item.product.name_ar.presence || "Jewelry"
-        request.export_line_items << {
-          number: index + 1,
-          description: product_name.truncate(50),
-          price: item.unit_price.to_f,
-          quantity: { value: item.quantity, unitOfMeasurement: "PCS" },
-          weight: { netValue: (item.quantity * 0.5).round(2), grossValue: (item.quantity * 0.5).round(2) },
-          commodityCodes: [{ typeCode: "outbound", value: "711319" }], # HS code for jewelry
-          manufacturerCountry: shipper_address.country_code,
-          exportReasonType: "permanent"
-        }
+      # Build export declaration line items (only for international shipments)
+      unless is_domestic
+        order.order_items.includes(:product).each_with_index do |item, index|
+          product_name = item.product.name_en.presence || item.product.name_ar.presence || "Jewelry"
+          request.export_line_items << {
+            number: index + 1,
+            description: product_name.truncate(50),
+            price: item.unit_price.to_f,
+            quantity: { value: item.quantity, unitOfMeasurement: "PCS" },
+            weight: { netValue: (item.quantity * 0.5).round(2), grossValue: (item.quantity * 0.5).round(2) },
+            commodityCodes: [{ typeCode: "outbound", value: "711319" }], # HS code for jewelry
+            manufacturerCountry: shipper_address.country_code,
+            exportReasonType: "permanent"
+          }
+        end
       end
 
       request
