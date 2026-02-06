@@ -146,11 +146,11 @@
           <% (@category_products[category.id] || []).take(4).each do |product| %>
             <div class="group">
               <!-- Product Image -->
-              <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-sm">
+              <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-sm flex items-center justify-center">
                 <% if product.primary_image %>
-                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                  <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                     <%= image_tag product.primary_image.image.url,
-                      class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" %>
+                      class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
                   <% end %>
                 <% else %>
                   <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -196,11 +196,11 @@
           <% @featured_products.each_with_index do |product, index| %>
             <div class="group bg-white rounded-md overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
               <!-- Product Image with Badge -->
-              <div class="relative aspect-square bg-gray-50 overflow-hidden">
+              <div class="relative aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
                 <% if product.primary_image %>
-                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                  <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                     <%= image_tag product.primary_image.image.url,
-                      class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" %>
+                      class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
                   <% end %>
                 <% else %>
                   <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -264,11 +264,11 @@
             <% (@scrolling_featured_products.to_a * 3).each do |product| %>
               <div class="flex-none w-48 md:w-80 group">
                 <!-- Product Image -->
-                <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-md shadow-sm">
+                <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-md shadow-sm flex items-center justify-center">
                   <% if product.primary_image %>
-                    <%= link_to product_path(product.slug, locale: I18n.locale) do %>
+                    <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                       <%= image_tag product.primary_image.image.url,
-                        class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" %>
+                        class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
                     <% end %>
                   <% else %>
                     <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -311,16 +311,16 @@
           <div class="bg-white rounded-lg overflow-hidden shadow-lg">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
               <!-- Product Image -->
-              <div class="relative aspect-[4/3] md:aspect-square bg-gray-50 overflow-hidden">
+              <div class="relative aspect-[4/3] md:aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
                 <% if sale_product.on_sale && sale_product.sale_price.present? %>
                   <span class="absolute top-3 left-3 md:top-4 md:left-4 bg-gray-700 text-white text-[10px] md:text-xs font-medium px-2 py-1.5 md:px-3 md:py-2 rounded z-10">
                     <%= t("common.sale_up_to", default: "SALE UP TO") %> <%= number_to_percentage((sale_product.price - sale_product.sale_price) / sale_product.price * 100, precision: 0) %> <%= t("common.off", default: "OFF") %>
                   </span>
                 <% end %>
                 <% if sale_product.primary_image %>
-                  <%= link_to product_path(sale_product.slug, locale: I18n.locale) do %>
+                  <%= link_to product_path(sale_product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-4" do %>
                     <%= image_tag sale_product.primary_image.image.url,
-                      class: "w-full h-full object-cover hover:scale-110 transition-transform duration-700" %>
+                      class: "max-h-full w-full object-contain hover:scale-110 transition-transform duration-700" %>
                   <% end %>
                 <% else %>
                   <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
