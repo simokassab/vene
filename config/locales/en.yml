@@ -424,14 +424,27 @@ en:
   mailers:
     order_mailer:
       confirmation:
-        subject: "Your VENE Jewelry order %{id}"
+        subject: "Your VENÈ Jewelry Order #%{id}"
         greeting: "Hello %{name},"
-        body: "Thank you for your purchase. Your order %{id} totals %{total}."
+        body: "Thank you for your purchase. Your order #%{id} totals %{total}."
         preorder_notice: "Pre-Order Notice"
         ship_together: "Your order contains both in-stock and pre-order items. All items will be shipped together when pre-order items become available."
         thanks: "Thank you for your order!"
       admin_notification:
-        subject: "New order %{id} received"
+        subject: "New order #%{id} received"
+    wishlist_mailer:
+      back_in_stock:
+        subject: "Good news! %{product} is back in stock"
+        greeting: "Hi %{name},"
+        body: "Great news! An item from your wishlist is now back in stock."
+        cta: "Shop now before it sells out"
+      price_drop:
+        subject: "Price drop alert! %{product} is now %{percentage}% off"
+        greeting: "Hi %{name},"
+        body: "We thought you'd want to know - %{product} from your wishlist just dropped %{percentage}%% in price!"
+        cta: "Get it now at the new lower price"
+      common:
+        footer: "You received this email because you have this item in your wishlist at VENÈ Jewelry."
   wishlist:
     title: "My Wishlist"
     add: "Add to Wishlist"
@@ -453,20 +466,6 @@ en:
     new_price: "New Price"
     you_save: "You Save"
     login_required: "Login to add to wishlist"
-  mailers:
-    wishlist_mailer:
-      back_in_stock:
-        subject: "Good news! %{product} is back in stock"
-        greeting: "Hi %{name},"
-        body: "Great news! An item from your wishlist is now back in stock."
-        cta: "Shop now before it sells out"
-      price_drop:
-        subject: "Price drop alert! %{product} is now %{percentage}% off"
-        greeting: "Hi %{name},"
-        body: "We thought you'd want to know - %{product} from your wishlist just dropped %{percentage}%% in price!"
-        cta: "Get it now at the new lower price"
-      common:
-        footer: "You received this email because you have this item in your wishlist at VENE Jewelry."
   activerecord:
     attributes:
       user:

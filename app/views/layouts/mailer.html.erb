@@ -1,13 +1,66 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style>
-      /* Email styles need to be inline */
-    </style>
-  </head>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: Arial, Helvetica, sans-serif;">
+  <!-- Outer wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 30px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main container -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden;">
 
-  <body>
-    <%= yield %>
-  </body>
+          <!-- Header with logo -->
+          <tr>
+            <td style="background-color: #1a1a1a; padding: 30px; text-align: center;">
+              <% if attachments["logo.jpg"] %>
+                <%= image_tag attachments["logo.jpg"].url, alt: "VENÈ Jewelry", style: "width: 140px; height: auto;", width: "140" %>
+              <% else %>
+                <span style="color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: 2px;">VENÈ JEWELRY</span>
+              <% end %>
+            </td>
+          </tr>
+
+          <!-- Body content -->
+          <tr>
+            <td style="padding: 40px 40px 30px 40px;">
+              <%= yield %>
+            </td>
+          </tr>
+
+          <!-- Footer signature -->
+          <tr>
+            <td style="padding: 0 40px 30px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top: 1px solid #e4e4e7; padding-top: 25px;">
+                    <p style="margin: 0 0 6px 0; font-size: 14px; color: #333333; line-height: 1.6;">
+                      Thank you for choosing from our jewelry collection and stepping into the
+                      <strong>WORLD OF VEN&Egrave;</strong> &mdash; where every piece is crafted to mirror your grace,
+                      your story, and your timeless elegance.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer bar -->
+          <tr>
+            <td style="background-color: #1a1a1a; padding: 20px 40px; text-align: center;">
+              <p style="margin: 0 0 4px 0; color: #999999; font-size: 12px;">GOLDEN ARCH FOR COMMERCIAL</p>
+              <p style="margin: 0 0 4px 0; color: #999999; font-size: 11px;">+961 78729590 &nbsp;|&nbsp; 1100 Beirut, Lebanon</p>
+              <p style="margin: 0; color: #666666; font-size: 11px;">
+                <a href="https://venejewelry.com" style="color: #999999; text-decoration: none;">venejewelry.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>

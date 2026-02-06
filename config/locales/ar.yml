@@ -424,14 +424,27 @@ ar:
   mailers:
     order_mailer:
       confirmation:
-        subject: "طلبك %{id} من VENE"
+        subject: "طلبك #%{id} من VENÈ Jewelry"
         greeting: "مرحباً %{name}"
         body: "شكراً لطلبك. إجمالي الطلب %{total}."
         preorder_notice: "إشعار الطلب المسبق"
         ship_together: "يحتوي طلبك على عناصر متوفرة وعناصر طلب مسبق. سيتم شحن جميع العناصر معاً عندما تصبح عناصر الطلب المسبق متاحة."
         thanks: "شكراً لطلبك!"
       admin_notification:
-        subject: "تم استلام طلب %{id}"
+        subject: "تم استلام طلب #%{id}"
+    wishlist_mailer:
+      back_in_stock:
+        subject: "خبر سار! %{product} متوفر الآن"
+        greeting: "مرحباً %{name}،"
+        body: "أخبار رائعة! منتج من قائمة أمنياتك أصبح متوفراً الآن."
+        cta: "تسوق الآن قبل نفاد الكمية"
+      price_drop:
+        subject: "تنبيه انخفاض السعر! %{product} الآن بخصم %{percentage}%"
+        greeting: "مرحباً %{name}،"
+        body: "اعتقدنا أنك ستود معرفة ذلك - %{product} من قائمة أمنياتك انخفض سعره %{percentage}%%!"
+        cta: "احصل عليه الآن بالسعر الجديد المنخفض"
+      common:
+        footer: "تلقيت هذا البريد الإلكتروني لأن لديك هذا المنتج في قائمة أمنياتك في VENÈ Jewelry."
   wishlist:
     title: "قائمة الأمنيات"
     add: "أضف إلى قائمة الأمنيات"
@@ -453,20 +466,6 @@ ar:
     new_price: "السعر الجديد"
     you_save: "توفر"
     login_required: "سجل الدخول لإضافة إلى قائمة الأمنيات"
-  mailers:
-    wishlist_mailer:
-      back_in_stock:
-        subject: "خبر سار! %{product} متوفر الآن"
-        greeting: "مرحباً %{name}،"
-        body: "أخبار رائعة! منتج من قائمة أمنياتك أصبح متوفراً الآن."
-        cta: "تسوق الآن قبل نفاد الكمية"
-      price_drop:
-        subject: "تنبيه انخفاض السعر! %{product} الآن بخصم %{percentage}%"
-        greeting: "مرحباً %{name}،"
-        body: "اعتقدنا أنك ستود معرفة ذلك - %{product} من قائمة أمنياتك انخفض سعره %{percentage}%%!"
-        cta: "احصل عليه الآن بالسعر الجديد المنخفض"
-      common:
-        footer: "تلقيت هذا البريد الإلكتروني لأن لديك هذا المنتج في قائمة أمنياتك في VENE Jewelry."
   activerecord:
     attributes:
       user:

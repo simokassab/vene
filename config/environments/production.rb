@@ -62,14 +62,20 @@ Rails.application.configure do
   # Set default URL options for all controllers
   config.action_controller.default_url_options = { host: ENV.fetch("APP_HOST", "venejewelry.com"), protocol: 'https' }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # SMTP via Microsoft 365 (GoDaddy)
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SMTP_ADDRESS", "smtp.office365.com"),
+    port: ENV.fetch("SMTP_PORT", 587).to_i,
+    user_name: ENV.fetch("SMTP_USERNAME", nil),
+    password: ENV.fetch("SMTP_PASSWORD", nil),
+    domain: ENV.fetch("SMTP_DOMAIN", "venejewelry.com"),
+    authentication: :login,
+    enable_starttls_auto: true,
+    open_timeout: 10,
+    read_timeout: 10
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
