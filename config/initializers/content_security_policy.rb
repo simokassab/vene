@@ -15,7 +15,7 @@ Rails.application.configure do
     policy.script_src  :self, :https, :unsafe_inline, :unsafe_eval
     policy.style_src   :self, :https, :unsafe_inline, "fonts.googleapis.com"
     policy.connect_src :self, :https, "cdn.jsdelivr.net"
-    policy.frame_src   :self, "checkout.montypay.com"
+    policy.frame_src   :self, "checkout.montypay.com", "www.googletagmanager.com"
     policy.frame_ancestors :none
     policy.form_action :self, "checkout.montypay.com"
 

@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>" dir="<%= I18n.locale == :ar ? 'rtl' : 'ltr' %>">
   <head>
+    <!-- Google Tag Manager -->
+    <script>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-KHHSVVZ6');
+    </script>
+    <!-- End Google Tag Manager -->
     <title><%= content_for(:title) || "VENÈ Jewelry" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= favicon_link_tag "favicon.ico" %>
-
     <!-- Open Graph -->
     <meta property="og:title" content="<%= content_for(:title) || "VENÈ Jewelry" %>">
     <meta property="og:description" content="<%= content_for(:og_description) || t("brand.tagline") %>">
     <meta property="og:image" content="<%= content_for(:og_image) || image_url("logo.jpg") %>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="VENÈ Jewelry">
-
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -24,8 +30,11 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   </head>
-
   <body class="bg-white text-gray-900" x-data="{ mobileMenu: false, searchOpen: false, ringSizeModal: false, userMenu: false }">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KHHSVVZ6"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <header class="fixed top-0 inset-x-0 backdrop-blur z-30 shadow-lg" style="background-color: #131313;">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-20 gap-8">
@@ -83,14 +92,12 @@
               <% end %>
             <% end %>
           </div>
-
           <!-- Center logo -->
           <div class="absolute left-1/2 transform -translate-x-1/2">
             <%= link_to root_path(locale: I18n.locale), class: "block" do %>
               <%= image_tag "logo.jpg", alt: "Logo", class: "h-12 md:h-16 w-auto object-contain" %>
             <% end %>
           </div>
-
           <!-- Right icons -->
           <div class="flex items-center gap-3 md:gap-4 flex-1 justify-end">
             <button @click="searchOpen = !searchOpen" class="text-white hover:text-gray-300 transition-colors">
@@ -137,7 +144,6 @@
             </div>
           </div>
         </div>
-
         <!-- Categories Navigation with Mega Menu -->
         <div class="hidden md:flex items-center justify-center gap-8 pb-4 border-b border-gray-700">
           <% navigation_categories.each do |category| %>
@@ -145,12 +151,10 @@
               <%= link_to category.name(I18n.locale),
                 category_path(category.slug, locale: I18n.locale),
                 class: "text-sm font-medium text-white hover:text-gray-300 transition-colors py-2 block" %>
-
               <!-- Mega Menu Dropdown -->
               <% subcategories = category.sub_categories.select do |sc|
                    sc.active? && sc.products.any?(&:active?)
                  end.sort_by { |sc| [sc.position || 999, sc.name_en] } %>
-
               <% if subcategories.any? %>
                 <div class="absolute left-1/2 transform -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                   <div class="bg-white rounded-2xl shadow-xl overflow-hidden" style="width: 560px;">
@@ -160,7 +164,6 @@
                         <%= category.name(I18n.locale) %>
                       </h3>
                     </div>
-
                     <!-- Subcategories -->
                     <div class="p-5">
                       <div class="grid grid-cols-3 gap-4">
@@ -194,7 +197,6 @@
                           <% end %>
                         <% end %>
                       </div>
-
                       <% if subcategories.size > 6 %>
                         <div class="mt-5 text-center">
                           <%= link_to category_path(category.slug, locale: I18n.locale),
@@ -211,7 +213,6 @@
             </div>
           <% end %>
         </div>
-
         <!-- Animated Search Bar -->
         <div x-show="searchOpen"
              x-transition:enter="transition ease-out duration-300"
@@ -242,7 +243,6 @@
           </form>
         </div>
       </div>
-
       <!-- Mobile Menu -->
       <div class="md:hidden" x-show="mobileMenu" x-transition>
         <div class="px-4 pb-4 space-y-2 border-t border-gray-700" style="background-color: #131313;">
@@ -285,7 +285,6 @@
         </div>
       </div>
     </header>
-
     <main class="min-h-screen<%= " #{content_for(:main_class)}" if content_for?(:main_class) %>">
       <% if content_for?(:full_width) %>
         <%= yield %>
@@ -300,7 +299,6 @@
         </div>
       <% end %>
     </main>
-
     <footer class="bg-black text-gray-200 mt-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
@@ -329,13 +327,11 @@
         </div>
       </div>
     </footer>
-
     <% if current_settings.whatsapp_phone_number.present? %>
       <a href="https://wa.me/<%= current_settings.whatsapp_phone_number %>" target="_blank" class="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-800 text-white rounded-full px-4 py-3 shadow-lg flex items-center gap-2">
         <span>WhatsApp</span>
       </a>
     <% end %>
-
     <!-- Ring Size Guide Modal -->
     <div x-show="ringSizeModal"
          x-transition:enter="transition ease-out duration-300"
@@ -368,7 +364,6 @@
             </svg>
           </button>
         </div>
-
         <!-- Modal Body - PDF Viewer -->
         <div class="flex-1 overflow-hidden">
           <iframe src="/documents/ring-size-guide.pdf"
@@ -377,7 +372,6 @@
                   frameborder="0">
           </iframe>
         </div>
-
         <!-- Modal Footer -->
         <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
           <a href="/documents/ring-size-guide.pdf"
