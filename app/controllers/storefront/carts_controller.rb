@@ -30,6 +30,11 @@ class Storefront::CartsController < ApplicationController
     end
 
     cart.add(params[:product_id], params[:quantity] || 1, params[:product_variant_id])
+
+    # GA4 ecommerce: stash add_to_cart so it fires on the page rendered after redirect
+    variant = params[:product_variant_id].present? ? ProductVariant.find_by(id: params[:product_variant_id]) : nil
+    flash[:ga4_event] = Ga4.add_to_cart_event(product, variant: variant, quantity: params[:quantity] || 1).to_json
+
     redirect_target = params[:redirect_to].presence || cart_path(locale: I18n.locale)
     redirect_to redirect_target, notice: t("cart.updated")
   end

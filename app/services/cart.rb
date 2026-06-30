@@ -49,7 +49,7 @@ class Cart
   end
 
   def update(cart_key, quantity)
-    qty = [quantity.to_i, 1].max
+    qty = [ quantity.to_i, 1 ].max
     @session[:cart][cart_key] = qty
   end
 
@@ -64,8 +64,8 @@ class Cart
     elsif @session[:cart].key?("#{key_to_remove}_")
       @session[:cart].delete("#{key_to_remove}_")
     # Try without underscore suffix (if passed with underscore)
-    elsif key_to_remove.end_with?('_') && @session[:cart].key?(key_to_remove.chomp('_'))
-      @session[:cart].delete(key_to_remove.chomp('_'))
+    elsif key_to_remove.end_with?("_") && @session[:cart].key?(key_to_remove.chomp("_"))
+      @session[:cart].delete(key_to_remove.chomp("_"))
     end
   end
 
@@ -84,7 +84,7 @@ class Cart
     product_ids = cart_data.map { |d| d[:product_id] }.uniq
     variant_ids = cart_data.map { |d| d[:variant_id] }.compact.uniq
 
-    products = Product.where(id: product_ids).index_by(&:id)
+    products = Product.where(id: product_ids).includes(:category).index_by(&:id)
     variants = ProductVariant.where(id: variant_ids).index_by(&:id) if variant_ids.any?
     variants ||= {}
 
@@ -172,11 +172,11 @@ class Cart
   end
 
   def parse_cart_key(key)
-    parts = key.to_s.split('_')
+    parts = key.to_s.split("_")
     if parts.length == 2
-      [parts[0].to_i, parts[1].to_i]
+      [ parts[0].to_i, parts[1].to_i ]
     else
-      [key.to_i, nil]
+      [ key.to_i, nil ]
     end
   end
 

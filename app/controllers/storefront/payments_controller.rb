@@ -13,6 +13,9 @@ class Storefront::PaymentsController < ApplicationController
     # Clear cart and coupon now that payment is confirmed
     clear_cart_and_session
 
+    # GA4 ecommerce: stash purchase so it fires once on the order page after redirect
+    flash[:ga4_event] = Ga4.purchase_event(@order).to_json
+
     redirect_to order_path(@order, locale: I18n.locale), notice: t("payments.success")
   end
 
