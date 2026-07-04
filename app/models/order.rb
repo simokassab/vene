@@ -8,10 +8,12 @@ class Order < ApplicationRecord
 
   STATUSES = %w[pending payment_pending paid shipped delivered canceled].freeze
   PAYMENT_STATUSES = %w[pending paid failed].freeze
+  PAYMENT_METHODS = %w[card cod].freeze
 
   validates :name, :email, :phone, :country, :city, :street_address, presence: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
+  validates :payment_method, inclusion: { in: PAYMENT_METHODS }
   validate :user_or_guest_required
 
   # Scopes for guest vs registered orders
@@ -20,12 +22,26 @@ class Order < ApplicationRecord
 
   before_validation :set_defaults
 
-  def update_totals!(settings, shipping_override: nil)
+  def update_totals!(settings, shipping_override: nil, cod_fee_override: nil)
     self.subtotal = order_items.sum(&:line_total)
     self.tax_amount = 0 # Prices include tax
     self.shipping_amount = shipping_override || settings.shipping_flat_rate || 0
-    self.total_amount = subtotal - discount_amount + shipping_amount
+    self.cod_fee = cod_fee_override.nil? ? (cod_fee || 0) : cod_fee_override
+    self.total_amount = subtotal - discount_amount + shipping_amount + cod_fee
     save!
+  end
+
+  def cod?
+    payment_method == "cod"
+  end
+
+  # Cash-on-Delivery: the order is committed at checkout with no online payment.
+  # Reserve stock now; the shipment is created manually by an admin after review.
+  def place_cod_order!
+    transaction do
+      update!(status: "pending", payment_status: "pending")
+      decrement_stock!
+    end
   end
 
   # Called after payment is confirmed (via webhook or success redirect)
@@ -33,25 +49,33 @@ class Order < ApplicationRecord
     return if payment_status == "paid"
 
     transaction do
-      update!(payment_status: "paid", status: "paid", paid_at: Time.current)
+      # Preserve post-fulfillment statuses (e.g. shipped/delivered) when a COD
+      # order is later marked paid; only advance pre-fulfillment orders.
+      new_status = %w[pending payment_pending].include?(status) ? "paid" : status
+      update!(payment_status: "paid", status: new_status, paid_at: Time.current)
       decrement_stock!
     end
 
-    # Create DHL shipment in the background
-    CreateDhlShipmentJob.perform_later(id)
+    # Create DHL shipment in the background (skip when one already exists, e.g. COD)
+    CreateDhlShipmentJob.perform_later(id) unless has_dhl_tracking?
   end
 
-  # Decrement stock for all order items (only for non-preorder items)
+  # Decrement stock for all order items (only for non-preorder items).
+  # Idempotent: safe to call more than once (card payment + COD both funnel here).
   def decrement_stock!
+    return if stock_decremented?
+
     order_items.regular_orders.each(&:decrement_stock!)
+    update_column(:stock_decremented, true)
   end
 
   def cancel_order!
     return false if status == "canceled"
 
     transaction do
-      # Only restore stock if payment was confirmed (stock was decremented)
-      if payment_status == "paid"
+      # Restore stock only if it was actually decremented (paid card orders and
+      # placed COD orders), independent of payment_status.
+      if stock_decremented?
         order_items.regular_orders.each do |item|
           if item.product_variant_id.present?
             item.product_variant.increment!(:stock_quantity, item.quantity)
@@ -59,6 +83,7 @@ class Order < ApplicationRecord
             item.product.increment!(:stock_quantity, item.quantity)
           end
         end
+        update_column(:stock_decremented, false)
       end
 
       update!(status: "canceled")
@@ -70,7 +95,7 @@ class Order < ApplicationRecord
   # Legacy address string (avoids conflict with belongs_to :address association)
   def address_text
     if street_address.present?
-      [street_address, building].compact_blank.join(", ")
+      [ street_address, building ].compact_blank.join(", ")
     else
       read_attribute(:address)
     end
@@ -205,7 +230,7 @@ class Order < ApplicationRecord
 
   def populate_legacy_address
     if street_address.present? && read_attribute(:address).blank?
-      write_attribute(:address, [street_address, building].compact_blank.join(", "))
+      write_attribute(:address, [ street_address, building ].compact_blank.join(", "))
     end
   end
 

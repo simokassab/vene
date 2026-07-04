@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_05_110643) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_04_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -132,6 +132,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_05_110643) do
     t.string "ip_address"
     t.string "user_agent"
     t.boolean "is_guest", default: false, null: false
+    t.string "payment_method", default: "card", null: false
+    t.decimal "cod_fee", precision: 10, scale: 2, default: "0.0", null: false
+    t.boolean "stock_decremented", default: false, null: false
     t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["coupon_code"], name: "index_orders_on_coupon_code"
     t.index ["coupon_id"], name: "index_orders_on_coupon_id"
@@ -139,6 +142,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_05_110643) do
     t.index ["email"], name: "index_orders_on_email"
     t.index ["ip_address"], name: "index_orders_on_ip_address"
     t.index ["is_guest"], name: "index_orders_on_is_guest"
+    t.index ["payment_method"], name: "index_orders_on_payment_method"
     t.index ["payment_status"], name: "index_orders_on_payment_status"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
@@ -252,6 +256,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_05_110643) do
     t.text "preorder_disclaimer_en", default: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed."
     t.text "preorder_disclaimer_ar", default: "عناصر الطلب المسبق من المقدر شحنها خلال الإطار الزمني المحدد. تواريخ التسليم تقديرية وغير مضمونة."
     t.boolean "maintenance_mode", default: false, null: false
+    t.boolean "cod_enabled", default: true, null: false
+    t.decimal "cod_fee", precision: 10, scale: 2, default: "10.0", null: false
   end
 
   create_table "sub_categories", force: :cascade do |t|

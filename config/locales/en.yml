@@ -34,6 +34,9 @@ en:
     buy_now: "Buy Now"
     preorder_now: "Pre-Order Now"
     not_available: "Not Available"
+    starting_from: "Starting from"
+    contact_to_order: "Contact us to order"
+    preorder_whatsapp_message: "Hello! I'd like to pre-order %{product} (starting from %{price}). %{url}"
     design_details: "Design Details"
     metal: "Metal"
     diamonds: "Diamonds"
@@ -94,6 +97,15 @@ en:
     sign_in: "Sign in"
     or_continue_guest: "or continue as guest below."
     guest_checkout: "Guest Checkout"
+    payment_method: "Payment Method"
+    secure_payment: "Secure payment gateway"
+    place_order: "Place Order & Pay"
+    place_order_cod: "Place Order (Cash on Delivery)"
+    pay_card: "Pay online (MontyPay)"
+    pay_cod: "Cash on Delivery"
+    cod_desc: "Pay with cash when your order arrives"
+    cod_fee: "Cash on Delivery fee"
+    cod_note: "You will pay in cash when your order is delivered. A %{fee} service fee applies."
   guest_checkout:
     order_placed: "Order Placed Successfully!"
     order_number: "Order #%{id}"
@@ -128,12 +140,16 @@ en:
     subtotal: "Subtotal"
     tax: "Tax"
     shipping: "Shipping"
+    payment_method: "Payment Method"
+    payment_cod: "Cash on Delivery"
+    payment_card: "Card (MontyPay)"
     preorder: "Pre-Order"
     preorder_ships_by: "Ships by %{date}"
   payments:
     success: "Payment successful! Thank you for your order."
     failure: "Payment was not completed. Please try again."
     initialization_failed: "Unable to initialize payment: %{error}"
+    cod_placed: "Your order has been placed. Pay with cash when it is delivered."
   admin:
     nav:
       dashboard: "Dashboard"
@@ -213,6 +229,8 @@ en:
     settings:
       title: "Store Settings"
       updated: "Settings saved"
+      cod: "Cash on Delivery"
+      payment: "Payment Integration"
     pages:
       title: "Pages"
       new: "New Page"
@@ -404,6 +422,10 @@ en:
       new_arrivals: "New Arrivals"
       featured_products: "Featured Products"
       must_have: "Must Have"
+      hero_eyebrow: "Fine Jewelry"
+      hero_heading: "Timeless by Design"
+      hero_body: "At VENÈ Jewelry, we create timeless pieces that celebrate life's meaningful moments. Handcrafted in Beirut from 18K gold, diamonds, and sterling silver — each piece is made to be cherished, today and for generations to come."
+      hero_cta: "Discover the Collection"
   common:
     yes: "Yes"
     no: "No"

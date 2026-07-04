@@ -3,7 +3,6 @@
   <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.settings.title") %></h1>
   <p class="mt-1 text-sm text-gray-600"><%= t("admin.settings.subtitle", default: "Configure your store settings and preferences") %></p>
 </div>
-
 <%= form_with(model: [:admin, @setting], url: admin_setting_path(locale: I18n.locale), method: :put, local: true, class: "space-y-6") do |form| %>
   <% if @setting.errors.any? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -15,7 +14,6 @@
       </ul>
     </div>
   <% end %>
-
   <!-- Store Information Section -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -24,7 +22,6 @@
       </svg>
       <%= t("admin.settings.store_info", default: "Store Information") %>
     </h3>
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :store_name, class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -32,7 +29,6 @@
           class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
           placeholder: "VENE Jewelry" %>
       </div>
-
       <div>
         <%= form.label :default_currency, class: "block text-sm font-medium text-gray-700 mb-2" %>
         <%= form.text_field :default_currency,
@@ -40,14 +36,12 @@
           placeholder: "USD" %>
         <p class="mt-1 text-xs text-gray-500">Currency code (e.g., USD, EUR, GBP)</p>
       </div>
-
       <div>
         <%= form.label :local_country, class: "block text-sm font-medium text-gray-700 mb-2" %>
         <%= form.text_field :local_country,
           class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
           placeholder: "United States" %>
       </div>
-
       <div>
         <%= form.label :whatsapp_phone_number, class: "block text-sm font-medium text-gray-700 mb-2" %>
         <%= form.text_field :whatsapp_phone_number,
@@ -57,7 +51,6 @@
       </div>
     </div>
   </div>
-
   <!-- Tax & Shipping Section -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -66,7 +59,6 @@
       </svg>
       <%= t("admin.settings.tax_shipping", default: "Tax & Shipping") %>
     </h3>
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div>
         <%= form.label :local_tax_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -80,7 +72,6 @@
         </div>
         <p class="mt-1 text-xs text-gray-500">Local sales tax rate</p>
       </div>
-
       <div>
         <%= form.label :international_tax_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
         <div class="relative">
@@ -93,7 +84,6 @@
         </div>
         <p class="mt-1 text-xs text-gray-500">International tax rate</p>
       </div>
-
       <div>
         <%= form.label :shipping_flat_rate, class: "block text-sm font-medium text-gray-700 mb-2" %>
         <div class="relative">
@@ -108,7 +98,34 @@
       </div>
     </div>
   </div>
-
+  <!-- Cash on Delivery Section -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+      <%= t("admin.settings.cod", default: "Cash on Delivery") %>
+    </h3>
+    <div class="space-y-4">
+      <div class="flex items-center space-x-3">
+        <%= form.check_box :cod_enabled,
+          class: "w-5 h-5 text-[#465FFF] border-gray-300 rounded focus:ring-[#465FFF]" %>
+        <%= form.label :cod_enabled, "Enable Cash on Delivery (local country only)", class: "text-sm font-medium text-gray-700" %>
+      </div>
+      <div>
+        <%= form.label :cod_fee, "Cash on Delivery Fee", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+            <span>$</span>
+          </div>
+          <%= form.number_field :cod_fee, step: 0.01,
+            class: "block w-full pl-8 pr-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
+            placeholder: "10.00" %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Extra fee added to Cash on Delivery orders (USD). Only offered when the shipping country matches the store's local country.</p>
+      </div>
+    </div>
+  </div>
   <!-- Payment Integration Section -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -117,7 +134,6 @@
       </svg>
       <%= t("admin.settings.payment", default: "Payment Integration") %>
     </h3>
-
     <div class="space-y-4 bg-gray-50 rounded-lg p-4">
       <div class="flex items-center space-x-3 mb-4">
         <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#465FFF] to-[#3651E6] rounded-lg flex items-center justify-center">
@@ -130,7 +146,6 @@
           <p class="text-xs text-gray-600">Configure your MontyPay payment gateway credentials</p>
         </div>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <%= form.label :montypay_merchant_id, class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -138,7 +153,6 @@
             class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors font-mono",
             placeholder: "merchant_xxxxxxxxxxxx" %>
         </div>
-
         <div>
           <%= form.label :montypay_api_key, class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= form.password_field :montypay_api_key,
@@ -149,7 +163,6 @@
       </div>
     </div>
   </div>
-
   <!-- Maintenance Mode Section -->
   <div class="bg-red-50 rounded-xl border border-red-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -158,7 +171,6 @@
       </svg>
       Maintenance Mode
     </h3>
-
     <div class="space-y-4">
       <div class="flex items-start">
         <div class="flex items-center h-5">
@@ -170,7 +182,6 @@
           <p class="text-xs text-gray-600">When enabled, regular users will see a maintenance page. Admins can still access the site.</p>
         </div>
       </div>
-
       <div class="bg-white border border-red-200 rounded-lg p-4">
         <div class="flex items-start">
           <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +199,6 @@
       </div>
     </div>
   </div>
-
   <!-- Pre-Order Settings Section -->
   <div class="bg-amber-50 rounded-xl border border-amber-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -197,7 +207,6 @@
       </svg>
       Pre-Order Settings
     </h3>
-
     <div class="space-y-6">
       <div class="flex items-start">
         <div class="flex items-center h-5">
@@ -209,7 +218,6 @@
           <p class="text-xs text-gray-600">Allow customers to pre-order out-of-stock items site-wide</p>
         </div>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <%= form.label :preorder_default_delivery_days, "Default Delivery Days", class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -220,7 +228,6 @@
           <p class="mt-1 text-xs text-gray-500">Used when product doesn't specify a delivery date</p>
         </div>
       </div>
-
       <div>
         <%= form.label :preorder_disclaimer_en, "Pre-Order Disclaimer (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
         <%= form.text_area :preorder_disclaimer_en, rows: 3,
@@ -228,7 +235,6 @@
           placeholder: "Pre-order items are estimated to ship within the specified timeframe. Delivery dates are estimates and not guaranteed." %>
         <p class="mt-1 text-xs text-gray-500">Displayed to customers during checkout for pre-order items</p>
       </div>
-
       <div>
         <%= form.label :preorder_disclaimer_ar, "Pre-Order Disclaimer (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
         <%= form.text_area :preorder_disclaimer_ar, rows: 3,
@@ -238,7 +244,6 @@
       </div>
     </div>
   </div>
-
   <!-- Form Actions -->
   <div class="flex items-center justify-end pt-4">
     <%= form.submit t("admin.actions.save"),

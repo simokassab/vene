@@ -1,9 +1,7 @@
 <h2 style="margin: 0 0 20px 0; font-size: 22px; color: #1a1a1a;">New Order Received</h2>
-
 <p style="margin: 0 0 25px 0; font-size: 15px; color: #333333; line-height: 1.6;">
   A new order has been placed on the store.
 </p>
-
 <!-- Order info -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; font-size: 14px; color: #333333;">
   <tr>
@@ -24,8 +22,10 @@
   <tr>
     <td style="padding: 4px 0;"><strong>Status:</strong> <%= @order.status.titleize %></td>
   </tr>
+  <tr>
+    <td style="padding: 4px 0;"><strong>Payment Method:</strong> <%= @order.cod? ? "Cash on Delivery" : "Card (MontyPay)" %><% if @order.cod? %> &mdash; collect <%= number_to_currency(@order.total_amount, unit: @order.currency) %> on delivery<% end %></td>
+  </tr>
 </table>
-
 <!-- Items table -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; border-collapse: collapse;">
   <tr>
@@ -39,10 +39,12 @@
       <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333;">
         <%= item.product.name_en %>
         <% if item.product_variant %>
-          <br><span style="font-size: 12px; color: #888888;"><%= item.product_variant.display_name %></span>
+          <br>
+          <span style="font-size: 12px; color: #888888;"><%= item.product_variant.display_name %></span>
         <% end %>
         <% if item.is_preorder %>
-          <br><span style="font-size: 11px; color: #b45309; font-weight: bold;">PRE-ORDER</span>
+          <br>
+          <span style="font-size: 11px; color: #b45309; font-weight: bold;">PRE-ORDER</span>
         <% end %>
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333; text-align: center;"><%= item.quantity %></td>
@@ -51,14 +53,14 @@
     </tr>
   <% end %>
 </table>
-
 <!-- Shipping address -->
 <div style="background-color: #f9fafb; border-radius: 4px; padding: 15px;">
   <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #1a1a1a; text-transform: uppercase;">Shipping Address</p>
   <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.6;">
     <% if @order.street_address.present? %>
       <%= @order.street_address %><br>
-      <% if @order.building.present? %><%= @order.building %><br><% end %>
+      <% if @order.building.present? %><%= @order.building %><br>
+      <% end %>
       <%= [@order.city, @order.postal_code].compact_blank.join(", ") %><br>
       <%= @order.country %>
     <% else %>

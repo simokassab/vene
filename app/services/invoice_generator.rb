@@ -23,7 +23,7 @@ class InvoiceGenerator
 
     # Company info on the left
     top = pdf.cursor
-    pdf.bounding_box([0, top], width: 340) do
+    pdf.bounding_box([ 0, top ], width: 340) do
       pdf.fill_color "000000"
       pdf.font_size(16) { pdf.text "GOLDEN ARCH FOR COMMERCIAL", style: :bold }
       pdf.move_down 4
@@ -41,7 +41,7 @@ class InvoiceGenerator
 
     # Logo on the right
     if File.exist?(logo_path)
-      pdf.image logo_path, at: [pdf.bounds.width - 120, top], width: 120, height: logo_height
+      pdf.image logo_path, at: [ pdf.bounds.width - 120, top ], width: 120, height: logo_height
     end
 
     pdf.move_down 50
@@ -51,7 +51,7 @@ class InvoiceGenerator
     top = pdf.cursor
 
     # Left side: Invoice details
-    pdf.bounding_box([0, top], width: 260) do
+    pdf.bounding_box([ 0, top ], width: 260) do
       pdf.fill_color "000000"
       pdf.font_size(18) { pdf.text "INVOICE", style: :bold }
       pdf.move_down 18
@@ -61,11 +61,13 @@ class InvoiceGenerator
         pdf.text "Date: #{@order.created_at.strftime('%B %d, %Y')}", style: :bold
         pdf.move_down 10
         pdf.text "Status: #{@order.status.titleize}", style: :bold
+        pdf.move_down 10
+        pdf.text "Payment: #{payment_method_text}", style: :bold
       end
     end
 
     # Right side: Billed To
-    pdf.bounding_box([280, top], width: 240) do
+    pdf.bounding_box([ 280, top ], width: 240) do
       pdf.fill_color "000000"
       pdf.font_size(12) { pdf.text "BILLED TO", style: :bold }
       pdf.move_down 18
@@ -82,7 +84,7 @@ class InvoiceGenerator
   end
 
   def render_items_table(pdf)
-    table_data = [["Description", "Quantity", "Unit Price", "Cost"]]
+    table_data = [ [ "Description", "Quantity", "Unit Price", "Cost" ] ]
 
     @order.order_items.each do |item|
       product_name = item.product.name_en || item.product.name_ar || "Product"
@@ -99,13 +101,13 @@ class InvoiceGenerator
 
     pdf.fill_color "000000"
 
-    pdf.table(table_data, width: pdf.bounds.width, cell_style: { borders: [:bottom], border_width: 0.5, border_color: "DDDDDD", padding: [12, 10] }) do
+    pdf.table(table_data, width: pdf.bounds.width, cell_style: { borders: [ :bottom ], border_width: 0.5, border_color: "DDDDDD", padding: [ 12, 10 ] }) do
       # Header row
       row(0).background_color = "333333"
       row(0).text_color = "FFFFFF"
       row(0).font_style = :bold
       row(0).size = 10
-      row(0).borders = [:bottom]
+      row(0).borders = [ :bottom ]
       row(0).border_width = 0
 
       # Data rows
@@ -126,22 +128,26 @@ class InvoiceGenerator
     x_offset = pdf.bounds.width - summary_width
 
     summary_items = [
-      ["Subtotal", as_currency(@order.subtotal)]
+      [ "Subtotal", as_currency(@order.subtotal) ]
     ]
 
     shipping_label = "Shipping (#{@order.shipping_method.presence || 'DHL'} EXPRESS)"
-    summary_items << [shipping_label, as_currency(@order.shipping_amount)]
+    summary_items << [ shipping_label, as_currency(@order.shipping_amount) ]
+
+    if @order.cod_fee.to_f > 0
+      summary_items << [ "Cash on Delivery Fee", as_currency(@order.cod_fee) ]
+    end
 
     if @order.discount_amount.to_f > 0
-      summary_items << ["Discount (#{@order.coupon_code})", "-#{as_currency(@order.discount_amount)}"]
+      summary_items << [ "Discount (#{@order.coupon_code})", "-#{as_currency(@order.discount_amount)}" ]
     end
 
     pdf.fill_color "000000"
 
     summary_items.each do |label, value|
       pdf.font_size(10) do
-        pdf.text_box label, at: [x_offset, pdf.cursor], width: 170, align: :right
-        pdf.text_box value, at: [x_offset + 170, pdf.cursor], width: 80, align: :right
+        pdf.text_box label, at: [ x_offset, pdf.cursor ], width: 170, align: :right
+        pdf.text_box value, at: [ x_offset + 170, pdf.cursor ], width: 80, align: :right
       end
       pdf.move_down 24
     end
@@ -153,8 +159,8 @@ class InvoiceGenerator
     pdf.move_down 14
 
     pdf.font_size(12) do
-      pdf.text_box "Total", at: [x_offset, pdf.cursor], width: 170, align: :right, style: :bold
-      pdf.text_box as_currency(@order.total_amount), at: [x_offset + 170, pdf.cursor], width: 80, align: :right, style: :bold
+      pdf.text_box "Total", at: [ x_offset, pdf.cursor ], width: 170, align: :right, style: :bold
+      pdf.text_box as_currency(@order.total_amount), at: [ x_offset + 170, pdf.cursor ], width: 80, align: :right, style: :bold
     end
 
     pdf.move_down 50
@@ -177,6 +183,10 @@ class InvoiceGenerator
     symbol = ExchangeRateService.symbol_for(currency)
     precision = ExchangeRateService.three_decimal?(currency) ? 3 : 2
     ActionController::Base.helpers.number_to_currency(amount, unit: symbol, precision: precision)
+  end
+
+  def payment_method_text
+    @order.cod? ? "Cash on Delivery" : "Card (MontyPay)"
   end
 
   def current_settings

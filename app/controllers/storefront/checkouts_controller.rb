@@ -1,5 +1,5 @@
 class Storefront::CheckoutsController < ApplicationController
-  before_action :ensure_cart_not_empty, only: [:show, :review, :create]
+  before_action :ensure_cart_not_empty, only: [ :show, :review, :create ]
 
   def show
     @cart = Cart.new(session)
@@ -84,6 +84,10 @@ class Storefront::CheckoutsController < ApplicationController
       end
     end
 
+    # Canonicalize the ship-to ISO code from the authoritative country name, so a
+    # spoofed country_code can't skew the DHL rate estimate that becomes the charge.
+    @order.country_code = Setting.country_alpha2(@order.country).presence || @order.country_code
+
     # Validate required fields
     required_fields = %i[name email phone country city street_address]
     missing = required_fields.select { |f| @order.send(f).blank? }
@@ -146,6 +150,10 @@ class Storefront::CheckoutsController < ApplicationController
     # Store shipping rate in session
     session[:dhl_shipping_rate] = @shipping_amount.to_s
     session[:dhl_shipping_estimated] = @shipping_estimated
+
+    # Cash on Delivery availability (local country only) for the review UI
+    @cod_available = current_settings.cod_available_for_country?(@order.country)
+    @cod_fee_usd = current_settings.cod_fee
   end
 
   def validate_city
@@ -193,8 +201,10 @@ class Storefront::CheckoutsController < ApplicationController
                         alert: t("checkout.order_blocked", default: "Unable to process order. Please contact support.")
     end
 
-    # Reuse existing pending order to prevent duplicates on retry/back-button
-    if session[:pending_order_id].present?
+    # Reuse existing pending order to prevent duplicates on retry/back-button.
+    # Skip when the customer chose Cash on Delivery so a stale card attempt is not
+    # forced back into the MontyPay gateway — the COD choice must be honored.
+    if session[:pending_order_id].present? && params[:payment_method] != "cod"
       existing = Order.find_by(id: session[:pending_order_id], status: "payment_pending")
       if existing
         result = Montypay::Client.new(existing).start_payment
@@ -228,6 +238,12 @@ class Storefront::CheckoutsController < ApplicationController
       @order.is_guest = true
     end
 
+    # Reconcile the ship-to ISO code with the authoritative country name so the
+    # client cannot claim a local country for COD while shipping the parcel (via
+    # DHL, which uses country_code) somewhere else. COD eligibility and the DHL
+    # destination then agree on a single server-derived code.
+    @order.country_code = Setting.country_alpha2(@order.country).presence || @order.country_code
+
     @order.status = "payment_pending"
     @order.ip_address = request.remote_ip
     @order.user_agent = request.user_agent&.truncate(500)
@@ -248,6 +264,15 @@ class Storefront::CheckoutsController < ApplicationController
       shipping_override = (flat_rate * rate).round(precision)
     end
 
+    # Cash on Delivery (local country only) — re-validate eligibility server-side
+    # against the real ship-to country so a tampered request from an ineligible
+    # country falls back to card payment.
+    use_cod = params[:payment_method] == "cod" && current_settings.cod_available_for_country?(@order.country)
+    @order.payment_method = use_cod ? "cod" : "card"
+    @order.status = use_cod ? "pending" : "payment_pending"
+    cod_fee_usd = use_cod ? (current_settings.cod_fee || 0) : 0
+    cod_fee_override = (cod_fee_usd * rate).round(precision)
+
     ActiveRecord::Base.transaction do
       @cart.items.each do |item|
         converted_price = (item.unit_price * rate).round(precision)
@@ -260,7 +285,7 @@ class Storefront::CheckoutsController < ApplicationController
       end
 
       @order.save!
-      @order.update_totals!(current_settings, shipping_override: shipping_override)
+      @order.update_totals!(current_settings, shipping_override: shipping_override, cod_fee_override: cod_fee_override)
 
       # Handle coupon if applied (after order is saved)
       if @cart.has_coupon?
@@ -273,7 +298,7 @@ class Storefront::CheckoutsController < ApplicationController
             # For fixed amount coupons, convert the discount to the order's currency
             if coupon.discount_type == "fixed" && rate != 1.0
               converted_fixed = (coupon.discount_value * rate).round(precision)
-              discount = [converted_fixed, @order.subtotal].min
+              discount = [ converted_fixed, @order.subtotal ].min
             end
             @order.update!(
               coupon: coupon,
@@ -281,7 +306,7 @@ class Storefront::CheckoutsController < ApplicationController
               discount_amount: discount
             )
             # Recalculate total with discount
-            @order.update!(total_amount: @order.subtotal - discount + @order.shipping_amount)
+            @order.update!(total_amount: @order.subtotal - discount + @order.shipping_amount + @order.cod_fee)
 
             # Only create UserCoupon for authenticated users
             if user_signed_in?
@@ -298,14 +323,35 @@ class Storefront::CheckoutsController < ApplicationController
         end
       end
 
-      # Store order ID in session so we can clear cart after payment
-      session[:pending_order_id] = @order.id
+      if use_cod
+        # Commit the COD order atomically with its stock reservation, so a failure
+        # rolls the whole thing back instead of orphaning a "pending" order.
+        @order.place_cod_order!
+      else
+        # Card: remember the order so we can resume/clear it after MontyPay returns.
+        session[:pending_order_id] = @order.id
+      end
     end
 
     # Clean up checkout session data
     session.delete(:checkout_params)
     session.delete(:dhl_shipping_rate)
     session.delete(:dhl_shipping_estimated)
+
+    # Cash on Delivery: no online payment. The order is already committed with its
+    # stock reserved (inside the transaction above); just notify, clear the cart,
+    # fire GA4, and send the customer to their order page (admin ships after review).
+    if use_cod
+      OrderConfirmationJob.perform_later(@order.id)
+      clear_cart_session
+      # Let a guest view/cancel the order they just placed (Storefront::OrdersController
+      # authorizes guest access via this session key). Safe now that the order is
+      # already committed above; the duplicate guard ignores COD "pending" orders.
+      session[:pending_order_id] = @order.id
+      flash[:ga4_event] = Ga4.purchase_event(@order).to_json
+      return redirect_to order_path(@order, locale: I18n.locale),
+                         notice: t("payments.cod_placed", default: "Your order has been placed. Pay with cash when it is delivered.")
+    end
 
     result = Montypay::Client.new(@order).start_payment
 
@@ -335,6 +381,14 @@ class Storefront::CheckoutsController < ApplicationController
     params.require(:order).permit(:name, :email, :phone, :country, :country_code, :city, :postal_code, :street_address, :building, :address_id)
   end
 
+  def clear_cart_session
+    session[:cart] = {}
+    session.delete(:coupon_code)
+    session.delete(:coupon_id)
+    session.delete(:discount_amount)
+    session.delete(:pending_order_id)
+  end
+
   def countries_without_postal_codes
     ISO3166::Country.all.reject(&:postal_code).map { |c| c.translations["en"] || c.common_name }.compact.sort
   end
@@ -349,7 +403,7 @@ class Storefront::CheckoutsController < ApplicationController
     end
 
     # Estimate 0.5 KG per item, minimum 0.5
-    total_weight = [cart.total_items_quantity * 0.5, 0.5].max
+    total_weight = [ cart.total_items_quantity * 0.5, 0.5 ].max
 
     dest_country_code = order.country_code.presence || Dhl::Address.country_code_for(order.country)
 

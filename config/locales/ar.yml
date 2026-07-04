@@ -34,6 +34,9 @@ ar:
     buy_now: "اشتري الآن"
     preorder_now: "اطلب مسبقاً الآن"
     not_available: "غير متوفر"
+    starting_from: "يبدأ من"
+    contact_to_order: "تواصل معنا للطلب"
+    preorder_whatsapp_message: "مرحباً! أرغب في الطلب المسبق لـ %{product} (يبدأ من %{price}). %{url}"
     design_details: "تفاصيل التصميم"
     metal: "المعدن"
     diamonds: "الألماس"
@@ -94,6 +97,15 @@ ar:
     sign_in: "تسجيل الدخول"
     or_continue_guest: "أو استمر كضيف أدناه."
     guest_checkout: "الدفع كضيف"
+    payment_method: "طريقة الدفع"
+    secure_payment: "بوابة دفع آمنة"
+    place_order: "إتمام الطلب والدفع"
+    place_order_cod: "إتمام الطلب (الدفع عند الاستلام)"
+    pay_card: "الدفع عبر الإنترنت (MontyPay)"
+    pay_cod: "الدفع عند الاستلام"
+    cod_desc: "ادفع نقداً عند وصول طلبك"
+    cod_fee: "رسوم الدفع عند الاستلام"
+    cod_note: "ستدفع نقداً عند تسليم طلبك. تُطبق رسوم خدمة قدرها %{fee}."
   guest_checkout:
     order_placed: "تم تأكيد الطلب بنجاح!"
     order_number: "طلب #%{id}"
@@ -128,12 +140,16 @@ ar:
     subtotal: "المجموع"
     tax: "الضريبة"
     shipping: "الشحن"
+    payment_method: "طريقة الدفع"
+    payment_cod: "الدفع عند الاستلام"
+    payment_card: "بطاقة (MontyPay)"
     preorder: "طلب مسبق"
     preorder_ships_by: "يشحن بحلول %{date}"
   payments:
     success: "تم الدفع بنجاح! شكراً لطلبك."
     failure: "لم يتم إتمام الدفع. يرجى المحاولة مرة أخرى."
     initialization_failed: "تعذر بدء الدفع: %{error}"
+    cod_placed: "تم استلام طلبك. ادفع نقداً عند التسليم."
   admin:
     nav:
       dashboard: "لوحة التحكم"
@@ -213,6 +229,8 @@ ar:
     settings:
       title: "إعدادات المتجر"
       updated: "تم حفظ الإعدادات"
+      cod: "الدفع عند الاستلام"
+      payment: "تكامل الدفع"
     pages:
       title: "الصفحات"
       new: "صفحة جديدة"
@@ -404,6 +422,10 @@ ar:
       new_arrivals: "وصل حديثاً"
       featured_products: "منتجات مميزة"
       must_have: "لا غنى عنها"
+      hero_eyebrow: "مجوهرات فاخرة"
+      hero_heading: "خالدة بالتصميم"
+      hero_body: "في فينيه للمجوهرات، نصنع قطعاً خالدة تحتفي بلحظات الحياة الثمينة. مصنوعة يدوياً في بيروت من ذهب عيار 18 قيراطاً، والألماس، والفضة الإسترليني — كل قطعة صُنعت لتبقى عزيزة، اليوم ولأجيالٍ قادمة."
+      hero_cta: "اكتشف المجموعة"
   common:
     yes: "نعم"
     no: "لا"

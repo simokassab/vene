@@ -1,12 +1,10 @@
 <h2 style="margin: 0 0 20px 0; font-size: 22px; color: #1a1a1a;">Order Confirmation</h2>
-
 <p style="margin: 0 0 8px 0; font-size: 15px; color: #333333; line-height: 1.6;">
   <%= I18n.t("mailers.order_mailer.confirmation.greeting", name: @order.name) %>
 </p>
 <p style="margin: 0 0 25px 0; font-size: 15px; color: #333333; line-height: 1.6;">
   <%= I18n.t("mailers.order_mailer.confirmation.body", id: @order.id, total: number_to_currency(@order.total_amount, unit: @order.currency)) %>
 </p>
-
 <!-- Order info -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; font-size: 14px; color: #333333;">
   <tr>
@@ -19,7 +17,6 @@
     <td style="padding: 4px 0;"><strong>Status:</strong> <%= @order.status.titleize %></td>
   </tr>
 </table>
-
 <!-- Items table -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; border-collapse: collapse;">
   <tr>
@@ -33,10 +30,12 @@
       <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333;">
         <%= item.product.name(I18n.locale) %>
         <% if item.product_variant %>
-          <br><span style="font-size: 12px; color: #888888;"><%= item.product_variant.display_name %></span>
+          <br>
+          <span style="font-size: 12px; color: #888888;"><%= item.product_variant.display_name %></span>
         <% end %>
         <% if item.is_preorder %>
-          <br><span style="font-size: 11px; color: #b45309; font-weight: bold;">PRE-ORDER</span>
+          <br>
+          <span style="font-size: 11px; color: #b45309; font-weight: bold;">PRE-ORDER</span>
         <% end %>
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333; text-align: center;"><%= item.quantity %></td>
@@ -45,7 +44,6 @@
     </tr>
   <% end %>
 </table>
-
 <!-- Totals -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
   <tr>
@@ -60,6 +58,12 @@
           <td style="padding: 6px 0;">Shipping (<%= @order.shipping_method.presence || "DHL" %> Express)</td>
           <td style="padding: 6px 0; text-align: right;"><%= number_to_currency(@order.shipping_amount, unit: @order.currency) %></td>
         </tr>
+        <% if @order.cod_fee.to_f > 0 %>
+          <tr>
+            <td style="padding: 6px 0;">Cash on Delivery Fee</td>
+            <td style="padding: 6px 0; text-align: right;"><%= number_to_currency(@order.cod_fee, unit: @order.currency) %></td>
+          </tr>
+        <% end %>
         <% if @order.discount_amount.to_f > 0 %>
           <tr>
             <td style="padding: 6px 0; color: #059669;">Discount (<%= @order.coupon_code %>)</td>
@@ -77,7 +81,6 @@
     </td>
   </tr>
 </table>
-
 <% if @order.has_preorder_items? %>
   <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px; font-size: 14px; color: #92400e;">
     <strong><%= I18n.t("mailers.order_mailer.confirmation.preorder_notice") %></strong>
@@ -87,14 +90,20 @@
     <% end %>
   </div>
 <% end %>
-
+<% if @order.cod? %>
+  <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin-bottom: 25px; font-size: 14px; color: #065f46;">
+    <strong>Cash on Delivery</strong>
+    <p style="margin: 8px 0 0 0;">Please have <%= number_to_currency(@order.total_amount, unit: @order.currency) %> ready in cash when your order is delivered.</p>
+  </div>
+<% end %>
 <!-- Shipping address -->
 <div style="background-color: #f9fafb; border-radius: 4px; padding: 15px; margin-bottom: 10px;">
   <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #1a1a1a; text-transform: uppercase;">Shipping Address</p>
   <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.6;">
     <% if @order.street_address.present? %>
       <%= @order.street_address %><br>
-      <% if @order.building.present? %><%= @order.building %><br><% end %>
+      <% if @order.building.present? %><%= @order.building %><br>
+      <% end %>
       <%= [@order.city, @order.postal_code].compact_blank.join(", ") %><br>
       <%= @order.country %>
     <% else %>
