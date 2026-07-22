@@ -110,7 +110,9 @@
           <!-- Center logo -->
           <div class="absolute left-1/2 transform -translate-x-1/2">
             <%= link_to root_path(locale: I18n.locale), class: "block" do %>
-              <%= image_tag "logo.jpg", alt: "Logo", class: "h-12 md:h-16 w-auto object-contain" %>
+              <%= image_tag "logo-hq.png", alt: t("brand.name", default: "VENÈ Jewelry"),
+                    width: 560, height: 486,
+                    class: "h-16 md:h-[4.5rem] w-auto object-contain" %>
             <% end %>
           </div>
           <!-- Right icons -->
