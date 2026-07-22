@@ -28,6 +28,16 @@
     <style>
       [x-cloak] { display: none !important; }
     </style>
+    <%# Intro splash guard: skip the splash if it already played this session. %>
+    <script>
+      (function () {
+        try {
+          if (sessionStorage.getItem("veneSplashSeen")) {
+            document.documentElement.classList.add("splash-seen");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <%= javascript_importmap_tags %>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
@@ -38,6 +48,7 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KHHSVVZ6"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <%= render "shared/intro_splash" %>
     <%= ga4_flash_event %>
     <header class="fixed top-0 inset-x-0 backdrop-blur z-30 shadow-lg" style="background-color: #131313;">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

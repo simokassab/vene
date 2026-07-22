@@ -1,0 +1,196 @@
+<%#
+  Intro splash / loading screen.
+  Shows the VENÈ logo centered on a black background with a light-sweep
+  and twinkling sparkles, then reveals the site after ~3.4s.
+  Displayed once per browser session (tracked in sessionStorage by the
+  guard script in the <head>; see application.html.erb).
+%>
+<div id="vene-splash" class="vene-splash" role="status" aria-label="<%= t('brand.name', default: 'VENÈ Jewelry') %>"
+     style="--splash-logo: url('<%= image_path("vene-splash-logo.png") %>');">
+  <div class="vene-splash__stage">
+    <div class="vene-splash__logo-wrap">
+      <%= image_tag "vene-splash-logo.png", alt: t("brand.name", default: "VENÈ Jewelry"),
+            width: 1200, height: 1040, class: "vene-splash__logo", fetchpriority: "high" %>
+      <span class="vene-splash__shine" aria-hidden="true"></span>
+    </div>
+    <span class="vene-splash__sparkle" style="--x:14%; --y:26%; --s:.9; --delay:.5s;"  aria-hidden="true"></span>
+    <span class="vene-splash__sparkle" style="--x:85%; --y:20%; --s:.7; --delay:1.1s;" aria-hidden="true"></span>
+    <span class="vene-splash__sparkle" style="--x:78%; --y:72%; --s:1;  --delay:.8s;"  aria-hidden="true"></span>
+    <span class="vene-splash__sparkle" style="--x:22%; --y:74%; --s:.8; --delay:1.4s;" aria-hidden="true"></span>
+    <span class="vene-splash__sparkle" style="--x:50%; --y:88%; --s:.6; --delay:1.8s;" aria-hidden="true"></span>
+  </div>
+  <div class="vene-splash__loader" aria-hidden="true"><span class="vene-splash__loader-bar"></span></div>
+</div>
+<noscript>
+  <style>
+    #vene-splash { display: none !important; }
+  </style>
+</noscript>
+<style>
+  html.splash-lock, html.splash-lock body { overflow: hidden; }
+  html.splash-seen #vene-splash { display: none !important; }
+
+  .vene-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(120% 100% at 50% 42%, #17171a 0%, #050505 55%, #000 100%);
+    opacity: 1;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .vene-splash.is-leaving {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .vene-splash__stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: vene-splash-in 1.2s cubic-bezier(.16,.84,.35,1) both,
+               vene-splash-float 6s ease-in-out 1.2s infinite;
+  }
+
+  .vene-splash__logo-wrap {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+  }
+  .vene-splash__logo {
+    display: block;
+    width: min(80vw, 540px);
+    height: auto;
+    filter: drop-shadow(0 10px 40px rgba(255,255,255,.06));
+  }
+
+  /* Light sweep clipped to the logo silhouette */
+  .vene-splash__shine {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg,
+      transparent 42%,
+      rgba(255,255,255,.15) 48%,
+      rgba(255,255,255,.85) 50%,
+      rgba(255,255,255,.15) 52%,
+      transparent 58%);
+    background-size: 300% 100%;
+    background-position: 160% 0;
+    -webkit-mask-image: var(--splash-logo);
+    mask-image: var(--splash-logo);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    mix-blend-mode: screen;
+    opacity: 0;
+    animation: vene-splash-shine 2.4s ease-in-out 1s 2 both;
+  }
+
+  .vene-splash__sparkle {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: 26px;
+    height: 26px;
+    transform: translate(-50%, -50%) scale(0);
+    background: #fff;
+    clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+    filter: drop-shadow(0 0 6px rgba(255,255,255,.9));
+    opacity: 0;
+    animation: vene-splash-twinkle 2.6s ease-in-out var(--delay) infinite;
+  }
+
+  .vene-splash__loader {
+    position: absolute;
+    bottom: clamp(48px, 12vh, 120px);
+    width: min(46vw, 220px);
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.12);
+    overflow: hidden;
+  }
+  .vene-splash__loader-bar {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, rgba(255,255,255,.25), #fff, rgba(255,255,255,.25));
+    animation: vene-splash-load 3.2s cubic-bezier(.5,.05,.2,1) forwards;
+  }
+
+  @keyframes vene-splash-in {
+    from { opacity: 0; transform: scale(.86) translateY(10px); }
+    to   { opacity: 1; transform: scale(1)   translateY(0); }
+  }
+  @keyframes vene-splash-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  @keyframes vene-splash-shine {
+    0%   { background-position: 160% 0; opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { background-position: -60% 0; opacity: 0; }
+  }
+  @keyframes vene-splash-twinkle {
+    0%, 100%   { transform: translate(-50%, -50%) scale(0)            rotate(0deg);   opacity: 0; }
+    45%        { transform: translate(-50%, -50%) scale(var(--s, 1))  rotate(45deg);  opacity: 1; }
+    70%        { transform: translate(-50%, -50%) scale(0)            rotate(90deg);  opacity: 0; }
+  }
+  @keyframes vene-splash-load {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vene-splash__stage { animation: vene-splash-in .4s ease both; }
+    .vene-splash__shine,
+    .vene-splash__sparkle,
+    .vene-splash__loader-bar { animation: none; }
+    .vene-splash__loader { display: none; }
+  }
+</style>
+<script>
+  (function () {
+    var html = document.documentElement;
+    // Already shown this session (guard added class in <head>), or a Turbo
+    // navigation re-ran this script after the first visit — do nothing.
+    if (html.classList.contains("splash-seen")) return;
+
+    var splash = document.getElementById("vene-splash");
+    if (!splash) return;
+
+    html.classList.add("splash-lock");
+
+    var reduce = window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function dismiss() {
+      if (splash.dataset.done) return;
+      splash.dataset.done = "1";
+      try { sessionStorage.setItem("veneSplashSeen", "1"); } catch (e) {}
+      html.classList.add("splash-seen");
+      html.classList.remove("splash-lock");
+      splash.classList.add("is-leaving");
+      setTimeout(function () {
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 750);
+    }
+
+    // Let visitors skip by clicking/tapping.
+    splash.addEventListener("click", dismiss);
+    // Reveal the site after the intro plays (shorter when motion is reduced).
+    setTimeout(dismiss, reduce ? 900 : 3200);
+  })();
+</script>
