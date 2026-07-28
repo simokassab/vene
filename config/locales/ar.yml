@@ -89,6 +89,7 @@ ar:
     preorder_ship_together: "إذا كان طلبك يحتوي على عناصر متوفرة وعناصر طلب مسبق، سيتم شحن جميع العناصر معاً عندما تصبح عناصر الطلب المسبق متاحة."
   checkout:
     title: "الدفع"
+    full_name_required: "الرجاء إدخال الاسم الأول واسم العائلة."
     pay: "ادفع الآن"
     calculated_at_checkout: "يحسب عند الدفع"
     shipping_calculated_next: "يحسب الشحن عند الدفع"

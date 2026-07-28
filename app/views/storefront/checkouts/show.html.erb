@@ -208,6 +208,8 @@
                     <%= t("checkout.full_name", default: "Full Name") %> <span class="text-red-500">*</span>
                   </label>
                   <input type="text" name="order[name]" value="<%= @order.name %>" required
+                    pattern="\s*\S+(\s+\S+)+\s*"
+                    title="<%= t("checkout.full_name_required", default: "Please enter your first and last name.") %>"
                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-700 focus:border-gray-700 transition-all"
                     placeholder="<%= t("checkout.name_placeholder", default: "John Doe") %>" />
                 </div>

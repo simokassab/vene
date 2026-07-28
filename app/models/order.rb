@@ -10,7 +10,17 @@ class Order < ApplicationRecord
   PAYMENT_STATUSES = %w[pending paid failed].freeze
   PAYMENT_METHODS = %w[card cod].freeze
 
+  # A shippable full name: at least two letter-words (first + last) separated by a
+  # space, hyphen, apostrophe or period. Matches Latin, accented and Arabic names,
+  # and rejects single-token names (e.g. "nadineka") that the MontyPay gateway and
+  # DHL reject ("Invalid customer name format").
+  FULL_NAME_FORMAT = /\A\p{L}+(?:[\s.'-]+\p{L}+)+\z/u
+
   validates :name, :email, :phone, :country, :city, :street_address, presence: true
+  # Only enforce full-name format on creation so existing orders (some predating this
+  # rule, e.g. a legacy "nadineka") can still be canceled/confirmed without tripping it.
+  validates :name, format: { with: FULL_NAME_FORMAT, message: "must include your first and last name" },
+                   on: :create, allow_blank: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
   validates :payment_method, inclusion: { in: PAYMENT_METHODS }
@@ -21,6 +31,7 @@ class Order < ApplicationRecord
   scope :registered, -> { where(is_guest: false) }
 
   before_validation :set_defaults
+  before_validation :normalize_name
 
   def update_totals!(settings, shipping_override: nil, cod_fee_override: nil)
     self.subtotal = order_items.sum(&:line_total)
@@ -219,6 +230,10 @@ class Order < ApplicationRecord
   end
 
   private
+
+  def normalize_name
+    self.name = name.squish if name.present?
+  end
 
   def set_defaults
     self.status ||= "payment_pending"

@@ -89,6 +89,7 @@ en:
     preorder_ship_together: "If your order contains both in-stock and pre-order items, all items will be shipped together when pre-order items become available."
   checkout:
     title: "Checkout"
+    full_name_required: "Please enter your first and last name."
     pay: "Pay Securely"
     calculated_at_checkout: "Calculated at checkout"
     shipping_calculated_next: "Shipping calculated at checkout"

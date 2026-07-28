@@ -99,6 +99,17 @@ class Storefront::CheckoutsController < ApplicationController
       return
     end
 
+    # Require a full name (first + last). MontyPay and DHL reject single-token names,
+    # so stop them here with clear feedback instead of failing later at the gateway.
+    unless @order.name.to_s.squish.match?(Order::FULL_NAME_FORMAT)
+      @order.errors.add(:name, "must include your first and last name")
+      @addresses = user_signed_in? ? current_user.addresses.order(is_default: :desc, updated_at: :desc) : []
+      @no_postal_countries = countries_without_postal_codes
+      flash.now[:alert] = t("checkout.full_name_required", default: "Please enter your first and last name.")
+      render :show, status: :unprocessable_entity
+      return
+    end
+
     # Validate city against DHL (safety net - front-end already validates)
     begin
       dest_code = @order.country_code.presence || Dhl::Address.country_code_for(@order.country)
@@ -365,6 +376,13 @@ class Storefront::CheckoutsController < ApplicationController
                   alert: t("payments.initialization_failed", error: result.error)
     end
   rescue ActiveRecord::RecordInvalid
+    # Re-render the address form with the details `show` needs (a direct POST that
+    # skips the review step won't have them set otherwise).
+    @is_guest = !user_signed_in?
+    @addresses = user_signed_in? ? current_user.addresses.order(is_default: :desc, updated_at: :desc) : []
+    @no_postal_countries = countries_without_postal_codes
+    flash.now[:alert] = @order.errors.full_messages.to_sentence.presence ||
+                        t("checkout.error", default: "Please review your details and try again.")
     render :show, status: :unprocessable_entity
   end
 
