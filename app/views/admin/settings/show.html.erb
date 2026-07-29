@@ -98,34 +98,6 @@
       </div>
     </div>
   </div>
-  <!-- Cash on Delivery Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-      </svg>
-      <%= t("admin.settings.cod", default: "Cash on Delivery") %>
-    </h3>
-    <div class="space-y-4">
-      <div class="flex items-center space-x-3">
-        <%= form.check_box :cod_enabled,
-          class: "w-5 h-5 text-[#465FFF] border-gray-300 rounded focus:ring-[#465FFF]" %>
-        <%= form.label :cod_enabled, "Enable Cash on Delivery (local country only)", class: "text-sm font-medium text-gray-700" %>
-      </div>
-      <div>
-        <%= form.label :cod_fee, "Cash on Delivery Fee", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-            <span>$</span>
-          </div>
-          <%= form.number_field :cod_fee, step: 0.01,
-            class: "block w-full pl-8 pr-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-            placeholder: "10.00" %>
-        </div>
-        <p class="mt-1 text-xs text-gray-500">Extra fee added to Cash on Delivery orders (USD). Only offered when the shipping country matches the store's local country.</p>
-      </div>
-    </div>
-  </div>
   <!-- Payment Integration Section -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">

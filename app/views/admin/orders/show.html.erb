@@ -94,9 +94,6 @@
     <p class="text-xs text-gray-500 mb-4">
       <%= t("orders.payment_method", default: "Payment Method") %>:
       <span class="font-semibold text-gray-700"><%= payment_method_label(@order) %></span>
-      <% if @order.cod? %>
-        <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">COD</span>
-      <% end %>
     </p>
     <%= button_to update_payment_status_admin_order_path(@order, locale: I18n.locale, payment_status: :paid),
       method: :patch,
@@ -203,12 +200,6 @@
             <span><%= t("orders.shipping", default: "Shipping") %></span>
             <span class="font-medium"><%= number_to_currency(@order.shipping_amount) %></span>
           </div>
-          <% if @order.cod_fee.to_f > 0 %>
-            <div class="flex justify-between text-sm text-gray-600">
-              <span><%= t("checkout.cod_fee", default: "Cash on Delivery fee") %></span>
-              <span class="font-medium"><%= number_to_currency(@order.cod_fee) %></span>
-            </div>
-          <% end %>
           <% if @order.discount_amount > 0 %>
             <div class="flex justify-between text-sm text-green-600">
               <span><%= t("coupons.discount", default: "Discount") %> (<span class="font-mono"><%= @order.coupon_code %></span>)</span>

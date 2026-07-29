@@ -19,9 +19,6 @@
 =====================================
 <%= I18n.t("orders.subtotal", default: "Subtotal") %>: <%= number_to_currency(@order.subtotal, unit: @order.currency) %>
 <%= I18n.t("orders.shipping", default: "Shipping") %>: <%= number_to_currency(@order.shipping_amount, unit: @order.currency) %>
-<% if @order.cod_fee.to_f > 0 -%>
-  <%= I18n.t("checkout.cod_fee", default: "Cash on Delivery fee") %>: <%= number_to_currency(@order.cod_fee, unit: @order.currency) %>
-<% end -%>
 -------------------------------------
 <%= I18n.t("orders.total", default: "Total") %>: <%= number_to_currency(@order.total_amount, unit: @order.currency) %>
 (<%= I18n.t("common.prices_include_tax", default: "Prices include all applicable taxes") %>)

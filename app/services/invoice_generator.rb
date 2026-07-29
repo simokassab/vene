@@ -134,10 +134,6 @@ class InvoiceGenerator
     shipping_label = "Shipping (#{@order.shipping_method.presence || 'DHL'} EXPRESS)"
     summary_items << [ shipping_label, as_currency(@order.shipping_amount) ]
 
-    if @order.cod_fee.to_f > 0
-      summary_items << [ "Cash on Delivery Fee", as_currency(@order.cod_fee) ]
-    end
-
     if @order.discount_amount.to_f > 0
       summary_items << [ "Discount (#{@order.coupon_code})", "-#{as_currency(@order.discount_amount)}" ]
     end
@@ -186,7 +182,7 @@ class InvoiceGenerator
   end
 
   def payment_method_text
-    @order.cod? ? "Cash on Delivery" : "Card (MontyPay)"
+    "Card (MontyPay)"
   end
 
   def current_settings

@@ -25,11 +25,7 @@ module ApplicationHelper
     number_to_currency(amount, unit: symbol, precision: precision)
   end
 
-  def payment_method_label(order)
-    if order.cod?
-      t("orders.payment_cod", default: "Cash on Delivery")
-    else
-      t("orders.payment_card", default: "Card (MontyPay)")
-    end
+  def payment_method_label(_order)
+    t("orders.payment_card", default: "Card (MontyPay)")
   end
 end

@@ -23,7 +23,7 @@
     <td style="padding: 4px 0;"><strong>Status:</strong> <%= @order.status.titleize %></td>
   </tr>
   <tr>
-    <td style="padding: 4px 0;"><strong>Payment Method:</strong> <%= @order.cod? ? "Cash on Delivery" : "Card (MontyPay)" %><% if @order.cod? %> &mdash; collect <%= number_to_currency(@order.total_amount, unit: @order.currency) %> on delivery<% end %></td>
+    <td style="padding: 4px 0;"><strong>Payment Method:</strong> Card (MontyPay)</td>
   </tr>
 </table>
 <!-- Items table -->

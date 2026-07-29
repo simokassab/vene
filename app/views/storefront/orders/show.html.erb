@@ -108,12 +108,6 @@
           <span><%= t("orders.shipping", default: "Shipping") %></span>
           <span class="ml-3 font-semibold text-gray-900"><%= display_order_price(@order.shipping_amount, @order) %></span>
         </div>
-        <% if @order.cod_fee.to_f > 0 %>
-          <div class="text-sm text-gray-600">
-            <span><%= t("checkout.cod_fee", default: "Cash on Delivery fee") %></span>
-            <span class="ml-3 font-semibold text-gray-900"><%= display_order_price(@order.cod_fee, @order) %></span>
-          </div>
-        <% end %>
         <% if @order.discount_amount > 0 %>
           <div class="text-sm text-green-600">
             <span><%= t("coupons.discount", default: "Discount") %> (<span class="font-mono"><%= @order.coupon_code %></span>)</span>

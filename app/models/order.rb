@@ -8,7 +8,7 @@ class Order < ApplicationRecord
 
   STATUSES = %w[pending payment_pending paid shipped delivered canceled].freeze
   PAYMENT_STATUSES = %w[pending paid failed].freeze
-  PAYMENT_METHODS = %w[card cod].freeze
+  PAYMENT_METHODS = %w[card].freeze
 
   # A shippable full name: at least two letter-words (first + last) separated by a
   # space, hyphen, apostrophe or period. Matches Latin, accented and Arabic names,
@@ -33,26 +33,12 @@ class Order < ApplicationRecord
   before_validation :set_defaults
   before_validation :normalize_name
 
-  def update_totals!(settings, shipping_override: nil, cod_fee_override: nil)
+  def update_totals!(settings, shipping_override: nil)
     self.subtotal = order_items.sum(&:line_total)
     self.tax_amount = 0 # Prices include tax
     self.shipping_amount = shipping_override || settings.shipping_flat_rate || 0
-    self.cod_fee = cod_fee_override.nil? ? (cod_fee || 0) : cod_fee_override
-    self.total_amount = subtotal - discount_amount + shipping_amount + cod_fee
+    self.total_amount = subtotal - discount_amount + shipping_amount
     save!
-  end
-
-  def cod?
-    payment_method == "cod"
-  end
-
-  # Cash-on-Delivery: the order is committed at checkout with no online payment.
-  # Reserve stock now; the shipment is created manually by an admin after review.
-  def place_cod_order!
-    transaction do
-      update!(status: "pending", payment_status: "pending")
-      decrement_stock!
-    end
   end
 
   # Called after payment is confirmed (via webhook or success redirect)
@@ -60,19 +46,19 @@ class Order < ApplicationRecord
     return if payment_status == "paid"
 
     transaction do
-      # Preserve post-fulfillment statuses (e.g. shipped/delivered) when a COD
-      # order is later marked paid; only advance pre-fulfillment orders.
+      # Preserve post-fulfillment statuses (e.g. shipped/delivered); only advance
+      # pre-fulfillment orders to "paid".
       new_status = %w[pending payment_pending].include?(status) ? "paid" : status
       update!(payment_status: "paid", status: new_status, paid_at: Time.current)
       decrement_stock!
     end
 
-    # Create DHL shipment in the background (skip when one already exists, e.g. COD)
+    # Create DHL shipment in the background (skip when one already exists)
     CreateDhlShipmentJob.perform_later(id) unless has_dhl_tracking?
   end
 
   # Decrement stock for all order items (only for non-preorder items).
-  # Idempotent: safe to call more than once (card payment + COD both funnel here).
+  # Idempotent: safe to call more than once.
   def decrement_stock!
     return if stock_decremented?
 
@@ -84,8 +70,8 @@ class Order < ApplicationRecord
     return false if status == "canceled"
 
     transaction do
-      # Restore stock only if it was actually decremented (paid card orders and
-      # placed COD orders), independent of payment_status.
+      # Restore stock only if it was actually decremented (paid orders),
+      # independent of payment_status.
       if stock_decremented?
         order_items.regular_orders.each do |item|
           if item.product_variant_id.present?
