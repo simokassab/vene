@@ -21,4 +21,32 @@ module AnalyticsHelper
   def ga4_flash_event
     ga4_data_layer(flash[:ga4_event])
   end
+
+  # Renders a <script> that fires a Meta (Facebook) Pixel standard event.
+  # Accepts the {event:, data:} Hash from the MetaPixel service (page-load
+  # events) or a pre-serialized JSON String (flash-stashed events that survive
+  # a redirect).
+  #
+  # The name and params are run through json_escape so a product name
+  # containing "</script>" cannot break out of the tag. `window.fbq &&` guards
+  # against the pixel being blocked (ad blockers) so we never raise on the page.
+  def meta_pixel_event(payload)
+    return if payload.blank?
+
+    payload = JSON.parse(payload) if payload.is_a?(String)
+    payload = payload.symbolize_keys
+    name = payload[:event]
+    return if name.blank?
+
+    args = [ name.to_json, (payload[:data].presence && payload[:data].to_json) ]
+             .compact.map { |json| ERB::Util.json_escape(json) }.join(",")
+
+    content_tag(:script, "window.fbq && fbq('track',#{args});".html_safe)
+  end
+
+  # Renders a Meta Pixel event stashed in the flash after a redirect
+  # (used for AddToCart and Purchase). No-op when nothing is stashed.
+  def meta_pixel_flash_event
+    meta_pixel_event(flash[:meta_pixel_event])
+  end
 end

@@ -471,7 +471,7 @@
               </svg>
               <div>
                 <h4 class="font-semibold text-gray-900 text-sm"><%= t("checkout.easy_returns", default: "Easy Returns") %></h4>
-                <p class="text-xs text-gray-600"><%= t("checkout.returns_desc", default: "30-day return policy") %></p>
+                <p class="text-xs text-gray-600"><%= t("checkout.returns_desc", default: "7-day return policy") %></p>
               </div>
             </div>
           </div>
@@ -484,4 +484,5 @@
     checkout (GET show), not on review re-renders or validation re-renders. %>
 <% if action_name == "show" %>
   <%= ga4_data_layer Ga4.begin_checkout_event(@cart) %>
+  <%= meta_pixel_event MetaPixel.initiate_checkout_event(@cart) %>
 <% end %>

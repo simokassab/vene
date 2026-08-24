@@ -15,6 +15,9 @@ class Storefront::PaymentsController < ApplicationController
 
     # GA4 ecommerce: stash purchase so it fires once on the order page after redirect
     flash[:ga4_event] = Ga4.purchase_event(@order).to_json
+    # Meta Pixel: stash Purchase (real charged value + currency) so it fires once
+    # on the order page after redirect
+    flash[:meta_pixel_event] = MetaPixel.purchase_event(@order).to_json
 
     redirect_to order_path(@order, locale: I18n.locale), notice: t("payments.success")
   end

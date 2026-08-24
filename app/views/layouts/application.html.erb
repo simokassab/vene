@@ -10,6 +10,26 @@
           })(window,document,'script','dataLayer','GTM-KHHSVVZ6');
     </script>
     <!-- End Google Tag Manager -->
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '<%= MetaPixel::PIXEL_ID %>');
+      // Fire PageView on the initial load and on every Turbo navigation, so
+      // client-side (Hotwire) page changes are tracked as separate views.
+      document.addEventListener('turbo:load', function () {
+        if (window.fbq) fbq('track', 'PageView');
+      });
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=<%= MetaPixel::PIXEL_ID %>&ev=PageView&noscript=1"/></noscript>
+    <!-- End Meta Pixel Code -->
     <title><%= content_for(:title) || "VENÈ Jewelry" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,6 +70,7 @@
     <!-- End Google Tag Manager (noscript) -->
     <%= render "shared/intro_splash" %>
     <%= ga4_flash_event %>
+    <%= meta_pixel_flash_event %>
     <header class="fixed top-0 inset-x-0 backdrop-blur z-30 shadow-lg" style="background-color: #131313;">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-20 gap-8">

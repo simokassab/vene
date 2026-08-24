@@ -762,3 +762,5 @@
       </style>
       <%# GA4 ecommerce: product detail view %>
       <%= ga4_data_layer Ga4.view_item_event(@product) %>
+      <%# Meta Pixel: product detail view %>
+      <%= meta_pixel_event MetaPixel.view_content_event(@product) %>
