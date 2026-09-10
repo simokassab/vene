@@ -218,6 +218,7 @@
             <div class="group">
               <!-- Product Image -->
               <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-sm flex items-center justify-center">
+                <%= render "shared/made_to_order_badge", product: product %>
                 <% if product.primary_image %>
                   <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                     <%= image_tag product.primary_image.image.url,
@@ -238,9 +239,16 @@
                     <%= product.name(I18n.locale) %>
                   </h3>
                 <% end %>
-                <%= link_to product_path(product.slug, locale: I18n.locale),
-                  class: "text-xs text-gray-700 underline hover:text-gray-900" do %>
-                  <%= t("common.shop_now", default: "Shop Now") %>
+                <% if product.made_to_order? && (wa = made_to_order_whatsapp_url(product)) %>
+                  <%= link_to wa, target: "_blank", rel: "noopener",
+                    class: "text-xs text-gray-900 font-medium underline hover:text-black" do %>
+                    <%= t("products.order_on_whatsapp") %>
+                  <% end %>
+                <% else %>
+                  <%= link_to product_path(product.slug, locale: I18n.locale),
+                    class: "text-xs text-gray-700 underline hover:text-gray-900" do %>
+                    <%= t("common.shop_now", default: "Shop Now") %>
+                  <% end %>
                 <% end %>
               </div>
             </div>
@@ -265,6 +273,7 @@
             <div class="group bg-white rounded-md overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
               <!-- Product Image with Badge -->
               <div class="relative aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
+                <%= render "shared/made_to_order_badge", product: product %>
                 <% if product.primary_image %>
                   <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                     <%= image_tag product.primary_image.image.url,
@@ -293,12 +302,26 @@
                       </span>
                     </div>
                   </div>
-                  <%= link_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
-                    method: :post,
-                    class: "text-gray-700 hover:text-gray-900 flex-shrink-0 ml-1" do %>
-                    <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
+                  <% if product.made_to_order? %>
+                    <% if (wa = made_to_order_whatsapp_url(product)) %>
+                      <%= link_to wa, target: "_blank", rel: "noopener",
+                        title: t("products.order_on_whatsapp"),
+                        "aria-label": t("products.order_on_whatsapp"),
+                        class: "text-gray-900 hover:text-black flex-shrink-0 ml-1" do %>
+                        <%= render "shared/whatsapp_icon", css_class: "w-5 h-5 md:w-6 md:h-6" %>
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <%# NOTE: link_to with method: :post is Rails-UJS syntax and is ignored under
+                        Turbo, so this emits a GET and 404s. Left as-is deliberately — fixing it
+                        would turn a dead control into a live purchase path inside this change. %>
+                    <%= link_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
+                      method: :post,
+                      class: "text-gray-700 hover:text-gray-900 flex-shrink-0 ml-1" do %>
+                      <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                      </svg>
+                    <% end %>
                   <% end %>
                 </div>
               </div>
@@ -329,6 +352,7 @@
               <div class="flex-none w-48 md:w-80 group">
                 <!-- Product Image -->
                 <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-md shadow-sm flex items-center justify-center">
+                  <%= render "shared/made_to_order_badge", product: product %>
                   <% if product.primary_image %>
                     <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
                       <%= image_tag product.primary_image.image.url,
@@ -373,11 +397,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
               <!-- Product Image -->
               <div class="relative aspect-[4/3] md:aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
-                <% if sale_product.on_sale && sale_product.sale_price.present? %>
-                  <span class="absolute top-3 left-3 md:top-4 md:left-4 bg-gray-700 text-white text-[10px] md:text-xs font-medium px-2 py-1.5 md:px-3 md:py-2 rounded z-10">
-                    <%= t("common.sale_up_to", default: "SALE UP TO") %> <%= number_to_percentage((sale_product.price - sale_product.sale_price) / sale_product.price * 100, precision: 0) %> <%= t("common.off", default: "OFF") %>
-                  </span>
-                <% end %>
+                <%# Stacked: this is the one card where a made-to-order badge and the SALE
+                    badge can both fire, and they share the top-left corner. %>
+                <div class="absolute top-3 left-3 md:top-4 md:left-4 z-10 flex flex-col gap-2 items-start">
+                  <%= render "shared/made_to_order_badge", product: sale_product, positioned: false %>
+                  <% if sale_product.on_sale && sale_product.sale_price.present? %>
+                    <span class="bg-gray-700 text-white text-[10px] md:text-xs font-medium px-2 py-1.5 md:px-3 md:py-2 rounded">
+                      <%= t("common.sale_up_to", default: "SALE UP TO") %> <%= number_to_percentage((sale_product.price - sale_product.sale_price) / sale_product.price * 100, precision: 0) %> <%= t("common.off", default: "OFF") %>
+                    </span>
+                  <% end %>
+                </div>
                 <% if sale_product.primary_image %>
                   <%= link_to product_path(sale_product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-4" do %>
                     <%= image_tag sale_product.primary_image.image.url,
@@ -403,9 +432,17 @@
                     <%= sale_product.name(I18n.locale) %>
                   </h3>
                 <% end %>
-                <%= link_to product_path(sale_product.slug, locale: I18n.locale),
-                  class: "inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gray-700 hover:bg-gray-800 text-white text-xs md:text-sm font-medium uppercase tracking-wide transition-all duration-300 text-center" do %>
-                  <%= t("common.shop_now", default: "SHOP NOW") %>
+                <% if sale_product.made_to_order? && (wa = made_to_order_whatsapp_url(sale_product)) %>
+                  <%= link_to wa, target: "_blank", rel: "noopener",
+                    class: "inline-flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-gray-900 hover:bg-black text-white text-xs md:text-sm font-medium uppercase tracking-wide transition-all duration-300 text-center" do %>
+                    <%= render "shared/whatsapp_icon", css_class: "w-4 h-4" %>
+                    <%= t("products.order_on_whatsapp") %>
+                  <% end %>
+                <% else %>
+                  <%= link_to product_path(sale_product.slug, locale: I18n.locale),
+                    class: "inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gray-700 hover:bg-gray-800 text-white text-xs md:text-sm font-medium uppercase tracking-wide transition-all duration-300 text-center" do %>
+                    <%= t("common.shop_now", default: "SHOP NOW") %>
+                  <% end %>
                 <% end %>
               </div>
             </div>

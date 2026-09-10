@@ -37,6 +37,15 @@ class ProductVariant < ApplicationRecord
     stock_quantity <= 0 && allow_preorder?
   end
 
+  # Storefront fulfillment gate. See Product#made_to_order? for why this is kept
+  # separate from #preorder_only?.
+  def made_to_order?
+    allow_preorder?
+  end
+
+  # Lead time is a per-product setting, not per-variant.
+  delegate :lead_time, to: :product
+
   def estimated_delivery_date
     return nil unless allow_preorder?
 

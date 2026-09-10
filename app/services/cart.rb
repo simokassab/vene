@@ -21,6 +21,11 @@ class Cart
       end
     end
 
+    # Made-to-order items are ordered over WhatsApp and must never reach checkout.
+    def made_to_order?
+      product.made_to_order_with?(product_variant)
+    end
+
     def estimated_delivery_date
       if product_variant
         product_variant.estimated_delivery_date
@@ -71,6 +76,15 @@ class Cart
 
   def clear
     @session[:cart] = {}
+  end
+
+  # session[:cart] survives deploys, so a cart built before this feature shipped can still
+  # hold a made-to-order line. Drops them and returns what was removed, so the caller can
+  # name the products in the flash rather than silently emptying someone's cart.
+  def purge_made_to_order!
+    stale = items.select(&:made_to_order?)
+    stale.each { |item| remove(item.cart_key) }
+    stale
   end
 
   def items

@@ -32,7 +32,7 @@ class Product < ApplicationRecord
   def self.ransackable_attributes(auth_object = nil)
     %w[name_en name_ar description_en description_ar price sale_price stock_quantity
        metal diamonds gemstones slug active featured on_sale created_at updated_at sub_category_id
-       allow_preorder preorder_estimated_delivery_date]
+       allow_preorder preorder_estimated_delivery_date lead_time_en lead_time_ar]
   end
 
   def self.ransackable_associations(auth_object = nil)
@@ -113,6 +113,26 @@ class Product < ApplicationRecord
 
   def preorder_note(locale = I18n.locale)
     locale.to_sym == :ar ? preorder_note_ar : preorder_note_en
+  end
+
+  # Made-to-order methods
+  #
+  # Storefront fulfillment gate: driven by the flag alone, never by stock level.
+  # Deliberately separate from #preorder_only?, which feeds OrderItem#is_preorder and
+  # therefore drives Order#decrement_stock! and #cancel_order!. Do not merge the two.
+  def made_to_order?
+    allow_preorder?
+  end
+
+  # OR-semantics, so views and server-side guards can never disagree. Failing this way
+  # round means the worst case is an unnecessary WhatsApp enquiry, never a sale we cannot ship.
+  def made_to_order_with?(variant)
+    made_to_order? || variant&.made_to_order? || false
+  end
+
+  def lead_time(locale = I18n.locale)
+    (locale.to_sym == :ar ? lead_time_ar : lead_time_en).presence ||
+      I18n.t("products.default_lead_time", locale: locale)
   end
 
   private

@@ -34,13 +34,15 @@
   variantPreorderStatus: <%= variant_preorder_status.to_json %>,
   productAllowPreorder: <%= @product.allow_preorder? %>,
   productEstimatedDate: '<%= @product.estimated_delivery_date&.iso8601 %>',
-  productPreorderOnly: <%= @product.preorder_only? %>,
+  // Made to order: driven by the flag alone, never by stock level. The property keeps its
+  // historical name because it is referenced throughout this 766-line file.
+  productPreorderOnly: <%= @product.made_to_order? %>,
   viewingVideo: false,
 
   // Simple properties - NO getters to avoid reactivity issues
   currentStock: <%= @product.stock_quantity %>,
-  currentMaxQty: <%= @product.preorder_only? ? 10 : @product.stock_quantity %>,
-  currentIsPreorder: <%= @product.preorder_only? %>,
+  currentMaxQty: <%= @product.stock_quantity %>,
+  currentIsPreorder: <%= @product.made_to_order? %>,
   currentCanPurchase: <%= @product.purchasable? %>,
   currentEstimatedDate: '<%= @product.estimated_delivery_date&.iso8601 %>',
 
@@ -51,15 +53,17 @@
       const allowPreorder = variantStatus?.allow_preorder || false;
 
       this.currentStock = stock;
-      this.currentIsPreorder = stock <= 0 && allowPreorder;
+      // OR-semantics, mirroring Product#made_to_order_with?: the product's own flag wins
+      // even when the selected variant is not itself made to order.
+      this.currentIsPreorder = this.productAllowPreorder || allowPreorder;
       this.currentCanPurchase = stock > 0 || allowPreorder;
-  this.currentMaxQty = this.currentIsPreorder ? 10 : stock;
+  this.currentMaxQty = stock;
   this.currentEstimatedDate = variantStatus?.estimated_date || '';
   } else {
   this.currentStock = this.productStockQuantity;
   this.currentIsPreorder = this.productPreorderOnly;
   this.currentCanPurchase = this.productStockQuantity > 0 || this.productAllowPreorder;
-  this.currentMaxQty = this.currentIsPreorder ? 10 : this.productStockQuantity;
+  this.currentMaxQty = this.productStockQuantity;
   this.currentEstimatedDate = this.productEstimatedDate;
   }
   },
@@ -85,9 +89,10 @@
     this.quantity = 1;
     });
     this.$watch('quantity', (value) => {
-    // Ensure quantity doesn't exceed max
-    if (value > this.maxQuantity) {
-    this.quantity = this.maxQuantity;
+    // Ensure quantity doesn't exceed max. The property is currentMaxQty — reading the
+    // non-existent this.maxQuantity here used to silently set quantity to undefined.
+    if (this.currentMaxQty > 0 && value > this.currentMaxQty) {
+    this.quantity = this.currentMaxQty;
     }
     if (value < 1) {
         this.quantity = 1;
@@ -117,6 +122,12 @@
         <div class="lg:sticky lg:top-24 lg:self-start">
           <!-- Main Display Area -->
           <div class="relative bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden mb-6">
+            <%# Written inline rather than via shared/_made_to_order_badge because it must track
+                the selected variant live, which a server-rendered partial cannot do. %>
+            <span x-show="currentIsPreorder" x-cloak
+              class="absolute top-4 left-4 z-20 inline-block bg-gray-900 text-white text-xs font-medium uppercase tracking-wide px-3 py-2 rounded pointer-events-none">
+              <%= t("products.made_to_order_badge") %>
+            </span>
             <!-- Video View -->
             <% if @product.video.present? %>
               <div x-show="viewingVideo"
@@ -180,7 +191,8 @@
             </div>
             <!-- Zoom Hint (only show when not viewing video) -->
             <% if primary_url %>
-              <div x-show="!viewingVideo" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+              <%# Shifted down when a made-to-order badge occupies the top-left corner. %>
+              <div x-show="!viewingVideo" :class="currentIsPreorder ? 'top-16' : 'top-4'" class="absolute left-4 right-4 flex items-center justify-between pointer-events-none">
                 <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity"
                  :class="imageZoom ? 'opacity-100' : ''">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,6 +327,11 @@
                 <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
               </span>
             </div>
+            <%# x-show rather than an ERB conditional so it tracks variant selection, like
+                the "Starting from" label above. Lead time is per product, so no variant branch. %>
+            <p x-show="currentIsPreorder" x-cloak class="mt-3 text-sm text-gray-600">
+              <%= t("products.made_to_order_line", lead_time: @product.lead_time(I18n.locale)) %>
+            </p>
           </div>
           <!-- Rating -->
           <div class="flex items-center gap-2">
@@ -446,25 +463,6 @@
                   </button>
                 </div>
               </div>
-              <!-- Pre-order notice - only show when variant is selected OR product has no variants -->
-              <div x-show="currentIsPreorder && (!hasVariants || selectedVariant)"
-               x-transition:enter="transition ease-out duration-200"
-               x-transition:enter-start="opacity-0"
-               x-transition:enter-end="opacity-100"
-               class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div>
-                  <p class="font-semibold text-amber-900"><%= t("products.preorder_item") %></p>
-                  <p class="text-amber-700" x-show="currentEstimatedDate">
-                    <%= t("products.estimated_delivery") %> <span x-text="currentEstimatedDate ? new Date(currentEstimatedDate).toLocaleDateString() : ''"></span>
-                  </p>
-                  <p class="text-amber-600 text-xs mt-1">
-                    <%= current_settings.preorder_disclaimer(I18n.locale) %>
-                  </p>
-                </div>
-              </div>
               <!-- Stock warning - only show when variant is selected OR product has no variants -->
               <div x-show="!currentIsPreorder && currentStock > 0 && currentStock <= 5 && (!hasVariants || selectedVariant)" class="text-xs text-orange-600 flex items-center gap-1">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,19 +477,30 @@
                   <span><%= t("products.out_of_stock_no_preorder") %></span>
                 </div>
               </div>
-              <% wa_number = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "") %>
-              <% wa_message = t("products.preorder_whatsapp_message", product: @product.name(I18n.locale), price: display_price(@product.price), url: request.original_url) %>
-              <% wa_href = "https://wa.me/#{wa_number}?text=#{ERB::Util.url_encode(wa_message)}" %>
-              <div :class="(currentCanPurchase && !currentIsPreorder) ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1'">
-                <!-- Pre-order / made-to-order items: contact us instead of online checkout -->
+              <%
+                # One href per variant so the enquiry names the exact piece. The variants are
+                # already loaded above (variant_stocks uses the same relation), so this is free.
+                wa_hrefs = { "default" => made_to_order_whatsapp_url(@product, url: request.original_url) }
+                if @product.has_variants?
+                  # display_name reads variant_type and variant_option, so eager-load both.
+                  @product.product_variants.active.includes(:variant_type, :variant_option).each do |pv|
+                    wa_hrefs[pv.id.to_s] = made_to_order_whatsapp_url(@product, variant: pv, url: request.original_url)
+                  end
+                end
+              %>
+              <div :class="(currentCanPurchase && !currentIsPreorder) ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1'"
+                x-data="{ waHrefs: <%= wa_hrefs.to_json %> }">
+                <!-- Made-to-order items: order over WhatsApp instead of online checkout -->
+                <% if wa_hrefs["default"].present? %>
                 <a x-show="currentIsPreorder" x-cloak
-                  href="<%= wa_href %>" target="_blank" rel="noopener"
-                  class="w-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2">
+                  :href="waHrefs[selectedVariant] || waHrefs['default']" target="_blank" rel="noopener"
+                  class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.874 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                   </svg>
-                  <%= t("products.contact_to_order", default: "Contact us to order") %>
+                  <%= t("products.order_on_whatsapp") %>
                 </a>
+                <% end %>
                 <!-- In-stock items: normal add to cart -->
                 <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post" x-show="!currentIsPreorder">
                   <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
@@ -687,6 +696,7 @@
                   <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
                     <!-- Product Image -->
                     <div class="relative aspect-square overflow-hidden bg-gray-100">
+                      <%= render "shared/made_to_order_badge", product: product %>
                       <% if product.primary_image&.image&.url %>
                         <%= link_to product_path(product.slug, locale: I18n.locale) do %>
                           <%= image_tag product.primary_image.image.url,

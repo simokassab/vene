@@ -7,6 +7,19 @@ class ApplicationController < ActionController::Base
   helper_method :current_settings, :cart_item_count, :navigation_categories,
                 :visitor_currency, :visitor_flag, :visitor_country_code, :currency_options
 
+  # Removes made-to-order lines from a cart that predates this feature. Returns true when
+  # something was dropped, so callers can choose between a flash.now and a redirect.
+  def purge_made_to_order(cart, flash_now: false)
+    removed = cart.purge_made_to_order!
+    return false if removed.empty?
+
+    Rails.logger.warn("[MadeToOrder] purged from cart: #{removed.map(&:cart_key).join(',')}")
+    message = t("cart.made_to_order_removed",
+                products: removed.map { |item| item.product.name(I18n.locale) }.to_sentence)
+    flash_now ? flash.now[:alert] = message : flash[:alert] = message
+    true
+  end
+
   unless Rails.env.production?
     around_action :n_plus_one_detection
 

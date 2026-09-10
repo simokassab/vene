@@ -1,6 +1,7 @@
 class Storefront::CartsController < ApplicationController
   def show
     @cart = Cart.new(session)
+    purge_made_to_order(@cart, flash_now: true)
   end
 
   def add_item
@@ -10,6 +11,16 @@ class Storefront::CartsController < ApplicationController
     # Validate variant selection if product has variants
     if product.has_variants? && params[:product_variant_id].blank?
       redirect_to product_path(product.slug, locale: I18n.locale), alert: t("cart.variant_required")
+      return
+    end
+
+    # Made-to-order items are ordered over WhatsApp and never enter the cart.
+    # Checked before purchasable?, which returns true for them and so stops nothing.
+    # POST /cart/add_item is the only route that writes to the cart, so this one guard
+    # covers every add-to-cart surface on the storefront.
+    made_to_order_variant = params[:product_variant_id].present? ? product.product_variants.find_by(id: params[:product_variant_id]) : nil
+    if product.made_to_order_with?(made_to_order_variant)
+      redirect_to product_path(product.slug, locale: I18n.locale), alert: t("cart.made_to_order_only")
       return
     end
 

@@ -7,6 +7,10 @@ class OrderItem < ApplicationRecord
   validates :unit_price, :line_total, numericality: { greater_than_or_equal_to: 0 }
   validate :variant_required_if_product_has_variants
   validate :check_stock_availability
+  # Last-resort net for any path that bypasses the storefront controllers.
+  # Scoped on: :create so the existing line items of products that are now made to order
+  # are never re-validated, and past orders can still be confirmed, shipped or canceled.
+  validate :reject_made_to_order, on: :create
 
   before_validation :set_preorder_flag
   before_validation :set_prices
@@ -31,6 +35,12 @@ class OrderItem < ApplicationRecord
   end
 
   private
+
+  def reject_made_to_order
+    return unless product
+
+    errors.add(:base, I18n.t("cart.made_to_order_only")) if product.made_to_order_with?(product_variant)
+  end
 
   def set_prices
     self.unit_price = product&.current_price || 0 if unit_price.nil?

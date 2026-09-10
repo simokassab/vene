@@ -81,7 +81,12 @@
 
               <!-- Status Badges -->
               <div class="absolute top-3 left-3 flex flex-col gap-2">
-                <% if !item.in_stock? %>
+                <%# Made to order takes precedence: these are never "out of stock", they are
+                    simply not held in stock, so the red pill would misdescribe them. %>
+                <% if item.product.made_to_order_with?(item.product_variant) %>
+                  <%= render "shared/made_to_order_badge", product: item.product, variant: item.product_variant,
+                        positioned: false, extra_class: "rounded-full px-3 py-1" %>
+                <% elsif !item.in_stock? %>
                   <span class="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
                     <%= t("wishlist.out_of_stock") %>
                   </span>
@@ -143,7 +148,17 @@
               </div>
 
               <!-- Add to Cart Button -->
-              <% if item.in_stock? %>
+              <%# Made to order stays wishlist-able, but is ordered over WhatsApp rather than
+                  through the cart, which the server would reject anyway. %>
+              <% if item.product.made_to_order_with?(item.product_variant) %>
+                <% if (wa = made_to_order_whatsapp_url(item.product, variant: item.product_variant)) %>
+                  <%= link_to wa, target: "_blank", rel: "noopener",
+                    class: "flex items-center justify-center gap-2 w-full py-3 bg-gray-900 hover:bg-black text-white font-semibold rounded-lg transition-all duration-300" do %>
+                    <%= render "shared/whatsapp_icon", css_class: "w-5 h-5" %>
+                    <%= t("products.order_on_whatsapp") %>
+                  <% end %>
+                <% end %>
+              <% elsif item.in_stock? %>
                 <%= form_with url: add_item_cart_path(locale: I18n.locale), method: :post, class: "w-full" do |f| %>
                   <%= hidden_field_tag :product_id, item.product.id %>
                   <% if item.product_variant %>

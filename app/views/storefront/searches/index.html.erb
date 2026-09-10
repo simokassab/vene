@@ -29,6 +29,7 @@
           <div class="group relative animate-fade-in" style="animation-delay: <%= index * 50 %>ms;">
             <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
               <div class="relative aspect-square overflow-hidden bg-gray-100">
+                <%= render "shared/made_to_order_badge", product: product %>
                 <% if product.primary_image&.image&.url %>
                   <%= link_to product_path(product.slug, locale: I18n.locale) do %>
                     <%= image_tag product.primary_image.image.url,

@@ -2,11 +2,14 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
   <% @products.each do |product| %>
     <div class="border rounded-md shadow-sm overflow-hidden hover:shadow">
-      <% if product.primary_image&.image&.url %>
-        <%= image_tag product.primary_image.image.url, class: "w-full h-52 object-cover" %>
-      <% else %>
-        <div class="w-full h-52 bg-gray-100 flex items-center justify-center text-gray-400">No image</div>
-      <% end %>
+      <div class="relative">
+        <%= render "shared/made_to_order_badge", product: product %>
+        <% if product.primary_image&.image&.url %>
+          <%= image_tag product.primary_image.image.url, class: "w-full h-52 object-cover" %>
+        <% else %>
+          <div class="w-full h-52 bg-gray-100 flex items-center justify-center text-gray-400">No image</div>
+        <% end %>
+      </div>
       <div class="p-4 space-y-1">
         <div class="text-sm text-gray-500"><%= product.category.name(I18n.locale) %></div>
         <h3 class="font-semibold"><%= link_to product.name, product_path(product.slug, locale: I18n.locale) %></h3>

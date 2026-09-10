@@ -150,7 +150,7 @@
       <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      Pre-Order Settings
+      <%= t("admin.products.made_to_order", default: "Made to Order") %>
     </h3>
 
     <div class="space-y-6">
@@ -160,17 +160,36 @@
             class: "w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2" %>
         </div>
         <div class="ml-3">
-          <%= form.label :allow_preorder, "Allow Pre-Orders", class: "text-sm font-medium text-gray-700" %>
-          <p class="text-xs text-gray-600">Enable pre-orders when product is out of stock</p>
+          <%= form.label :allow_preorder, "Made to Order (routes to WhatsApp)", class: "text-sm font-medium text-gray-700" %>
+          <p class="text-xs text-gray-600">Hides Add to Cart everywhere on the site and shows an Order on WhatsApp button instead. <strong>Applies regardless of stock quantity.</strong></p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <%= form.label :preorder_estimated_delivery_date, "Estimated Delivery Date", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.label :preorder_estimated_delivery_date, "Estimated Delivery Date (internal)", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= form.date_field :preorder_estimated_delivery_date,
             class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors" %>
-          <p class="mt-1 text-xs text-gray-500">Leave blank to use global default (30 days)</p>
+          <p class="mt-1 text-xs text-gray-500">Not shown on the storefront. Used only by pre-order reporting for existing orders.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <%= form.label :lead_time_en, "Lead Time (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.text_field :lead_time_en,
+            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
+            placeholder: "2-3 weeks" %>
+          <p class="mt-1 text-xs text-gray-500">Shown under the price as &ldquo;Handcrafted in Beirut &middot; Ships in &hellip;&rdquo;. Leave blank for &ldquo;2-3 weeks&rdquo;.</p>
+        </div>
+
+        <div>
+          <%= form.label :lead_time_ar, "Lead Time (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.text_field :lead_time_ar,
+            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
+            placeholder: "٢-٣ أسابيع",
+            dir: "rtl" %>
+          <p class="mt-1 text-xs text-gray-500">Leave blank to use the Arabic default.</p>
         </div>
       </div>
 

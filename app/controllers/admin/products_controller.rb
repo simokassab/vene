@@ -53,6 +53,7 @@ class Admin::ProductsController < Admin::BaseController
                                     :stock_quantity, :metal, :diamonds, :gemstones, :others, :active, :slug,
                                     :featured, :on_sale, :sale_price, :video, :remove_video,
                                     :allow_preorder, :preorder_estimated_delivery_date, :preorder_note_en, :preorder_note_ar,
+                                    :lead_time_en, :lead_time_ar,
                                     related_product_ids: [],
                                     images: [],
                                     product_images_attributes: %i[id image position _destroy],

@@ -1,5 +1,8 @@
 class Storefront::CheckoutsController < ApplicationController
   before_action :ensure_cart_not_empty, only: [ :show, :review, :create ]
+  # :create is deliberately excluded — see the inline purge there. A before_action redirect
+  # would strand a customer mid-payment on an order legitimately placed under the old rules.
+  before_action :reject_made_to_order_cart, only: [ :show, :review ]
 
   def show
     @cart = Cart.new(session)
@@ -226,6 +229,12 @@ class Storefront::CheckoutsController < ApplicationController
       end
     end
 
+    # Placed after the pending-order resume above, so an in-flight payment is never
+    # interrupted, but before any order is built.
+    if purge_made_to_order(@cart)
+      return redirect_to cart_path(locale: I18n.locale)
+    end
+
     # Read params from session (set during review step) or fall back to direct params
     saved_params = session[:checkout_params]
     permitted_keys = %i[name email phone country country_code city postal_code street_address building address_id]
@@ -359,6 +368,10 @@ class Storefront::CheckoutsController < ApplicationController
     if cart.items.empty?
       redirect_to cart_path(locale: I18n.locale), alert: t("cart.empty")
     end
+  end
+
+  def reject_made_to_order_cart
+    redirect_to cart_path(locale: I18n.locale) if purge_made_to_order(Cart.new(session))
   end
 
   def order_params

@@ -1,0 +1,15 @@
+<%# locals: (product:, variant: nil, positioned: true, extra_class: nil) %>
+<%#
+  The made-to-order predicate lives inside this partial rather than at the call sites, so that
+  none of the ten product-card sites can render the badge under the wrong condition.
+
+  Reads only allow_preorder, which is already loaded on every product row. It must never call
+  has_variants? (product_variants.active.any?) — that would N+1 across every grid.
+
+  positioned: false for containers that already own an absolute badge stack.
+%>
+<% if product.made_to_order_with?(variant) %>
+  <span class="<%= "absolute top-3 left-3 md:top-4 md:left-4 z-10 " if positioned %>inline-block bg-gray-900 text-white text-[10px] md:text-xs font-medium uppercase tracking-wide px-2 py-1.5 md:px-3 md:py-2 rounded pointer-events-none <%= extra_class %>">
+    <%= t("products.made_to_order_badge") %>
+  </span>
+<% end %>
