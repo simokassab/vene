@@ -26,8 +26,10 @@ class Storefront::CartsController < ApplicationController
 
     # Validate product/variant is purchasable
     if params[:product_variant_id].present?
-      variant = ProductVariant.find(params[:product_variant_id])
-      unless variant.purchasable?
+      # Scoped to this product: an unscoped find would let a variant of a different
+      # product be bound to this cart key.
+      variant = product.product_variants.find_by(id: params[:product_variant_id])
+      unless variant&.purchasable?
         redirect_to product_path(product.slug, locale: I18n.locale),
                     alert: t("cart.not_available")
         return
