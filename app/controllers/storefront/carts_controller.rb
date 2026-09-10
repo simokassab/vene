@@ -48,8 +48,7 @@ class Storefront::CartsController < ApplicationController
     # Meta Pixel: stash AddToCart so it fires on the page rendered after redirect
     flash[:meta_pixel_event] = MetaPixel.add_to_cart_event(product, variant: variant, quantity: params[:quantity] || 1).to_json
 
-    redirect_target = params[:redirect_to].presence || cart_path(locale: I18n.locale)
-    redirect_to redirect_target, notice: t("cart.updated")
+    redirect_to safe_redirect_target, notice: t("cart.updated")
   end
 
   def update_item
@@ -90,5 +89,20 @@ class Storefront::CartsController < ApplicationController
     cart = Cart.new(session)
     cart.remove_coupon
     redirect_to cart_path(locale: I18n.locale), notice: t("coupons.removed", default: "Coupon removed")
+  end
+
+  private
+
+  # params[:redirect_to] is user-supplied (the Buy Now form sets it to the checkout path),
+  # so it must not be passed to redirect_to unchecked.
+  #
+  # Checking only for a leading "/" is not enough: browsers normalise "/\evil.example" and
+  # "//evil.example" into protocol-relative URLs, so the second character is checked too.
+  def safe_redirect_target
+    requested = params[:redirect_to].to_s
+    return cart_path(locale: I18n.locale) if requested.blank?
+
+    safe = requested.start_with?("/") && !requested[1, 1].to_s.match?(%r{[/\\]})
+    safe ? requested : cart_path(locale: I18n.locale)
   end
 end
