@@ -155,6 +155,37 @@
       </div>
     </div>
   </section>
+  <!-- Our Story: long-form brand narrative -->
+  <section id="our-story" class="w-full bg-white py-16 md:py-24 lg:py-28">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div x-data="{ shown: false }" x-intersect.once="shown = true" x-init="setTimeout(() => shown = true, 700)"
+        class="transition-all duration-1000 ease-out"
+        :class="shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'">
+        <!-- Section Header -->
+        <div class="text-center">
+          <p class="text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">
+            <%= t("storefront.home.story_eyebrow", default: "Our Story") %>
+          </p>
+          <h2 class="mt-4 md:mt-6 font-serif uppercase leading-[1.1] tracking-tight text-3xl sm:text-4xl lg:text-5xl text-gray-900">
+            <%= t("storefront.home.story_heading", default: "The Story Behind VENÈ Jewelry") %>
+          </h2>
+          <span class="mt-6 md:mt-8 inline-block h-px w-16 bg-gray-300"></span>
+        </div>
+        <!-- Narrative -->
+        <div class="mt-8 md:mt-12 space-y-6 text-start text-base md:text-lg leading-relaxed text-gray-600">
+          <p><%= t("storefront.home.story_p1") %></p>
+          <p><%= t("storefront.home.story_p2") %></p>
+          <p><%= t("storefront.home.story_p3") %></p>
+          <p><%= t("storefront.home.story_p4") %></p>
+          <p><%= t("storefront.home.story_p5") %></p>
+        </div>
+        <!-- Closing Line -->
+        <p class="mt-10 md:mt-14 font-serif text-xl md:text-2xl lg:text-3xl leading-snug text-gray-900 text-center">
+          <%= t("storefront.home.story_closing") %>
+        </p>
+      </div>
+    </div>
+  </section>
   <!-- Top Product Section -->
   <section class="w-full py-10 md:py-16 bg-white" x-data="{ selectedCategory: <%= @categories.first&.id || 'null' %> }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
