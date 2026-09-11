@@ -38,14 +38,24 @@ class Admin::ProductsController < Admin::BaseController
   end
 
   def destroy
-    @product.destroy
-    redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.deleted")
+    if @product.destroy
+      redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.deleted")
+    else
+      # Previously this reported success regardless, so a blocked delete looked like it worked.
+      redirect_to admin_products_path(locale: I18n.locale), alert: destroy_error_message
+    end
   end
 
   private
 
   def set_product
     @product = Product.find(params[:id])
+  end
+
+  def destroy_error_message
+    return t("admin.products.delete_blocked_by_orders") if @product.order_items.exists?
+
+    @product.errors.full_messages.to_sentence.presence || t("admin.products.delete_failed")
   end
 
   def product_params

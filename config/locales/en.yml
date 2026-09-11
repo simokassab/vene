@@ -192,6 +192,8 @@ en:
       created: "Product created"
       updated: "Product updated"
       deleted: "Product deleted"
+      delete_blocked_by_orders: "This product is part of an existing order and cannot be deleted. Untick Active to hide it from the store instead."
+      delete_failed: "This product could not be deleted."
       name: "Name"
       category: "Category"
       price: "Price"

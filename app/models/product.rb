@@ -5,9 +5,16 @@ class Product < ApplicationRecord
   has_one :category, through: :sub_category
   has_many :product_images, dependent: :destroy
   has_many :product_variants, dependent: :destroy
-  has_many :order_items
+  # A product that has been ordered cannot be deleted: order_items.product_id is NOT NULL,
+  # so removing it would destroy order history. Admins should deactivate it instead.
+  has_many :order_items, dependent: :restrict_with_error
   has_many :product_relations, dependent: :destroy
   has_many :related_products, through: :product_relations, source: :related_product
+  # The other side of the relation: rows where THIS product is someone else's "related
+  # product". Without this, deleting it left those rows orphaned and Postgres raised a
+  # foreign key violation.
+  has_many :inverse_product_relations, class_name: "ProductRelation",
+           foreign_key: :related_product_id, inverse_of: :related_product, dependent: :destroy
   has_many :wishlist_items, dependent: :destroy
 
   mount_uploader :video, ProductVideoUploader
