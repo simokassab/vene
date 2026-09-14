@@ -346,9 +346,10 @@
           <%= t("storefront.home.featured_products", default: "Featured Products") %>
         </h2>
         <!-- Auto-scrollable Container -->
+        <% featured = @scrolling_featured_products.to_a %>
         <div class="relative overflow-hidden">
-          <div class="flex gap-3 md:gap-6 animate-scroll-horizontal">
-            <% (@scrolling_featured_products.to_a * 3).each do |product| %>
+          <div class="flex gap-3 md:gap-6 <%= marquee_scrollable?(featured) ? "animate-scroll-horizontal" : "flex-wrap justify-center" %>">
+            <% marquee_products(featured).each do |product| %>
               <div class="flex-none w-48 md:w-80 group">
                 <!-- Product Image -->
                 <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-md shadow-sm flex items-center justify-center">

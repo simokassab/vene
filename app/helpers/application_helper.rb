@@ -49,4 +49,20 @@ module ApplicationHelper
   def payment_method_label(_order)
     t("orders.payment_card", default: "Card (MontyPay)")
   end
+
+  # The featured-products marquee translates the track by exactly one copy of the
+  # list, so a single copy has to be wider than its container for the loop to look
+  # continuous. Widest case is the desktop card: 320px + 24px gap inside a ~1216px
+  # container, so 4 cards. Below that the extra copies sit on screen side by side
+  # and just read as duplicate products.
+  MARQUEE_MIN_PRODUCTS = 4
+  MARQUEE_COPIES = 3
+
+  def marquee_scrollable?(products)
+    products.size >= MARQUEE_MIN_PRODUCTS
+  end
+
+  def marquee_products(products)
+    marquee_scrollable?(products) ? products * MARQUEE_COPIES : products
+  end
 end
