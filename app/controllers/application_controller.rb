@@ -49,6 +49,23 @@ class ApplicationController < ActionController::Base
     @settings || Setting.current
   end
 
+  # (Re)starts MontyPay for a card order. A previously failed attempt is reset to
+  # "pending" so the success redirect confirms it; the order stays in the session so
+  # guests keep access to it and a retry reuses it instead of creating a duplicate.
+  def start_card_payment(order)
+    order.update!(payment_status: "pending") unless order.payment_status == "pending"
+    session[:pending_order_id] = order.id
+
+    result = Montypay::Client.new(order).start_payment
+    if result.success?
+      redirect_to result.redirect_url, allow_other_host: true
+    else
+      order.update(payment_status: "failed")
+      redirect_to order_path(order, locale: I18n.locale),
+                  alert: t("payments.initialization_failed", error: result.error)
+    end
+  end
+
   def cart_item_count
     @cart_item_count ||= Cart.new(session).items.sum(&:quantity)
   end

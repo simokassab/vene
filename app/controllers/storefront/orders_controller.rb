@@ -1,6 +1,6 @@
 class Storefront::OrdersController < ApplicationController
-  before_action :authenticate_user!, except: [:show, :invoice, :cancel]
-  before_action :set_order, only: %i[show invoice cancel]
+  before_action :authenticate_user!, except: [:show, :invoice, :cancel, :pay]
+  before_action :set_order, only: %i[show invoice cancel pay]
 
   def index
     @orders = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).order(created_at: :desc)
@@ -12,6 +12,14 @@ class Storefront::OrdersController < ApplicationController
   def invoice
     pdf = InvoiceGenerator.new(@order).render
     send_data pdf, filename: "order-#{@order.id}.pdf", type: "application/pdf", disposition: :inline
+  end
+
+  # Retry card payment for an order whose MontyPay attempt failed or was abandoned.
+  def pay
+    return start_card_payment(@order) if @order.awaiting_card_payment?
+
+    redirect_to order_path(@order, locale: I18n.locale),
+                alert: t("orders.cannot_pay", default: "This order can no longer be paid")
   end
 
   def cancel

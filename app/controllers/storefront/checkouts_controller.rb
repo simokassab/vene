@@ -215,15 +215,7 @@ class Storefront::CheckoutsController < ApplicationController
     if session[:pending_order_id].present?
       existing = Order.find_by(id: session[:pending_order_id], status: "payment_pending")
       if existing
-        result = Montypay::Client.new(existing).start_payment
-        if result.success?
-          return redirect_to result.redirect_url, allow_other_host: true
-        else
-          existing.update(payment_status: "failed")
-          session.delete(:pending_order_id)
-          return redirect_to order_path(existing, locale: I18n.locale),
-                            alert: t("payments.initialization_failed", error: result.error)
-        end
+        return start_card_payment(existing)
       else
         session.delete(:pending_order_id)
       end
@@ -339,17 +331,7 @@ class Storefront::CheckoutsController < ApplicationController
     session.delete(:dhl_shipping_rate)
     session.delete(:dhl_shipping_estimated)
 
-    result = Montypay::Client.new(@order).start_payment
-
-    if result.success?
-      # Redirect to MontyPay hosted checkout
-      redirect_to result.redirect_url, allow_other_host: true
-    else
-      # Payment initiation failed - show error
-      @order.update(payment_status: "failed")
-      redirect_to order_path(@order, locale: I18n.locale),
-                  alert: t("payments.initialization_failed", error: result.error)
-    end
+    start_card_payment(@order)
   rescue ActiveRecord::RecordInvalid
     # Re-render the address form with the details `show` needs (a direct POST that
     # skips the review step won't have them set otherwise).

@@ -41,6 +41,11 @@ class Order < ApplicationRecord
     save!
   end
 
+  # Card order still waiting for a successful MontyPay payment (retry allowed).
+  def awaiting_card_payment?
+    payment_method == "card" && status == "payment_pending" && payment_status != "paid"
+  end
+
   # Called after payment is confirmed (via webhook or success redirect)
   def confirm_payment!
     return if payment_status == "paid"

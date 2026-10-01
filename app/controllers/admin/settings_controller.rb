@@ -16,8 +16,8 @@ class Admin::SettingsController < Admin::BaseController
 
   def setting_params
     params.require(:setting).permit(:store_name, :local_tax_rate, :international_tax_rate, :shipping_flat_rate,
-                                    :default_currency, :whatsapp_phone_number, :local_country, :montypay_merchant_id,
-                                    :montypay_api_key, :preorder_enabled, :preorder_default_delivery_days,
+                                    :default_currency, :whatsapp_phone_number, :local_country,
+                                    :preorder_enabled, :preorder_default_delivery_days,
                                     :preorder_disclaimer_en, :preorder_disclaimer_ar, :maintenance_mode)
   end
 end

@@ -46,6 +46,7 @@ Rails.application.routes.draw do
       member do
         get :invoice
         patch :cancel
+        post :pay
       end
     end
     resource :guest_registration, only: [:new, :create], controller: "storefront/guest_registrations"

@@ -2,14 +2,12 @@ require "digest"
 
 module Montypay
   class WebhookVerifier
-    def initialize(params, settings: Setting.current)
+    def initialize(params)
       @params = params
-      @settings = settings
     end
 
     def valid?
       return false if @params[:hash].blank?
-      return false if @settings.montypay_api_key.blank?
 
       expected_hash = generate_expected_hash
       ActiveSupport::SecurityUtils.secure_compare(expected_hash, @params[:hash].to_s)
@@ -25,7 +23,7 @@ module Montypay
         @params[:order_amount],
         @params[:order_currency],
         @params[:order_description],
-        @settings.montypay_api_key
+        Credentials::PASSWORD
       ].join.upcase
 
       md5 = Digest::MD5.hexdigest(to_md5)

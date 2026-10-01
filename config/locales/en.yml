@@ -154,6 +154,8 @@ en:
     payment_card: "Card (MontyPay)"
     preorder: "Pre-Order"
     preorder_ships_by: "Ships by %{date}"
+    pay_now: "Pay Now"
+    cannot_pay: "This order can no longer be paid"
   payments:
     success: "Payment successful! Thank you for your order."
     failure: "Payment was not completed. Please try again."

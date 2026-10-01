@@ -154,6 +154,8 @@ ar:
     payment_card: "بطاقة (MontyPay)"
     preorder: "طلب مسبق"
     preorder_ships_by: "يشحن بحلول %{date}"
+    pay_now: "ادفع الآن"
+    cannot_pay: "لم يعد بالإمكان دفع هذا الطلب"
   payments:
     success: "تم الدفع بنجاح! شكراً لطلبك."
     failure: "لم يتم إتمام الدفع. يرجى المحاولة مرة أخرى."

@@ -8,9 +8,8 @@ module Montypay
 
     Result = Data.define(:success?, :redirect_url, :error)
 
-    def initialize(order, settings: Setting.current)
+    def initialize(order)
       @order = order
-      @settings = settings
     end
 
     def start_payment
@@ -19,7 +18,7 @@ module Montypay
       if response[:redirect_url]
         Result.new(true, response[:redirect_url], nil)
       else
-        error_message = response[:error_message] || response[:message] || "Payment initialization failed"
+        error_message = error_message_from(response)
         Rails.logger.error("MontyPay session creation failed: #{error_message}")
         Result.new(false, nil, error_message)
       end
@@ -49,7 +48,7 @@ module Montypay
 
     def payload
       {
-        merchant_key: @settings.montypay_merchant_id,
+        merchant_key: Credentials::MERCHANT_KEY,
         operation: "purchase",
         order: order_data,
         success_url: success_url,
@@ -78,10 +77,18 @@ module Montypay
       end
     end
 
+    # MontyPay's top-level message is generic ("Request data is invalid."); the
+    # field-level reasons live in `errors`.
+    def error_message_from(response)
+      details = Array(response[:errors]).filter_map { |e| e[:error_message] if e.is_a?(Hash) }.uniq
+      base = response[:error_message] || response[:message] || "Payment initialization failed"
+      details.any? ? "#{base} #{details.join('; ')}" : base
+    end
+
     def generate_hash
       # SHA1(MD5(order_number + amount + currency + description + password).uppercase)
       order = order_data
-      to_md5 = "#{order[:number]}#{order[:amount]}#{order[:currency]}#{order[:description]}#{@settings.montypay_api_key}"
+      to_md5 = "#{order[:number]}#{order[:amount]}#{order[:currency]}#{order[:description]}#{Credentials::PASSWORD}"
       md5 = Digest::MD5.hexdigest(to_md5.upcase)
       Digest::SHA1.hexdigest(md5)
     end
@@ -117,7 +124,8 @@ module Montypay
 
     def billing_address_data
       {
-        country: @order.country,
+        # MontyPay requires ISO 3166-1 alpha-2 ("LB"), not the country name.
+        country: @order.country_code.presence || Setting.country_alpha2(@order.country),
         city: @order.city,
         address: @order.address_text,
         phone: @order.phone
