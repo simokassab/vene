@@ -9,6 +9,38 @@ module MetaPixel
   module_function
 
   PIXEL_ID = "743405888542926"
+  BRAND = "VENÈ Jewelry"
+
+  # Catalog fields Meta's pixel reads from product-page microdata. `id` must equal
+  # the content_ids sent by the events above (the catalog's retailer_item_id).
+  # Prices are the base USD amounts, matching ViewContent. `url`/`image` are
+  # passed in already absolute since they depend on the request host.
+  def catalog_item(product, url:, image:)
+    {
+      id: product.id.to_s,
+      title: product.name(:en),
+      description: product.description(:en).to_s.squish.truncate(5000),
+      availability: availability(product),
+      condition: "new",
+      price: format("%.2f", product.current_price),
+      currency: "USD",
+      image: image,
+      brand: BRAND,
+      url: url
+    }
+  end
+
+  # Meta availability value: stock on the product or any active variant is
+  # "in stock"; a made-to-order piece with no stock is a "preorder".
+  def availability(product)
+    if product.stock_quantity.to_i.positive? || product.product_variants.active.where("stock_quantity > 0").exists?
+      "in stock"
+    elsif product.made_to_order?
+      "preorder"
+    else
+      "out of stock"
+    end
+  end
 
   # A single Meta "contents" entry for a product line.
   def content(product, quantity: 1, price: nil)

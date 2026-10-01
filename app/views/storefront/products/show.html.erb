@@ -1,4 +1,11 @@
 <%
+  content_for :title, "#{@product.name} | VENÈ Jewelry"
+  content_for :og_description, @product.description.to_s.squish.truncate(300)
+  content_for :og_image, image_url(@product.primary_image.image.url) if @product.primary_image&.image&.url.present?
+  content_for :og_type, "product"
+  content_for :head, meta_catalog_microdata(@product)
+%>
+<%
   images = @product.product_images
   primary_url = images.first&.image&.url
 
