@@ -365,6 +365,12 @@
           </div>
         </div>
       </div>
+      <div class="border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 text-center">
+          <%= render "shared/social_links" %>
+          <p class="text-sm text-gray-400">&copy; <%= Date.current.year %> <%= current_settings.store_name %></p>
+        </div>
+      </div>
     </footer>
     <% if current_settings.whatsapp_phone_number.present? %>
       <a href="https://wa.me/<%= current_settings.whatsapp_phone_number %>" target="_blank" class="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-800 text-white rounded-full px-4 py-3 shadow-lg flex items-center gap-2">
