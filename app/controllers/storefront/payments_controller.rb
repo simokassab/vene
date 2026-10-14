@@ -18,6 +18,8 @@ class Storefront::PaymentsController < ApplicationController
     # Meta Pixel: stash Purchase (real charged value + currency) so it fires once
     # on the order page after redirect
     flash[:meta_pixel_event] = MetaPixel.purchase_event(@order).to_json
+    # TikTok Pixel: stash Purchase (real charged value + currency) likewise
+    flash[:tiktok_pixel_event] = TiktokPixel.purchase_event(@order).to_json
 
     redirect_to order_path(@order, locale: I18n.locale), notice: t("payments.success")
   end

@@ -50,6 +50,28 @@ module AnalyticsHelper
     meta_pixel_event(flash[:meta_pixel_event])
   end
 
+  # Renders a <script> that fires a TikTok Pixel standard event. Same contract
+  # and escaping as meta_pixel_event; `window.ttq &&` guards against a blocked pixel.
+  def tiktok_pixel_event(payload)
+    return if payload.blank?
+
+    payload = JSON.parse(payload) if payload.is_a?(String)
+    payload = payload.symbolize_keys
+    name = payload[:event]
+    return if name.blank?
+
+    args = [ name.to_json, (payload[:data].presence && payload[:data].to_json) ]
+             .compact.map { |json| ERB::Util.json_escape(json) }.join(",")
+
+    content_tag(:script, "window.ttq && ttq.track(#{args});".html_safe)
+  end
+
+  # Renders a TikTok Pixel event stashed in the flash after a redirect
+  # (used for AddToCart and Purchase). No-op when nothing is stashed.
+  def tiktok_pixel_flash_event
+    tiktok_pixel_event(flash[:tiktok_pixel_event])
+  end
+
   SCHEMA_AVAILABILITY = {
     "in stock" => "https://schema.org/InStock",
     "preorder" => "https://schema.org/PreOrder",

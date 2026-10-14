@@ -49,6 +49,8 @@ class Storefront::CartsController < ApplicationController
     flash[:ga4_event] = Ga4.add_to_cart_event(product, variant: variant, quantity: params[:quantity] || 1).to_json
     # Meta Pixel: stash AddToCart so it fires on the page rendered after redirect
     flash[:meta_pixel_event] = MetaPixel.add_to_cart_event(product, variant: variant, quantity: params[:quantity] || 1).to_json
+    # TikTok Pixel: stash AddToCart so it fires on the page rendered after redirect
+    flash[:tiktok_pixel_event] = TiktokPixel.add_to_cart_event(product, quantity: params[:quantity] || 1).to_json
 
     redirect_to safe_redirect_target, notice: t("cart.updated")
   end
