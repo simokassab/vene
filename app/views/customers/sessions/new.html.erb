@@ -6,8 +6,8 @@
     <!-- Logo & Header -->
     <div class="text-center">
       <div class="flex justify-center">
-        <%= link_to root_path(locale: I18n.locale) do %>
-          <%= image_tag "logo.jpg", alt: "VENE Jewelry", class: "h-20 w-auto object-contain" %>
+        <%= link_to root_path(locale: I18n.locale), class: "inline-flex rounded-2xl px-6 py-4 shadow-lg", style: "background-color: #131313;" do %>
+          <%= image_tag "logo-hq.png", alt: "VENÈ Jewelry", width: 360, height: 245, class: "h-24 w-auto object-contain" %>
         <% end %>
       </div>
       <h2 class="mt-6 text-3xl font-extrabold text-gray-900">

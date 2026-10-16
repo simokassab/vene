@@ -41,7 +41,7 @@ class InvoiceGenerator
 
     # Logo on the right
     if File.exist?(logo_path)
-      pdf.image logo_path, at: [ pdf.bounds.width - 120, top ], width: 120, height: logo_height
+      pdf.image logo_path, at: [ pdf.bounds.width - 120, top ], fit: [ 120, logo_height ]
     end
 
     pdf.move_down 50
