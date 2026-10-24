@@ -21,7 +21,9 @@
 <%= I18n.t("orders.shipping", default: "Shipping") %>: <%= number_to_currency(@order.shipping_amount, unit: @order.currency) %>
 -------------------------------------
 <%= I18n.t("orders.total", default: "Total") %>: <%= number_to_currency(@order.total_amount, unit: @order.currency) %>
+<% if Setting.current.show_tax_notice %>
 (<%= I18n.t("common.prices_include_tax", default: "Prices include all applicable taxes") %>)
+<% end %>
 =====================================
 <% if @order.has_preorder_items? %>
   ⚠️ <%= I18n.t("mailers.order_mailer.confirmation.preorder_notice", default: "Pre-Order Notice") %>

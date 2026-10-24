@@ -97,6 +97,16 @@
         <p class="mt-1 text-xs text-gray-500">Flat shipping rate</p>
       </div>
     </div>
+    <div class="flex items-start mt-6">
+      <div class="flex items-center h-5">
+        <%= form.check_box :show_tax_notice,
+          class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+      </div>
+      <div class="ml-3">
+        <%= form.label :show_tax_notice, t("admin.settings.show_tax_notice", default: "Show \"Prices include all applicable taxes\""), class: "text-sm font-medium text-gray-700" %>
+        <p class="text-xs text-gray-600"><%= t("admin.settings.show_tax_notice_hint", default: "When off, no tax note is shown on product pages, checkout, orders or confirmation emails.") %></p>
+      </div>
+    </div>
   </div>
   <!-- Maintenance Mode Section -->
   <div class="bg-red-50 rounded-xl border border-red-200 shadow-sm p-6">

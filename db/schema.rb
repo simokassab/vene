@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_10_215124) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -260,6 +260,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_10_215124) do
     t.boolean "maintenance_mode", default: false, null: false
     t.boolean "cod_enabled", default: true, null: false
     t.decimal "cod_fee", precision: 10, scale: 2, default: "10.0", null: false
+    t.boolean "show_tax_notice", default: false, null: false
   end
 
   create_table "sub_categories", force: :cascade do |t|

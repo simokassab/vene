@@ -244,6 +244,8 @@ en:
       updated: "Settings saved"
       cod: "Cash on Delivery"
       payment: "Payment Integration"
+      show_tax_notice: "Show \"Prices include all applicable taxes\""
+      show_tax_notice_hint: "When off, no tax note is shown on product pages, checkout, orders or confirmation emails."
     pages:
       title: "Pages"
       new: "New Page"

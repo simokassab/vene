@@ -223,9 +223,11 @@
                 <div class="text-3xl font-bold text-gray-700">
                   <%= display_price(review_total) %>
                 </div>
-                <div class="text-sm text-gray-500">
-                  <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
-                </div>
+                <% if current_settings.show_tax_notice %>
+                  <div class="text-sm text-gray-500">
+                    <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
+                  </div>
+                <% end %>
               </div>
             </div>
             <!-- Place Order Form (hidden fields + submit) -->

@@ -330,9 +330,11 @@
                   <%= display_price(@product.price) %>
                 </span>
               <% end %>
-              <span class="text-sm text-gray-500">
-                <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
-              </span>
+              <% if current_settings.show_tax_notice %>
+                <span class="text-sm text-gray-500">
+                  <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
+                </span>
+              <% end %>
             </div>
             <%# x-show rather than an ERB conditional so it tracks variant selection, like
                 the "Starting from" label above. Lead time is per product, so no variant branch. %>
