@@ -128,9 +128,11 @@
           <span><%= t("orders.total", default: "Total") %></span>
           <span class="ml-3"><%= display_order_price(@order.total_amount, @order) %></span>
         </div>
-        <div class="text-xs text-gray-500 mt-2">
-          <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
-        </div>
+        <% if current_settings.show_tax_notice %>
+          <div class="text-xs text-gray-500 mt-2">
+            <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
