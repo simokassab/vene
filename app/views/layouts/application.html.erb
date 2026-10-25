@@ -60,6 +60,9 @@
     <meta property="og:type" content="<%= content_for(:og_type) || "website" %>">
     <meta property="og:site_name" content="VENÈ Jewelry">
     <%= yield :head %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Noto+Naskh+Arabic:wght@400;500&display=swap">
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <style>
@@ -80,7 +83,7 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   </head>
-  <body class="bg-white text-gray-900" x-data="{ mobileMenu: false, searchOpen: false, ringSizeModal: false, userMenu: false }">
+  <body class="storefront bg-white text-gray-900" x-data="{ mobileMenu: false, searchOpen: false, ringSizeModal: false, userMenu: false }">
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KHHSVVZ6"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -206,7 +209,7 @@
             <div class="relative group">
               <%= link_to category.name(I18n.locale),
                 category_path(category.slug, locale: I18n.locale),
-                class: "text-sm font-medium text-white hover:text-gray-300 transition-colors py-2 block" %>
+                class: "font-display text-sm text-white hover:text-gray-300 transition-colors py-2 block" %>
               <!-- Mega Menu Dropdown -->
               <% subcategories = category.sub_categories.select do |sc|
                    sc.active? && sc.products.any?(&:active?)

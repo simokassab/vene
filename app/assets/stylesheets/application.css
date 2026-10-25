@@ -53,3 +53,55 @@
 .prose strong {
   font-weight: 600 !important;
 }
+
+/* Storefront typography. Fonts are linked from Google Fonts in the storefront layout.
+ * - EB Garamond is the default for all storefront text; Noto Naskh Arabic covers Arabic.
+ * - Jost for titles (h1-h4) and product names (.font-title); IBM Plex Sans Arabic covers Arabic.
+ * Unlayered on purpose so it beats Tailwind's font-family/font-weight utilities. */
+:root {
+  --font-sans: "Jost", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-reading: "EB Garamond", "Noto Naskh Arabic", Georgia, serif;
+}
+
+/* :where() keeps this below the title rule, so an h2.font-serif still gets Jost. */
+.storefront,
+.storefront :where(.font-serif, .font-reading) {
+  font-family: var(--font-reading);
+}
+
+/* Garamond has a small x-height; font-size-adjust scales it to Jost's proportions so
+ * both read at the same size without overriding each element's text-* utility.
+ * Arabic metrics differ, so Naskh is left at its natural size. */
+html[lang="en"] .storefront {
+  font-size-adjust: 0.47;
+}
+
+.storefront :is(h1, h2, h3, h4),
+.storefront .font-title {
+  font-family: var(--font-sans);
+  font-size-adjust: none;
+}
+
+/* Chopard-style titles: uppercase with open tracking, never bold. Arabic is excluded
+ * because letter-spacing breaks joined script. */
+html[lang="en"] .storefront :is(h1, h2, h3, h4),
+html[lang="en"] .storefront .font-title,
+html[lang="en"] .storefront .font-display {
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Naskh has no italic, so a slanted fallback would be synthesized. */
+html[lang="ar"] .storefront .italic {
+  font-style: normal;
+}
+
+/* Every price on the storefront: regular weight, lining figures that line up in columns
+ * (Garamond defaults to old-style figures). */
+.price {
+  font-family: var(--font-reading);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}

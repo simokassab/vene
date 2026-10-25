@@ -58,11 +58,8 @@
                     <%= product.name(I18n.locale) %>
                   </h3>
                 <% end %>
-                <div class="text-lg font-bold text-gray-900">
-                  <%= display_price(product.current_price) %>
-                  <% if product.on_sale_with_price? %>
-                    <span class="text-sm text-gray-400 line-through ml-2"><%= display_price(product.price) %></span>
-                  <% end %>
+                <div>
+                  <%= render "shared/product_price", product: product %>
                 </div>
               </div>
             </div>

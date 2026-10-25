@@ -307,27 +307,18 @@
           </div>
           <!-- Product Title & Price -->
           <div>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            <h1 class="text-2xl md:text-3xl text-gray-900 mb-4 leading-snug">
               <%= @product.name(I18n.locale) %>
             </h1>
             <div class="flex items-center flex-wrap gap-3">
               <span x-show="currentIsPreorder" x-cloak class="text-sm font-medium text-gray-500 uppercase tracking-wide">
                 <%= t("products.starting_from", default: "Starting from") %>
               </span>
+              <%= render "shared/product_price", product: @product, size: :page %>
               <% if @product.on_sale_with_price? %>
-                <span class="text-4xl font-bold text-red-700">
-                  <%= display_price(@product.current_price) %>
-                </span>
-                <span class="text-xl text-gray-400 line-through">
-                  <%= display_price(@product.price) %>
-                </span>
                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-50 text-red-700 font-semibold text-sm">
                   <%= t("common.sale", default: "Sale") %>
                   <span class="ml-2 text-xs font-bold">-<%= number_to_percentage(@product.discount_percentage, precision: 0) %></span>
-                </span>
-              <% else %>
-                <span class="text-4xl font-bold text-gray-900">
-                  <%= display_price(@product.price) %>
                 </span>
               <% end %>
               <% if current_settings.show_tax_notice %>
@@ -584,7 +575,7 @@
                x-transition:enter="transition-opacity duration-300"
                x-transition:enter-start="opacity-0"
                x-transition:enter-end="opacity-100"
-               class="prose max-w-none text-gray-700">
+               class="font-reading prose max-w-none text-gray-700">
                   <%= simple_format(@product.description(I18n.locale)) %>
                 </div>
                 <!-- Video Tab -->
@@ -734,8 +725,8 @@
                           <%= product.name(I18n.locale) %>
                         </h3>
                       <% end %>
-                      <div class="text-lg font-bold text-gray-900">
-                        <%= display_price(product.price) %>
+                      <div>
+                        <%= render "shared/product_price", product: product %>
                       </div>
                     </div>
                   </div>

@@ -27,7 +27,7 @@
           <%= @category.name(I18n.locale) %>
         </h1>
         <% if @category.respond_to?(:description) && @category.description(I18n.locale).present? %>
-          <p class="text-xl text-white/90 mb-6 drop-shadow-lg">
+          <p class="font-reading text-xl text-white/90 mb-6 drop-shadow-lg">
             <%= @category.description(I18n.locale) %>
           </p>
         <% end %>
@@ -238,9 +238,7 @@
                   <% end %>
 
                   <div class="flex items-center justify-between mt-4">
-                    <span class="text-2xl font-bold text-[black]">
-                      <%= display_price(product.price) %>
-                    </span>
+                    <%= render "shared/product_price", product: product %>
                     <% if product.made_to_order? %>
                       <% if (wa = made_to_order_whatsapp_url(product)) %>
                         <%= link_to wa, target: "_blank", rel: "noopener",
@@ -305,7 +303,7 @@
                       </h3>
                     <% end %>
                     <% if product.respond_to?(:short_description) && product.short_description(I18n.locale).present? %>
-                      <p class="text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
+                      <p class="font-reading text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
                         <%= product.short_description(I18n.locale) %>
                       </p>
                     <% end %>
@@ -326,9 +324,7 @@
                   </div>
 
                   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span class="text-2xl md:text-3xl font-bold text-[black]">
-                      <%= display_price(product.price) %>
-                    </span>
+                    <%= render "shared/product_price", product: product %>
                     <div class="flex items-center gap-2 sm:gap-3">
                       <%= render "shared/wishlist_button", product: product %>
                       <%= link_to product_path(product.slug, locale: I18n.locale),

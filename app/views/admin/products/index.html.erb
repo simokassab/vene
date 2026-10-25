@@ -128,9 +128,11 @@
                 <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-semibold text-gray-900"><%= number_to_currency(product.price) %></div>
-                <% if product.on_sale? && product.sale_price.present? %>
-                  <div class="text-xs text-red-600 line-through"><%= number_to_currency(product.sale_price) %></div>
+                <% if product.on_sale_with_price? %>
+                  <div class="text-sm text-red-700"><%= number_to_currency(product.sale_price) %></div>
+                  <div class="text-xs text-gray-400 line-through"><%= number_to_currency(product.price) %></div>
+                <% else %>
+                  <div class="text-sm text-gray-900"><%= number_to_currency(product.price) %></div>
                 <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
