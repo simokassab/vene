@@ -27,7 +27,7 @@
           <%= @category.name(I18n.locale) %>
         </h1>
         <% if @category.respond_to?(:description) && @category.description(I18n.locale).present? %>
-          <p class="font-reading text-xl text-white/90 mb-6 drop-shadow-lg">
+          <p class="text-xl text-white/90 mb-6 drop-shadow-lg">
             <%= @category.description(I18n.locale) %>
           </p>
         <% end %>
@@ -303,7 +303,7 @@
                       </h3>
                     <% end %>
                     <% if product.respond_to?(:short_description) && product.short_description(I18n.locale).present? %>
-                      <p class="font-reading text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
+                      <p class="text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
                         <%= product.short_description(I18n.locale) %>
                       </p>
                     <% end %>
