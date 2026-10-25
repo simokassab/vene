@@ -137,11 +137,11 @@
 
               <!-- Price -->
               <div class="flex items-baseline gap-2 mb-4">
-                <span class="text-xl font-bold text-gray-900">
+                <span class="price text-sm md:text-base text-gray-900">
                   <%= display_price(item.current_price) %>
                 </span>
                 <% if item.price_dropped? %>
-                  <span class="text-sm text-gray-400 line-through">
+                  <span class="price text-xs md:text-sm text-gray-400 line-through">
                     <%= display_price(item.price_when_added) %>
                   </span>
                 <% end %>

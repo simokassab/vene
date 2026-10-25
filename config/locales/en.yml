@@ -30,6 +30,8 @@ en:
     featured: "Featured pieces"
     view_all: "View all"
   products:
+    sale_price: "Sale price"
+    original_price: "Original price"
     add_to_cart: "Add to Cart"
     buy_now: "Buy Now"
     preorder_now: "Pre-Order Now"

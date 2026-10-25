@@ -12,7 +12,7 @@
       <div class="flex gap-3">
         <div class="px-4 py-3 bg-white border border-gray-200 rounded-2xl shadow-sm text-center">
           <div class="text-sm text-gray-500"><%= t("orders.total_spent", default: "Total Spent") %></div>
-          <div class="text-xl font-semibold text-gray-900">
+          <div class="price text-xl text-gray-900">
             <%= display_price(@orders.sum(&:total_amount)) %>
           </div>
         </div>
@@ -90,7 +90,7 @@
                     <div class="flex items-center gap-3">
                       <div class="text-right">
                         <div class="text-xs text-gray-500"><%= t("orders.total", default: "Total") %></div>
-                        <div class="text-2xl font-bold text-gray-900"><%= display_order_price(order.total_amount, order) %></div>
+                        <div class="price text-2xl text-gray-900"><%= display_order_price(order.total_amount, order) %></div>
                       </div>
                       <div class="flex flex-col sm:flex-row gap-2">
                         <%= link_to t("orders.view", default: "View"), order_path(order, locale: I18n.locale),
