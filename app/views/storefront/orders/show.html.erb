@@ -1,139 +1,104 @@
 <% content_for :full_width, true %>
-<div class="min-h-screen bg-gray-50 pb-10">
-  <div class="w-full mx-auto px-4 sm:px-8 lg:px-12 space-y-6 pt-32 md:pt-36">
-    <% flash.to_hash.slice("notice", "alert").each do |key, value| %>
-      <div class="rounded-lg border px-4 py-3 <%= key == 'alert' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' %>">
-        <%= value %>
-      </div>
+<% content_for :title, "#{vn_order_number(@order)} · VENÈ Jewelry" %>
+<%# Tracking.dc.html: where the order is, its journey, the pieces and the totals, with the
+    actions that still apply (pay, cancel, receipt). %>
+<%
+  steps = %w[placed paid shipped delivered]
+  reached = { "pending" => 0, "payment_pending" => 0, "paid" => 1, "shipped" => 2, "delivered" => 3 }
+  current = reached[@order.status]
+  canceled = @order.status == "canceled"
+  dhl_url = "https://www.dhl.com/global-en/home/tracking/tracking-express.html?submit=1&tracking-id=#{ERB::Util.url_encode(@order.dhl_tracking_id)}" if @order.dhl_tracking_id.present?
+%>
+<div class="vn-container pt-[clamp(48px,6vw,96px)] pb-[var(--section)] flex flex-col gap-16">
+  <% if @order.is_guest? && !user_signed_in? && session[:pending_order_id].to_s == @order.id.to_s %>
+    <%= render "shared/vene/help_card", variant: :band, title: t("guest_checkout.create_account_prompt_title"), text: t("guest_checkout.create_account_prompt_desc") do %>
+      <%= link_to t("guest_checkout.create_account_button_short"), new_guest_registration_path(locale: I18n.locale), class: "vn-btn vn-btn--primary vn-btn--sm" %>
     <% end %>
-    <%# Guest account creation prompt %>
-    <% if @order.is_guest? && !user_signed_in? && session[:pending_order_id].to_s == @order.id.to_s %>
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
-        <div class="flex items-start gap-4">
-          <div class="flex-shrink-0">
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="flex-1">
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">
-              <%= t("guest_checkout.create_account_prompt_title", default: "Create an account to track your order") %>
-            </h3>
-            <p class="text-gray-600 text-sm mb-4">
-              <%= t("guest_checkout.create_account_prompt_desc", default: "Save your details for faster checkout next time and easily track all your orders in one place.") %>
-            </p>
-            <%= link_to new_guest_registration_path(locale: I18n.locale), class: "inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors" do %>
-              <%= t("guest_checkout.create_account_button_short", default: "Create Account") %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    <% end %>
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm uppercase tracking-[0.2em] text-gray-500 mb-1"><%= t("orders.details", default: "Order Details") %></p>
-        <h1 class="text-4xl font-bold text-gray-900">#<%= @order.id %></h1>
-        <p class="text-gray-600"><%= l(@order.created_at, format: :long) %></p>
-      </div>
-      <div class="flex gap-2">
-        <%= link_to t("orders.invoice", default: "Invoice"), invoice_order_path(@order, locale: I18n.locale),
-          class: "inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50" %>
-        <% if @order.awaiting_card_payment? %>
-          <%= button_to t("orders.pay_now", default: "Pay Now"), pay_order_path(@order, locale: I18n.locale),
-            form: { data: { turbo: false } },
-            class: "inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white font-semibold hover:bg-black" %>
+  <% end %>
+
+  <header class="flex flex-wrap justify-between items-end gap-6">
+    <div class="flex flex-col gap-4">
+      <%= render "shared/vene/eyebrow", text: t("vene.orders.order", number: vn_order_number(@order)) %>
+      <h1 class="vn-h1 m-0"><%= t("vene.orders.headline.#{@order.status}", default: vn_status_label(@order.status)) %></h1>
+      <p class="vn-lead m-0"><%= t("vene.orders.placed_on", date: l(@order.created_at.to_date, format: :long)) %></p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="vn-badge vn-badge--<%= vn_status_tone(@order.status) %>"><%= vn_status_label(@order.status) %></span>
+    </div>
+  </header>
+
+  <% unless canceled || current.nil? %>
+    <ol aria-label="<%= t('vene.orders.progress') %>" class="list-none m-0 p-0 relative grid grid-cols-4">
+      <li aria-hidden="true" class="absolute top-[9px] inset-x-[12.5%] h-px bg-line-control"></li>
+      <li aria-hidden="true" class="absolute top-[9px] start-[12.5%] h-px bg-ink" style="width: <%= current * 25 %>%;"></li>
+      <% steps.each_with_index do |step, i| %>
+        <li class="relative flex flex-col items-center gap-3 text-center" <%= 'aria-current="step"'.html_safe if i == current %>>
+          <span aria-hidden="true" class="block w-[19px] h-[19px] border <%= i <= current ? 'bg-ink border-ink' : 'bg-surface border-line-control' %> <%= 'shadow-[0_0_0_4px_var(--gold-soft)]' if i == current %>"></span>
+          <span class="text-xs leading-5 tracking-nav uppercase rtl:text-sm <%= i <= current ? 'text-ink' : 'text-ink-subtle' %>"><%= t("vene.orders.steps.#{step}") %></span>
+          <% if i.zero? %><span class="vn-small"><%= l(@order.created_at.to_date, format: :short) %></span><% end %>
+          <% if i == 1 && @order.paid_at %><span class="vn-small"><%= l(@order.paid_at.to_date, format: :short) %></span><% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+
+  <div class="flex flex-wrap items-start gap-y-16 gap-x-[clamp(48px,6vw,96px)]">
+    <section aria-labelledby="pieces-title" class="flex-[999_1_560px] min-w-0 flex flex-col gap-8">
+      <h2 id="pieces-title" class="vn-h2 m-0"><%= t("vene.checkout.pieces") %></h2>
+      <ul class="list-none m-0 p-0 border-t border-line">
+        <% @order.order_items.each do |item| %>
+          <li class="py-6 border-b border-line">
+            <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product),
+                  href: product_path(item.product.slug, locale: I18n.locale),
+                  meta: [item.product.metal.presence, item.product_variant&.display_name].compact.join(" · "),
+                  detail: safe_join([vn_order_price(item.unit_price, @order), " × ", tag.bdi(item.quantity, class: "font-latin")]),
+                  price: vn_order_price(item.line_total, @order) %>
+          </li>
         <% end %>
-        <% if ["pending", "payment_pending"].include?(@order.status) %>
-          <%= button_to cancel_order_path(@order, locale: I18n.locale), method: :patch,
-            form: { data: { turbo_confirm: t("orders.confirm_cancel", default: "Cancel this order?") } },
-            class: "inline-flex items-center px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700" do %>
-            <%= t("orders.cancel", default: "Cancel Order") %>
+      </ul>
+      <%
+        rows = [[t("orders.subtotal"), vn_order_price(@order.subtotal, @order)],
+                [t("vene.cart.delivery"), vn_order_price(@order.shipping_amount, @order)]]
+        if @order.discount_amount.positive?
+          rows << [safe_join([t("coupons.discount"), " ", tag.bdi(@order.coupon_code, class: "font-latin")]), safe_join(["−", vn_order_price(@order.discount_amount, @order)])]
+        end
+      %>
+      <div class="max-w-[460px] w-full ms-auto">
+        <%= render "shared/vene/totals", rows: rows, total: vn_order_price(@order.total_amount, @order) %>
+        <% if current_settings.show_tax_notice %><p class="m-0 mt-3 vn-small text-end"><%= t("common.prices_include_tax") %></p><% end %>
+      </div>
+    </section>
+
+    <aside aria-label="<%= t('vene.orders.shipment') %>" class="flex-[1_1_340px] min-w-0 max-w-[440px] flex flex-col gap-6">
+      <div class="p-8 bg-surface-raised shadow-hairline flex flex-col gap-5">
+        <dl class="m-0 flex flex-col gap-4 text-[15px] leading-6">
+          <div><dt class="vn-label mb-1"><%= t("vene.orders.carrier") %></dt><dd class="m-0">DHL Express</dd></div>
+          <div><dt class="vn-label mb-1"><%= t("vene.orders.tracking_number") %></dt><dd class="m-0"><bdi class="font-latin"><%= @order.dhl_tracking_id.presence || t("vene.orders.tracking_soon") %></bdi></dd></div>
+          <div><dt class="vn-label mb-1"><%= t("vene.orders.payment") %></dt><dd class="m-0"><%= payment_method_label(@order) %> · <%= vn_payment_status_label(@order.payment_status) %></dd></div>
+          <div>
+            <dt class="vn-label mb-1"><%= t("vene.orders.deliver_to") %></dt>
+            <dd class="m-0 text-ink-muted"><%= @order.name %><br><%= @order.address_text %>, <%= @order.city %>, <%= @order.country %><br><bdi class="font-latin"><%= @order.phone %></bdi></dd>
+          </div>
+        </dl>
+        <% if dhl_url %>
+          <%= link_to dhl_url, target: "_blank", rel: "noopener", class: "vn-btn vn-btn--link self-start" do %>
+            <span><%= t("vene.orders.view_on_dhl") %></span><span class="vn-btn__arrow" aria-hidden="true">→</span>
           <% end %>
         <% end %>
       </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <% status_colors = {
-        "pending" => "bg-yellow-100 text-yellow-800",
-        "payment_pending" => "bg-orange-100 text-orange-800",
-        "paid" => "bg-emerald-100 text-emerald-800",
-        "shipped" => "bg-blue-100 text-blue-800",
-        "delivered" => "bg-indigo-100 text-indigo-800",
-        "canceled" => "bg-red-100 text-red-700"
-      } %>
-      <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-2">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-semibold text-gray-900"><%= t("orders.status", default: "Status") %></h2>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold <%= status_colors[@order.status] || 'bg-gray-100 text-gray-800' %>">
-            <%= @order.status.titleize %>
-          </span>
-        </div>
-        <p class="text-sm text-gray-600"><%= t("orders.payment_status", default: "Payment") %>: <%= @order.payment_status.titleize %></p>
-        <p class="text-sm text-gray-600"><%= t("orders.payment_method", default: "Payment Method") %>: <%= payment_method_label(@order) %></p>
-        <p class="text-sm text-gray-600">DHL: <%= @order.dhl_tracking_id.presence || '-' %></p>
-      </div>
-      <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-        <h2 class="text-lg font-semibold text-gray-900 mb-2"><%= t("orders.shipping_address", default: "Shipping Address") %></h2>
-        <p class="text-sm text-gray-800"><%= @order.name %></p>
-        <p class="text-sm text-gray-600"><%= @order.address_text %>, <%= @order.city %>, <%= @order.country %></p>
-        <p class="text-sm text-gray-600"><%= @order.phone %></p>
-      </div>
-    </div>
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-900"><%= t("orders.items", default: "Items") %></h2>
-        <div class="text-right">
-          <div class="text-sm text-gray-500"><%= t("orders.total", default: "Total") %></div>
-          <div class="price text-2xl text-gray-900"><%= display_order_price(@order.total_amount, @order) %></div>
-        </div>
-      </div>
-      <div class="divide-y divide-gray-200">
-        <% @order.order_items.each do |item| %>
-          <div class="py-4 flex items-start justify-between gap-4">
-            <div>
-              <div class="font-title text-gray-900"><%= item.product.name(I18n.locale) %></div>
-              <% if item.product_variant %>
-                <div class="text-sm font-medium text-gray-700"><%= item.product_variant.display_name %></div>
-              <% end %>
-              <div class="text-sm text-gray-500"><%= t("orders.qty", default: "Qty") %>: <%= item.quantity %></div>
-            </div>
-            <div class="text-right">
-              <div class="price text-sm text-gray-600"><%= display_order_price(item.unit_price, @order) %> <span class="text-xs text-gray-500">x <%= item.quantity %></span></div>
-              <div class="price text-lg text-gray-900"><%= display_order_price(item.line_total, @order) %></div>
-            </div>
-          </div>
+      <div class="flex flex-col gap-3">
+        <% if @order.awaiting_card_payment? %>
+          <%= button_to t("orders.pay_now"), pay_order_path(@order, locale: I18n.locale), form: { data: { turbo: false } }, class: "vn-btn vn-btn--primary vn-btn--block" %>
+        <% end %>
+        <%= link_to invoice_order_path(@order, locale: I18n.locale), class: "vn-btn vn-btn--outline vn-btn--block" do %>
+          <%= vn_icon(:download, size: 16) %><span><%= t("orders.invoice") %></span>
+        <% end %>
+        <% if %w[pending payment_pending].include?(@order.status) %>
+          <%= button_to t("vene.orders.cancel"), cancel_order_path(@order, locale: I18n.locale), method: :patch,
+                form: { data: { turbo_confirm: t("vene.orders.confirm_cancel") } }, class: "vn-btn vn-btn--danger vn-btn--block" %>
         <% end %>
       </div>
-      <div class="mt-6 border-t border-gray-200 pt-4 space-y-2 text-right">
-        <div class="text-sm text-gray-600">
-          <span><%= t("orders.subtotal", default: "Subtotal") %></span>
-          <span class="price ml-3 text-gray-900"><%= display_order_price(@order.subtotal, @order) %></span>
-        </div>
-        <div class="text-sm text-gray-600">
-          <span><%= t("orders.shipping", default: "Shipping") %></span>
-          <span class="price ml-3 text-gray-900"><%= display_order_price(@order.shipping_amount, @order) %></span>
-        </div>
-        <% if @order.discount_amount > 0 %>
-          <div class="text-sm text-green-600">
-            <span><%= t("coupons.discount", default: "Discount") %> (<span class="font-mono"><%= @order.coupon_code %></span>)</span>
-            <span class="price ml-3">-<%= display_order_price(@order.discount_amount, @order) %></span>
-          </div>
-        <% end %>
-        <div class="text-lg font-bold text-gray-900">
-          <span><%= t("orders.total", default: "Total") %></span>
-          <span class="price ml-3"><%= display_order_price(@order.total_amount, @order) %></span>
-        </div>
-        <% if current_settings.show_tax_notice %>
-          <div class="text-xs text-gray-500 mt-2">
-            <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
-          </div>
-        <% end %>
-      </div>
-    </div>
+      <p class="m-0 p-5 bg-gold-soft text-[13px] leading-5"><%= t("vene.product.duties") %></p>
+    </aside>
   </div>
 </div>

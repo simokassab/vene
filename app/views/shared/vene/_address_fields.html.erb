@@ -1,0 +1,38 @@
+<%# locals: (f:, prefill: {}) %>
+<%# The saved-address fields (orders#index → addresses tab), shared by the new and edit forms. %>
+<% field = "vn-field" %>
+<div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
+  <div class="<%= field %>">
+    <%= f.label :label, t("vene.addresses.label"), class: "vn-field__label" %>
+    <%= f.text_field :label, placeholder: t("vene.addresses.label_placeholder"), class: "vn-input" %>
+  </div>
+  <div class="<%= field %>">
+    <%= f.label :name, t("checkout.full_name"), class: "vn-field__label" %>
+    <%= f.text_field :name, required: true, autocomplete: "name", class: "vn-input", value: prefill.fetch(:name) { f.object.name } %>
+  </div>
+  <div class="<%= field %>">
+    <%= f.label :phone, t("checkout.phone"), class: "vn-field__label" %>
+    <%= f.telephone_field :phone, required: true, autocomplete: "tel", dir: "ltr", class: "vn-input", value: prefill.fetch(:phone) { f.object.phone } %>
+  </div>
+  <div class="<%= field %>">
+    <%= f.label :country, t("checkout.country"), class: "vn-field__label" %>
+    <%= f.country_select :country, { priority_countries: [current_settings.local_country], except: %w[IL IR CU RU KP], include_blank: t("common.select_country") },
+          { required: true, autocomplete: "country-name", class: "vn-select" } %>
+  </div>
+  <div class="<%= field %>">
+    <%= f.label :city, t("checkout.city"), class: "vn-field__label" %>
+    <%= f.text_field :city, required: true, autocomplete: "address-level2", class: "vn-input" %>
+  </div>
+  <div class="<%= field %>">
+    <%= f.label :postal_code, t("checkout.postal_code"), class: "vn-field__label" %>
+    <%= f.text_field :postal_code, autocomplete: "postal-code", dir: "ltr", class: "vn-input" %>
+  </div>
+  <div class="<%= field %> col-span-full">
+    <%= f.label :street_address, t("checkout.street_address"), class: "vn-field__label" %>
+    <%= f.text_field :street_address, required: true, autocomplete: "address-line1", class: "vn-input" %>
+  </div>
+  <div class="<%= field %> col-span-full">
+    <%= f.label :building, t("vene.checkout.building"), class: "vn-field__label" %>
+    <%= f.text_field :building, autocomplete: "address-line2", class: "vn-input" %>
+  </div>
+</div>

@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>" dir="<%= I18n.locale == :ar ? 'rtl' : 'ltr' %>">
   <head>
-    <title>Maintenance - VENÈ Jewelry</title>
+    <title><%= t("vene.maintenance.title") %> · VENÈ Jewelry</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="robots" content="noindex">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
+    <%= favicon_link_tag "favicon.ico" %>
+    <%= render "shared/vene/font_links" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   </head>
-
-  <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center px-4">
+  <body class="vn-noir min-h-screen flex items-center justify-center px-[var(--gutter)] py-16">
     <%= yield %>
   </body>
 </html>

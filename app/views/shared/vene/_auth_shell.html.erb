@@ -1,0 +1,32 @@
+<%# locals: (tab: nil) %>
+<%# Account.dc.html: a noir panel with what an account gives you, beside the form panel. tab:
+    :signin | :signup shows the split tab bar between the two Devise pages; nil hides it. %>
+<% content_for :full_width, true %>
+<div class="flex flex-wrap items-stretch">
+  <section class="vn-noir order-2 lg:order-1 flex-[1_1_480px] min-w-0 px-[clamp(16px,5vw,96px)] py-[clamp(48px,7vw,112px)] flex flex-col justify-center gap-10" aria-label="<%= t('vene.auth.why') %>">
+    <%= image_tag "logo-hq.png", alt: "VENÈ Jewelry", width: 220, height: 150, class: "block w-[180px] md:w-[220px] h-auto" %>
+    <h2 class="vn-h1 m-0 max-w-[460px]"><%= t("vene.auth.headline") %></h2>
+    <ul class="list-none m-0 p-0 flex flex-col gap-5 max-w-[420px]">
+      <li><%= render "shared/vene/feature_item", layout: :inline, icon: :package, tone: :gold, title: t("vene.auth.track_title"), text: t("vene.auth.track_text") %></li>
+      <li><%= render "shared/vene/feature_item", layout: :inline, icon: :list, title: t("vene.auth.history_title"), text: t("vene.auth.history_text") %></li>
+      <li><%= render "shared/vene/feature_item", layout: :inline, icon: :heart, title: t("vene.auth.wishlist_title"), text: t("vene.auth.wishlist_text") %></li>
+      <li><%= render "shared/vene/feature_item", layout: :inline, icon: :lock, title: t("vene.auth.faster_title"), text: t("vene.auth.faster_text") %></li>
+    </ul>
+  </section>
+  <section class="order-1 lg:order-2 flex-[1_1_480px] min-w-0 px-[clamp(16px,5vw,96px)] py-[clamp(48px,7vw,112px)] flex justify-center">
+    <div class="w-full max-w-[440px] flex flex-col gap-8">
+      <% if tab %>
+        <nav aria-label="<%= t('vene.auth.tabs') %>" class="grid grid-cols-2 border-b border-line text-xs leading-5 tracking-nav uppercase rtl:text-sm">
+          <% [[:signin, t("vene.auth.sign_in"), new_user_session_path(locale: I18n.locale)], [:signup, t("vene.auth.create"), new_user_registration_path(locale: I18n.locale)]].each do |key, label, href| %>
+            <%= link_to label, href, class: "vn-navlink text-center !py-4 -mb-px border-b-2 #{key == tab ? '!border-ink' : '!border-transparent !text-ink-muted'}", "aria-current": (key == tab ? "page" : nil) %>
+          <% end %>
+        </nav>
+      <% end %>
+      <%= yield %>
+      <div class="flex flex-col gap-3 pt-6 border-t border-line text-[15px] leading-6 text-ink-muted">
+        <span><%= t("vene.auth.checking_out") %> <%= link_to t("vene.auth.as_guest"), checkout_path(locale: I18n.locale), class: "vn-link" %></span>
+        <span><%= t("vene.auth.have_order") %> <%= link_to t("vene.auth.track_without"), orders_path(locale: I18n.locale), class: "vn-link" %></span>
+      </div>
+    </div>
+  </section>
+</div>

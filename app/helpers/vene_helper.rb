@@ -69,7 +69,7 @@ module VeneHelper
   end
 
   def vn_order_price(amount, order, css: nil)
-    vn_bdi(display_order_price(amount, order), css: [ "vn-price", css ].compact.join(" "))
+    vn_bdi(display_order_price(amount, order, compact: true), css: [ "vn-price", css ].compact.join(" "))
   end
 
   def vn_arabic?
@@ -125,6 +125,31 @@ module VeneHelper
     when "notice", "success" then :success
     else :note
     end
+  end
+
+  def vn_status_label(status)
+    t("vene.status.#{status}", default: status.to_s.humanize)
+  end
+
+  def vn_payment_status_label(status)
+    t("vene.payment_status.#{status}", default: status.to_s.humanize)
+  end
+
+  # Wrapped in Unicode isolates (LRI … PDI) so "#12" stays in order inside Arabic text,
+  # including plain-text contexts such as <title> where <bdi> cannot be used.
+  def vn_order_number(order)
+    "\u2066#{t('vene.orders.number_prefix')}#{order.id}\u2069"
+  end
+
+  # PolicyLayout: give each <h2> of admin-authored page content an id and list them for the
+  # table of contents. Content is trusted as before (pages are written in the admin).
+  def vn_prose_with_toc(html)
+    doc = Nokogiri::HTML::DocumentFragment.parse(html.to_s)
+    toc = doc.css("h2").each_with_index.map do |heading, index|
+      heading["id"] ||= "section-#{index + 1}"
+      [ heading["id"], heading.text.squish ]
+    end
+    [ doc.to_html.html_safe, toc ] # rubocop:disable Rails/OutputSafety
   end
 
   # Order and payment statuses → Badge tones.

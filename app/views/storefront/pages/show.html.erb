@@ -1,5 +1,33 @@
-<div class="py-8">
-  <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[#465FFF] prose-strong:text-gray-900" dir="<%= I18n.locale == :ar ? 'rtl' : 'ltr' %>">
-    <%= @page.content.html_safe %>
+<% content_for :title, "#{@page.title(I18n.locale)} · VENÈ Jewelry" %>
+<%# PolicyLayout.dc.html: breadcrumb, page header, a table of contents built from the page's
+    h2s, the content as VENÈ prose, then a help band. %>
+<% html, toc = vn_prose_with_toc(@page.content(I18n.locale)) %>
+<% section = @page.slug == "our-story" ? t("vene.footer.house") : t("vene.footer.client_care") %>
+<% whatsapp = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "") %>
+<div class="max-w-[1200px] mx-auto">
+  <%= render "shared/vene/breadcrumb", trail: [[section, nil]], current: @page.title(I18n.locale) %>
+  <div class="pt-[clamp(32px,5vw,64px)] pb-10">
+    <%= render "shared/vene/page_header", eyebrow: section, title: @page.title(I18n.locale),
+          meta: t("vene.pages.updated", date: l(@page.updated_at.to_date, format: :long)) %>
+  </div>
+  <div class="flex flex-wrap items-start gap-y-12 gap-x-[clamp(48px,6vw,96px)]">
+    <% if toc.size > 1 %>
+      <nav aria-labelledby="toc-title" class="flex-[1_1_220px] min-w-0 max-w-[280px] lg:sticky lg:top-[180px]">
+        <span id="toc-title" class="vn-label block mb-4"><%= t("vene.pages.on_this_page") %></span>
+        <ol class="list-none m-0 p-0 flex flex-col border-s border-line">
+          <% toc.each do |id, label| %>
+            <li><a href="#<%= id %>" class="vn-quiet block py-2 ps-4 -ms-px border-s border-transparent hover:border-gold text-[15px] leading-6"><%= label %></a></li>
+          <% end %>
+        </ol>
+      </nav>
+    <% end %>
+    <article class="flex-[999_1_560px] min-w-0 max-w-[720px] flex flex-col gap-14">
+      <div class="vn-prose !max-w-none [&_h2]:scroll-mt-[200px]"><%= html %></div>
+      <%= render "shared/vene/help_card", variant: :band, title: t("vene.pages.help_title"), text: t("vene.pages.help_text") do %>
+        <% if whatsapp.present? %>
+          <a href="https://wa.me/<%= whatsapp %>" target="_blank" rel="noopener" class="vn-btn vn-btn--outline vn-btn--sm"><%= t("vene.cart.message_us") %></a>
+        <% end %>
+      <% end %>
+    </article>
   </div>
 </div>

@@ -1,0 +1,37 @@
+<%# locals: (order:) %>
+<%# OrderCard.dc.html: order meta and status, the pieces, then what the client can do next. %>
+<% href = order_path(order, locale: I18n.locale) %>
+<article aria-label="<%= t('vene.orders.order', number: vn_order_number(order)) %>" class="bg-surface-raised shadow-hairline">
+  <header class="flex flex-wrap justify-between items-center gap-x-8 gap-y-4 px-6 py-5 border-b border-line">
+    <dl class="m-0 flex flex-wrap gap-x-10 gap-y-3">
+      <div><dt class="vn-label !text-[11px] !tracking-[0.24em] rtl:!text-xs"><%= t("vene.orders.order_label") %></dt><dd class="m-0 text-[15px] leading-6"><bdi class="font-latin"><%= vn_order_number(order) %></bdi></dd></div>
+      <div><dt class="vn-label !text-[11px] !tracking-[0.24em] rtl:!text-xs"><%= t("vene.orders.placed") %></dt><dd class="m-0 text-[15px] leading-6"><%= l(order.created_at.to_date, format: :long) %></dd></div>
+      <div><dt class="vn-label !text-[11px] !tracking-[0.24em] rtl:!text-xs"><%= t("vene.orders.value") %></dt><dd class="m-0 text-[15px] leading-6"><%= vn_order_price(order.total_amount, order) %></dd></div>
+    </dl>
+    <span class="vn-badge vn-badge--<%= vn_status_tone(order.status) %>"><%= vn_status_label(order.status) %></span>
+  </header>
+  <div class="flex flex-wrap justify-between gap-x-12 gap-y-6 p-6">
+    <ul class="list-none m-0 p-0 flex-[1_1_360px] min-w-0 flex flex-col gap-4">
+      <% order.order_items.each do |item| %>
+        <li>
+          <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product),
+                href: product_path(item.product.slug, locale: I18n.locale),
+                meta: [item.product.metal.presence, item.product_variant&.display_name, ("× #{item.quantity}" if item.quantity > 1)].compact.join(" · "),
+                price: vn_order_price(item.line_total, order) %>
+        </li>
+      <% end %>
+    </ul>
+    <div class="flex-[0_1_260px] min-w-0 flex flex-col gap-3">
+      <p class="m-0 mb-1 vn-small"><%= t("vene.orders.note.#{order.status}", default: "") %></p>
+      <%= link_to(%w[shipped delivered paid].include?(order.status) ? t("vene.orders.track") : t("vene.orders.view"), href, class: "vn-btn vn-btn--primary vn-btn--sm vn-btn--block") %>
+      <%= link_to t("vene.orders.receipt"), invoice_order_path(order, locale: I18n.locale), class: "vn-btn vn-btn--outline vn-btn--sm vn-btn--block" %>
+      <% if order.awaiting_card_payment? %>
+        <%= button_to t("orders.pay_now"), pay_order_path(order, locale: I18n.locale), form: { data: { turbo: false } }, class: "vn-btn vn-btn--gold vn-btn--sm vn-btn--block" %>
+      <% end %>
+      <% if %w[pending payment_pending].include?(order.status) %>
+        <%= button_to t("vene.orders.cancel"), cancel_order_path(order, locale: I18n.locale), method: :patch,
+              form: { data: { turbo_confirm: t("vene.orders.confirm_cancel") } }, class: "vn-textbtn vn-textbtn--danger self-start" %>
+      <% end %>
+    </div>
+  </div>
+</article>

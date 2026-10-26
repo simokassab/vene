@@ -43,4 +43,22 @@ class VeneHelperTest < ActionView::TestCase
 
     assert_equal({ "notice" => "Saved" }, vn_flash_messages)
   end
+
+  test "vn_prose_with_toc ids each h2 and lists it" do
+    html, toc = vn_prose_with_toc("<h2>Overview</h2><p>Text</p><h2 id=\"faq\">Your questions</h2>")
+
+    assert_equal [ [ "section-1", "Overview" ], [ "faq", "Your questions" ] ], toc
+    assert_includes html, 'id="section-1"'
+  end
+
+  test "vn_order_number isolates the number for right-to-left text" do
+    order = Order.new(id: 12)
+
+    assert_equal "\u2066#12\u2069", vn_order_number(order)
+  end
+
+  test "status labels are translated, with a readable fallback" do
+    I18n.with_locale(:ar) { assert_equal "تم التسليم", vn_status_label("delivered") }
+    assert_equal "Something new", vn_status_label("something_new")
+  end
 end

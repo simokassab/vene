@@ -1,0 +1,30 @@
+<%# locals: (items:, rows:, total:, title: nil, total_label: nil, total_suffix: nil, note: nil, collapsible: true, price_for: nil) %>
+<%# OrderSummary.dc.html: the pieces, the totals, then actions from the block. items are cart
+    items or order items (both answer product, product_variant, quantity, line_total); price_for
+    renders a line's price (order items use the order's currency). On mobile it
+    folds closed under its heading. %>
+<aside aria-labelledby="order-summary-title" class="bg-surface-sunken p-8 flex flex-col gap-6" x-data="{ open: <%= !collapsible %> }">
+  <div class="flex justify-between items-center gap-4">
+    <h2 id="order-summary-title" class="m-0 font-display font-medium text-2xl leading-8 rtl:font-bold rtl:text-xl"><%= title || t("vene.checkout.your_order") %></h2>
+    <% if collapsible %>
+      <button type="button" class="vn-textbtn lg:hidden inline-flex items-center gap-2" @click="open = !open" :aria-expanded="open.toString()" aria-controls="order-summary-body">
+        <span x-text="open ? '<%= j t('vene.checkout.hide') %>' : '<%= j t('vene.checkout.show') %>'"><%= t("vene.checkout.show") %></span>
+      </button>
+    <% end %>
+  </div>
+  <div id="order-summary-body" class="flex flex-col gap-6 <%= 'max-lg:hidden' if collapsible %>" :class="open && '!flex'">
+    <ul class="list-none m-0 p-0 flex flex-col gap-4">
+      <% items.each do |item| %>
+        <% product = item.product %>
+        <li>
+          <%= render "shared/vene/line_item", size: :sm, title: product.name(I18n.locale), image: vn_product_image_url(product, version: :thumb),
+                meta: [item.product_variant&.display_name, "× #{item.quantity}"].compact.join(" · "),
+                price: (price_for ? price_for.call(item) : vn_price(item.line_total)) %>
+        </li>
+      <% end %>
+    </ul>
+    <%= render "shared/vene/totals", rows: rows, total: total, total_label: total_label, total_suffix: total_suffix, ruled: true %>
+  </div>
+  <%= yield if block_given? %>
+  <% if note.present? %><p class="m-0 vn-small"><%= note %></p><% end %>
+</aside>

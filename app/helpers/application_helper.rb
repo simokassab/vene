@@ -46,12 +46,16 @@ module ApplicationHelper
     "https://wa.me/#{number}?text=#{ERB::Util.url_encode(text)}"
   end
 
-  def display_order_price(amount, order)
+  def display_order_price(amount, order, compact: false)
     return "" if amount.nil?
 
     currency = order.currency.presence || "USD"
     symbol = ExchangeRateService.symbol_for(currency)
     precision = ExchangeRateService.three_decimal?(currency) ? 3 : 2
+    if compact
+      symbol = symbol.strip
+      precision = 0 if whole_amount?(amount)
+    end
     number_to_currency(amount, unit: symbol, precision: precision)
   end
 

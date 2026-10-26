@@ -88,7 +88,11 @@
     <%= meta_pixel_flash_event %>
     <%= tiktok_pixel_flash_event %>
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2 focus:z-50 vn-btn vn-btn--primary vn-btn--sm"><%= t("vene.skip_to_content") %></a>
-    <%= render "shared/vene/site_header" %>
+    <% if content_for?(:checkout) %>
+      <%= render "shared/vene/checkout_header" %>
+    <% else %>
+      <%= render "shared/vene/site_header" %>
+    <% end %>
     <% if (messages = vn_flash_messages).any? %>
       <div class="vn-container pt-6 flex flex-col gap-3">
         <% messages.each do |key, value| %>
@@ -105,7 +109,7 @@
         </div>
       <% end %>
     </main>
-    <%= render "shared/vene/site_footer" %>
+    <%= render "shared/vene/site_footer" unless content_for?(:checkout) %>
     <% if (whatsapp = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "")).present? %>
       <a href="https://wa.me/<%= whatsapp %>" target="_blank" rel="noopener"
          class="fixed bottom-5 end-5 z-40 w-14 h-14 rounded-full bg-primary text-on-primary shadow-soft flex items-center justify-center transition-colors duration-400 ease-vene hover:bg-gold hover:text-on-gold"

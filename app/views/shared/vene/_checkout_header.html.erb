@@ -1,0 +1,15 @@
+<%# CheckoutHeader.dc.html: back to the bag, the wordmark, and a secure-checkout note. %>
+<header class="bg-surface border-b border-line text-ink">
+  <div class="vn-container min-h-16 md:min-h-[88px] grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
+    <%= link_to cart_path(locale: I18n.locale), class: "vn-quiet justify-self-start inline-flex items-center gap-2 min-h-11 text-xs tracking-nav uppercase rtl:text-sm" do %>
+      <span aria-hidden="true" class="font-latin"><%= vn_arabic? ? "→" : "←" %></span><span class="vn-hide-sm"><%= t("vene.checkout.back_to_bag") %></span>
+    <% end %>
+    <%= link_to root_path(locale: I18n.locale), lang: "en", dir: "ltr", class: "flex flex-col items-center gap-0.5 py-2 text-ink no-underline", "aria-label": t("vene.header.home_label") do %>
+      <span class="font-display font-medium text-[28px] leading-7 uppercase ps-[0.12em]" style="letter-spacing: var(--tracking-nav); text-transform: uppercase;">VENÈ</span>
+      <span class="font-latin text-[9px] leading-3 font-medium uppercase ps-[0.5em]" style="letter-spacing: 0.5em; text-transform: uppercase;">Jewelry</span>
+    <% end %>
+    <span class="justify-self-end inline-flex items-center gap-2 text-xs tracking-nav uppercase text-ink-muted rtl:text-sm">
+      <%= vn_icon(:lock, size: 16) %><span class="vn-hide-sm"><%= t("vene.checkout.secure") %></span>
+    </span>
+  </div>
+</header>

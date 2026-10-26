@@ -1,0 +1,13 @@
+<%# locals: (current:) %>
+<%# The two checkout steps: 1 details (contact + delivery), 2 review & pay. %>
+<% steps = [[:details, t("vene.checkout.step_details")], [:review, t("vene.checkout.step_review")], [:confirmed, t("vene.checkout.step_confirmed")]] %>
+<% index = steps.index { |k, _| k == current } %>
+<ol aria-label="<%= t('vene.checkout.steps') %>" class="list-none m-0 mb-12 p-0 flex flex-wrap gap-x-10 gap-y-2 text-xs leading-5 tracking-nav uppercase rtl:text-sm">
+  <% steps.each_with_index do |(key, label), i| %>
+    <li class="inline-flex items-center gap-3 pb-2 border-b <%= i == index ? 'border-ink text-ink' : (i < index ? 'border-transparent text-ink' : 'border-transparent text-ink-subtle') %>"
+        <%= 'aria-current="step"'.html_safe if i == index %>>
+      <span class="font-latin vn-num"><%= format("%02d", i + 1) %></span><%= label %>
+      <% if i < index %><%= vn_icon(:check, size: 14, stroke: 1.5, tone: :success) %><span class="sr-only"><%= t("vene.checkout.done") %></span><% end %>
+    </li>
+  <% end %>
+</ol>

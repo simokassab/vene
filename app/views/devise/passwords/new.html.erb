@@ -1,0 +1,17 @@
+<% content_for :title, "#{t('vene.auth.forgot')} · VENÈ Jewelry" %>
+<%= render "shared/vene/auth_shell" do %>
+  <div class="flex flex-col gap-6">
+    <%= render "shared/vene/eyebrow", text: t("vene.account.eyebrow") %>
+    <h1 class="vn-h2 m-0"><%= t("vene.auth.reset_title") %></h1>
+    <p class="m-0 text-[15px] leading-6 text-ink-muted"><%= t("vene.auth.reset_text") %></p>
+    <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "flex flex-col gap-6" }) do |f| %>
+      <%= render "shared/vene/form_errors", record: resource %>
+      <div class="vn-field">
+        <%= f.label :email, t("activerecord.attributes.user.email"), class: "vn-field__label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", dir: "ltr", required: true, class: "vn-input" %>
+      </div>
+      <%= f.button t("vene.auth.send_reset"), type: "submit", class: "vn-btn vn-btn--primary vn-btn--block" %>
+      <%= link_to t("vene.auth.back_to_sign_in"), new_session_path(resource_name), class: "vn-link self-start text-[13px]" %>
+    <% end %>
+  </div>
+<% end %>
