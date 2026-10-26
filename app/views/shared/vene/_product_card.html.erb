@@ -1,0 +1,42 @@
+<%# locals: (product:, heading: :h3, wishlist: true, loading: "lazy", css: nil) %>
+<%# ProductCard (ds/vene, ProductGrid.dc.html): the piece on white at 4:5, badges top-start, actions
+    top-end, then name, metal and price centred. The actions sit outside the card link so no
+    interactive element is nested inside another. Needs product_images preloaded. %>
+<% href = product_path(product.slug, locale: I18n.locale) %>
+<% sold_out = !product.purchasable? %>
+<% metal_line = [product.metal.presence, (t("vene.product.diamonds") if product.diamonds.present?)].compact.join(" · ") %>
+<div class="vn-card relative min-w-0 <%= css %>">
+  <%= link_to href, class: "block text-inherit no-underline" do %>
+    <div class="vn-card__media">
+      <% if (src = vn_product_image_url(product)) %>
+        <%= image_tag src, alt: product.name(I18n.locale), loading: loading %>
+      <% else %>
+        <div class="w-full h-full flex items-center justify-center text-line-control"><%= vn_icon(:diamond, size: 40, stroke: 1) %></div>
+      <% end %>
+      <div class="vn-card__badge">
+        <%= render "shared/made_to_order_badge", product: product, positioned: false %>
+        <% if sold_out %>
+          <span class="vn-badge vn-badge--noir"><%= t("vene.product.sold_out") %></span>
+        <% elsif product.on_sale_with_price? %>
+          <span class="vn-badge vn-badge--outline"><%= t("vene.product.sale") %></span>
+        <% end %>
+      </div>
+    </div>
+    <div class="vn-card__body">
+      <%= content_tag heading, product.name(I18n.locale), class: "vn-card__name" %>
+      <% if metal_line.present? %><span class="vn-card__metal"><%= metal_line %></span><% end %>
+      <span class="vn-card__price"><%= render "shared/product_price", product: product %></span>
+    </div>
+  <% end %>
+  <div class="vn-card__action flex flex-col gap-1">
+    <% if wishlist %>
+      <%= render "shared/wishlist_icon_button", product: product %>
+    <% end %>
+    <% if product.made_to_order? && (wa = made_to_order_whatsapp_url(product)) %>
+      <%= link_to wa, target: "_blank", rel: "noopener", class: "vn-icon-btn !bg-surface-raised/80 hover:!bg-surface-raised",
+            title: t("products.order_on_whatsapp"), "aria-label": "#{t('products.order_on_whatsapp')}: #{product.name(I18n.locale)}" do %>
+        <%= render "shared/whatsapp_icon", css_class: "w-[18px] h-[18px]" %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

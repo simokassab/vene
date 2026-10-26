@@ -1,20 +1,21 @@
-<h1 class="text-2xl font-semibold mb-6"><%= t("products.all") %></h1>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<% content_for :title, "#{t('products.all')} · VENÈ Jewelry" %>
+<%# Every piece: the collection layout with categories as chips. %>
+<%= render "shared/vene/breadcrumb", current: t("products.all") %>
+<div class="pt-[clamp(32px,5vw,64px)] pb-12">
+  <%= render "shared/vene/page_header", eyebrow: t("vene.collection.eyebrow"), title: t("vene.collection.fine_jewelry"), lead: t("vene.collection.lead"), align: :center %>
+</div>
+<% if @categories.any? %>
+  <nav aria-label="<%= t('vene.home.categories') %>" class="vn-scroll-x flex items-center gap-3 overflow-x-auto py-4 border-y border-line mb-12">
+    <span class="vn-label whitespace-nowrap me-1"><%= t("vene.collection.category") %></span>
+    <span class="vn-chip is-active" aria-current="page"><%= t("vene.collection.all") %></span>
+    <% @categories.each do |category| %>
+      <%= link_to category.name(I18n.locale), category_path(category.slug, locale: I18n.locale), class: "vn-chip" %>
+    <% end %>
+  </nav>
+<% end %>
+<p aria-live="polite" class="m-0 mb-6 vn-small"><%= t("vene.collection.count", count: @products.size) %></p>
+<div class="vn-products">
   <% @products.each do |product| %>
-    <div class="border rounded-md shadow-sm overflow-hidden hover:shadow">
-      <div class="relative">
-        <%= render "shared/made_to_order_badge", product: product %>
-        <% if product.primary_image&.image&.url %>
-          <%= image_tag product.primary_image.image.url, class: "w-full h-52 object-cover" %>
-        <% else %>
-          <div class="w-full h-52 bg-gray-100 flex items-center justify-center text-gray-400">No image</div>
-        <% end %>
-      </div>
-      <div class="p-4 space-y-1">
-        <div class="text-sm text-gray-500"><%= product.category.name(I18n.locale) %></div>
-        <h3 class="font-semibold"><%= link_to product.name, product_path(product.slug, locale: I18n.locale) %></h3>
-        <div><%= render "shared/product_price", product: product %></div>
-      </div>
-    </div>
+    <%= render "shared/vene/product_card", product: product, heading: :h2 %>
   <% end %>
 </div>

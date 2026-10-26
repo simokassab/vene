@@ -1,0 +1,9 @@
+<%# locals: (current:, trail: []) %>
+<%# Breadcrumb.dc.html. trail: [[label, href], ...] between Home and the current page. %>
+<nav aria-label="<%= t("vene.breadcrumb") %>" class="py-6 text-[13px] leading-5 text-ink-muted rtl:text-sm">
+  <%= link_to t("nav.home"), root_path(locale: I18n.locale), class: "vn-quiet" %>
+  <% trail.each do |label, href| %>
+    <span aria-hidden="true" class="mx-2">/</span><%= href ? link_to(label, href, class: "vn-quiet") : tag.span(label) %>
+  <% end %>
+  <span aria-hidden="true" class="mx-2">/</span><span aria-current="page" class="text-ink"><%= current %></span>
+</nav>

@@ -1,408 +1,75 @@
+<%# Collection.dc.html: breadcrumb, centred heading, filter and sort bar, the grid, then help. %>
+<% content_for :title, "#{@category.name(I18n.locale)} · VENÈ Jewelry" %>
 <% content_for :full_width, true %>
+<% count = @products.size %>
+<% subcategories = @subcategories_with_counts.to_a %>
+<% total = subcategories.sum { |s| s.products_count.to_i } %>
+<% whatsapp = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "") %>
 
-<!-- Alpine.js State -->
-<div x-data="{
-  filterOpen: true,
-  sortBy: '<%= @sort %>',
-  viewMode: 'grid',
-  hoveredProduct: null
-}" class="min-h-screen bg-gray-50">
+<div class="vn-container pb-[var(--section)]">
+  <%= render "shared/vene/breadcrumb",
+        trail: (@selected_subcategory ? [[@category.name(I18n.locale), category_path(@category.slug, locale: I18n.locale)]] : []),
+        current: (@selected_subcategory || @category).name(I18n.locale) %>
 
-  <!-- Hero Section with Category Banner -->
-  <section class="relative h-96 overflow-hidden pt-32 md:pt-36">
-    <% if @category.image? %>
-      <%= image_tag @category.image.url,
-        class: "absolute inset-0 w-full h-full object-cover" %>
-    <% else %>
-      <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-500"></div>
-    <% end %>
+  <div class="pt-[clamp(32px,5vw,64px)] pb-12">
+    <%= render "shared/vene/page_header",
+          eyebrow: t("vene.collection.eyebrow"),
+          title: (@selected_subcategory || @category).name(I18n.locale),
+          lead: @selected_subcategory&.description(I18n.locale).presence || t("vene.collection.lead"),
+          align: :center %>
+  </div>
 
-    <!-- Dark Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
-
-    <!-- Category Info -->
-    <div class="relative h-full flex items-center justify-center text-center px-4">
-      <div class="max-w-4xl mx-auto animate-fade-in">
-        <h1 class="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-2xl">
-          <%= @category.name(I18n.locale) %>
-        </h1>
-        <% if @category.respond_to?(:description) && @category.description(I18n.locale).present? %>
-          <p class="text-xl text-white/90 mb-6 drop-shadow-lg">
-            <%= @category.description(I18n.locale) %>
-          </p>
+  <div role="group" aria-label="<%= t('vene.collection.filter_sort') %>"
+       class="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 py-4 border-y border-line mb-12">
+    <% if subcategories.any? %>
+      <nav aria-label="<%= t('vene.collection.subcategories') %>" class="vn-scroll-x flex items-center gap-3 overflow-x-auto max-w-full">
+        <span class="vn-label whitespace-nowrap me-1"><%= t("vene.collection.category") %></span>
+        <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort), class: "vn-chip", "aria-current": (@selected_subcategory ? nil : "page") do %>
+          <%= t("vene.collection.all") %> <span class="vn-num font-latin opacity-70"><%= total %></span>
         <% end %>
-        <div class="flex items-center justify-center gap-4 text-white/80">
-          <span><%= @products.count %> <%= t("common.products", default: "Products") %></span>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Scroll Down Indicator -->
-    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-      </svg>
-    </div>
-  </section>
-
-  <!-- Filters & Sort Bar -->
-  <section class="sticky top-20 z-20 bg-white border-b border-gray-300 shadow-sm">
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-between flex-wrap gap-4">
-        <!-- Left: Results Count + Mobile Filter Toggle -->
-        <div class="flex items-center gap-4">
-          <button @click="filterOpen = !filterOpen"
-                  class="lg:hidden px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-            </svg>
-            <%= t("common.filter") %>
-          </button>
-          <h2 class="text-lg font-semibold text-gray-900">
-            <%= @products.count %> <%= t("common.products", default: "Products") %>
-            <% if @selected_subcategory %>
-              <span class="text-sm font-normal text-gray-600">
-                <%= t("common.in_category", name: @selected_subcategory.name(I18n.locale)) %>
-              </span>
-            <% end %>
-          </h2>
-        </div>
-
-        <!-- Right: View & Sort Options -->
-        <div class="flex items-center gap-2 sm:gap-4">
-          <!-- View Mode Toggle -->
-          <div class="hidden sm:flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-            <button @click="viewMode = 'grid'"
-                    :class="viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-600'"
-                    class="px-3 py-2 rounded transition-all duration-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-              </svg>
-            </button>
-            <button @click="viewMode = 'list'"
-                    :class="viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-600'"
-                    class="px-3 py-2 rounded transition-all duration-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Sort Dropdown -->
-          <%= form_with url: category_path(@category.slug, locale: I18n.locale), method: :get, local: true, class: "relative" do %>
-            <%= select_tag :sort,
-              options_for_select({
-                t("common.sort_featured", default: "Featured") => "featured",
-                t("common.sort_price_low", default: "Price: Low to High") => "price_low",
-                t("common.sort_price_high", default: "Price: High to Low") => "price_high",
-                t("common.sort_newest", default: "Newest") => "newest"
-              }, @sort),
-              class: "appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm font-medium focus:ring-2 focus:ring-[black] focus:border-[black] cursor-pointer",
-              onchange: "this.form.submit()" %>
-            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </div>
+        <% subcategories.each do |sub| %>
+          <%= link_to category_path(@category.slug, locale: I18n.locale, subcategory: sub.slug, sort: @sort), class: "vn-chip",
+                "aria-current": (@selected_subcategory&.id == sub.id ? "page" : nil) do %>
+            <%= sub.name(I18n.locale) %> <span class="vn-num font-latin opacity-70"><%= sub.products_count %></span>
           <% end %>
-        </div>
-      </div>
-    </div>
-  </section>
+        <% end %>
+      </nav>
+    <% end %>
+    <%= form_with url: category_path(@category.slug, locale: I18n.locale), method: :get, local: true, class: "flex items-center gap-3 min-w-[220px]" do %>
+      <% if @selected_subcategory %><%= hidden_field_tag :subcategory, @selected_subcategory.slug %><% end %>
+      <label for="sort" class="vn-label whitespace-nowrap"><%= t("vene.collection.sort") %></label>
+      <%= select_tag :sort, options_for_select({
+            t("vene.collection.sort_featured") => "featured",
+            t("vene.collection.sort_price_low") => "price_low",
+            t("vene.collection.sort_price_high") => "price_high",
+            t("vene.collection.sort_newest") => "newest"
+          }, @sort), id: "sort", class: "vn-select", onchange: "this.form.requestSubmit()" %>
+      <noscript><button type="submit" class="vn-btn vn-btn--outline vn-btn--sm"><%= t("vene.collection.apply") %></button></noscript>
+    <% end %>
+  </div>
 
-  <!-- Products Section with Sidebar -->
-  <section class="py-12">
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex gap-8">
+  <p aria-live="polite" class="m-0 mb-6 vn-small"><%= t("vene.collection.count", count: count) %></p>
 
-        <!-- Sidebar Filter (Desktop) -->
-        <aside class="hidden lg:block w-64 flex-shrink-0">
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sticky top-28">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              <%= t("common.subcategories", default: "Subcategories") %>
-            </h3>
-
-            <div class="space-y-2">
-              <!-- All Products Link -->
-              <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort),
-                class: "flex items-center justify-between px-3 py-2 rounded-lg transition-colors #{params[:subcategory].blank? ? 'bg-gray-900 text-white' : 'hover:bg-gray-100 text-gray-700'}" do %>
-                <span class="text-sm font-medium">
-                  <%= t("common.all_products", default: "All Products") %>
-                </span>
-                <span class="text-xs <%= params[:subcategory].blank? ? 'text-white' : 'text-gray-500' %>">
-                  <%= @category.products.active.count %>
-                </span>
-              <% end %>
-
-              <!-- Subcategory Links -->
-              <% @subcategories_with_counts.each do |subcategory| %>
-                <%= link_to category_path(@category.slug, locale: I18n.locale, subcategory: subcategory.slug, sort: @sort),
-                  class: "flex items-center justify-between px-3 py-2 rounded-lg transition-colors #{@selected_subcategory&.id == subcategory.id ? 'bg-gray-900 text-white' : 'hover:bg-gray-100 text-gray-700'}" do %>
-                  <span class="text-sm font-medium"><%= subcategory.name(I18n.locale) %></span>
-                  <span class="text-xs <%= @selected_subcategory&.id == subcategory.id ? 'text-white' : 'text-gray-500' %>">
-                    <%= subcategory.products_count %>
-                  </span>
-                <% end %>
-              <% end %>
-            </div>
-          </div>
-        </aside>
-
-        <!-- Mobile Filter Dropdown -->
-        <div x-show="filterOpen"
-             x-transition
-             class="lg:hidden fixed inset-0 z-30 bg-black/50"
-             @click="filterOpen = false">
-          <div @click.stop class="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-lg font-semibold text-gray-900"><%= t("common.subcategories", default: "Subcategories") %></h3>
-              <button @click="filterOpen = false" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
-            <div class="space-y-2">
-              <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort),
-                class: "flex items-center justify-between px-3 py-2 rounded-lg #{params[:subcategory].blank? ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}" do %>
-                <span class="text-sm font-medium"><%= t("common.all_products", default: "All Products") %></span>
-                <span class="text-xs"><%= @category.products.active.count %></span>
-              <% end %>
-
-              <% @subcategories_with_counts.each do |subcategory| %>
-                <%= link_to category_path(@category.slug, locale: I18n.locale, subcategory: subcategory.slug, sort: @sort),
-                  class: "flex items-center justify-between px-3 py-2 rounded-lg #{@selected_subcategory&.id == subcategory.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}" do %>
-                  <span class="text-sm font-medium"><%= subcategory.name(I18n.locale) %></span>
-                  <span class="text-xs"><%= subcategory.products_count %></span>
-                <% end %>
-              <% end %>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main Products Area -->
-        <div class="flex-1">
-      <% if @products.any? %>
-        <!-- Grid View -->
-        <div x-show="viewMode === 'grid'"
-             x-transition:enter="transition-opacity duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <% @products.each_with_index do |product, index| %>
-            <div @mouseenter="hoveredProduct = <%= index %>"
-                 @mouseleave="hoveredProduct = null"
-                 class="group relative animate-fade-in"
-                 style="animation-delay: <%= index * 50 %>ms;">
-              <!-- Product Card -->
-              <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl"
-                   :class="hoveredProduct === <%= index %> ? 'transform -translate-y-2' : ''">
-
-                <!-- Product Image -->
-                <div class="relative aspect-square overflow-hidden bg-gray-50 flex items-center justify-center">
-                  <%= render "shared/made_to_order_badge", product: product %>
-                  <% if product.primary_image&.image&.url %>
-                    <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-4" do %>
-                      <%= image_tag product.primary_image.image.url,
-                        class: "max-h-full w-full object-contain transition-transform duration-700 group-hover:scale-110" %>
-                    <% end %>
-                  <% else %>
-                    <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <svg class="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                      </svg>
-                    </div>
-                  <% end %>
-
-                  <!-- Quick View Overlay -->
-                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <%= link_to product_path(product.slug, locale: I18n.locale),
-                      class: "px-6 py-3 bg-white text-gray-900 font-semibold rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-gray-100" do %>
-                      <%= t("common.quick_view", default: "Quick View") %>
-                    <% end %>
-                  </div>
-
-                  <!-- Wishlist Button -->
-                  <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <%= render "shared/wishlist_icon_button", product: product %>
-                  </div>
-                </div>
-
-                <!-- Product Info -->
-                <div class="p-6">
-                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[black] transition-colors">
-                      <%= product.name(I18n.locale) %>
-                    </h3>
-                  <% end %>
-
-                  <div class="flex items-center justify-between mt-4">
-                    <%= render "shared/product_price", product: product %>
-                    <% if product.made_to_order? %>
-                      <% if (wa = made_to_order_whatsapp_url(product)) %>
-                        <%= link_to wa, target: "_blank", rel: "noopener",
-                          title: t("products.order_on_whatsapp"),
-                          "aria-label": t("products.order_on_whatsapp"),
-                          class: "w-10 h-10 bg-gray-900 ring-2 ring-gray-900 ring-offset-2 text-white rounded-full flex items-center justify-center hover:bg-[black] transition-all duration-300 hover:scale-110" do %>
-                          <%= render "shared/whatsapp_icon", css_class: "w-5 h-5" %>
-                        <% end %>
-                      <% end %>
-                    <% else %>
-                      <%= button_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
-                        method: :post,
-                        class: "w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-[black] transition-all duration-300 hover:scale-110" do %>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                      <% end %>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3D Shadow Effect -->
-              <div class="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-black/10 to-gray-900/10 blur-xl opacity-0 group-hover:opacity-70 transition-opacity duration-500 transform translate-y-4"></div>
-            </div>
-          <% end %>
-        </div>
-
-        <!-- List View -->
-        <div x-show="viewMode === 'list'"
-             x-transition:enter="transition-opacity duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             class="space-y-6">
-          <% @products.each_with_index do |product, index| %>
-            <div class="bg-white rounded-md shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 animate-fade-in"
-                 style="animation-delay: <%= index * 50 %>ms;">
-              <div class="flex flex-col sm:flex-row">
-                <!-- Product Image -->
-                <div class="relative w-full sm:w-48 md:w-64 lg:w-80 aspect-square sm:aspect-auto sm:min-h-48 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center">
-                  <%= render "shared/made_to_order_badge", product: product %>
-                  <% if product.primary_image&.image&.url %>
-                    <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-4" do %>
-                      <%= image_tag product.primary_image.image.url,
-                        class: "max-h-full w-full object-contain hover:scale-110 transition-transform duration-700" %>
-                    <% end %>
-                  <% else %>
-                    <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <svg class="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                      </svg>
-                    </div>
-                  <% end %>
-                </div>
-
-                <!-- Product Details -->
-                <div class="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between">
-                  <div>
-                    <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                      <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 hover:text-[black] transition-colors">
-                        <%= product.name(I18n.locale) %>
-                      </h3>
-                    <% end %>
-                    <% if product.respond_to?(:short_description) && product.short_description(I18n.locale).present? %>
-                      <p class="text-gray-600 mb-4 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base">
-                        <%= product.short_description(I18n.locale) %>
-                      </p>
-                    <% end %>
-
-                    <!-- Specifications -->
-                    <div class="flex flex-wrap gap-2 sm:gap-3 mb-4">
-                      <% if product.metal.present? %>
-                        <span class="px-2 sm:px-3 py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-700">
-                          <%= product.metal %>
-                        </span>
-                      <% end %>
-                      <% if product.diamonds.present? %>
-                        <span class="px-2 sm:px-3 py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-700">
-                          <%= product.diamonds %>
-                        </span>
-                      <% end %>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <%= render "shared/product_price", product: product %>
-                    <div class="flex items-center gap-2 sm:gap-3">
-                      <%= render "shared/wishlist_button", product: product %>
-                      <%= link_to product_path(product.slug, locale: I18n.locale),
-                        class: "group flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300" do %>
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        <span class="text-xs sm:text-sm font-medium"><%= t("common.view_details", default: "View Details") %></span>
-                      <% end %>
-                      <% if product.made_to_order? %>
-                        <% if (wa = made_to_order_whatsapp_url(product)) %>
-                          <%= link_to wa, target: "_blank", rel: "noopener",
-                            class: "group flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-gray-900 bg-gray-900 text-white hover:bg-[black] rounded-lg transition-all duration-300" do %>
-                            <%= render "shared/whatsapp_icon", css_class: "w-4 h-4 sm:w-5 sm:h-5" %>
-                            <span class="text-xs sm:text-sm font-medium"><%= t("products.order_on_whatsapp") %></span>
-                          <% end %>
-                        <% end %>
-                      <% else %>
-                        <%= button_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
-                          method: :post,
-                          class: "group flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-gray-900 bg-gray-900 text-white hover:bg-[black] rounded-lg transition-all duration-300" do %>
-                          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                          </svg>
-                          <span class="text-xs sm:text-sm font-medium"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
-                        <% end %>
-                      <% end %>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <!-- Empty State -->
-        <div class="text-center py-20">
-          <div class="inline-block p-6 bg-gray-100 rounded-full mb-6">
-            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-            </svg>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-2">
-            <%= t("common.no_products", default: "No Products Found") %>
-          </h3>
-          <p class="text-gray-600 mb-8">
-            <%= t("common.no_products_subtitle", default: "Check back soon for new arrivals") %>
-          </p>
-          <%= link_to root_path(locale: I18n.locale),
-            class: "inline-flex items-center px-8 py-4 bg-[black] hover:bg-[gray-900] text-white font-semibold rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105" do %>
-            <%= t("common.back_home", default: "Back to Home") %>
-          <% end %>
-        </div>
+  <% if count.positive? %>
+    <div class="vn-products">
+      <% @products.each do |product| %>
+        <%= render "shared/vene/product_card", product: product, heading: :h2 %>
       <% end %>
-        </div>
-        <!-- End Main Products Area -->
-
-      </div>
-      <!-- End Flex Container -->
     </div>
-  </section>
+  <% else %>
+    <div class="flex flex-col items-center gap-6 py-24 px-4 text-center bg-surface-sunken">
+      <p class="vn-h2 !font-light m-0"><%= t("vene.collection.empty_title") %></p>
+      <p class="m-0 text-[15px] leading-6 text-ink-muted max-w-[460px]"><%= t("vene.collection.empty_text") %></p>
+      <%= render "shared/vene/button", label: t("vene.collection.clear"), href: category_path(@category.slug, locale: I18n.locale), variant: :outline %>
+    </div>
+  <% end %>
+
+  <div class="mt-24">
+    <%= render "shared/vene/help_card", variant: :banner, title: t("vene.collection.help_title"), text: t("vene.collection.help_text") do %>
+      <button type="button" class="vn-btn vn-btn--outline" @click="ringSizeModal = true"><%= t("footer.ring_size_guide") %></button>
+      <% if whatsapp.present? %>
+        <a href="https://wa.me/<%= whatsapp %>" target="_blank" rel="noopener" class="vn-btn vn-btn--primary"><%= t("vene.header.whatsapp") %></a>
+      <% end %>
+    <% end %>
+  </div>
 </div>
-
-<!-- Custom CSS Animations -->
-<style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-  }
-</style>

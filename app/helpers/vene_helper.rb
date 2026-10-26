@@ -110,6 +110,14 @@ module VeneHelper
     version ? image.public_send(version).url : image.url
   end
 
+  FLASH_MESSAGE_KEYS = %w[notice alert error success info warning].freeze
+
+  # Only human-readable messages: analytics payloads (ga4_event, meta_pixel_event, …) also
+  # travel in the flash and are rendered by their own helpers.
+  def vn_flash_messages
+    flash.to_hash.slice(*FLASH_MESSAGE_KEYS).select { |_, v| v.is_a?(String) && v.present? }
+  end
+
   # Flash keys → Notice tones. Devise and the app use notice/alert; anything else is a note.
   def vn_flash_tone(key)
     case key.to_s

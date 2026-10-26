@@ -36,4 +36,11 @@ class VeneHelperTest < ActionView::TestCase
     assert_equal :success, vn_flash_tone("notice")
     assert_equal :note, vn_flash_tone(:info)
   end
+
+  test "only message keys from the flash become notices" do
+    flash[:notice] = "Saved"
+    flash[:ga4_event] = '{"event":"add_to_cart"}'
+
+    assert_equal({ "notice" => "Saved" }, vn_flash_messages)
+  end
 end

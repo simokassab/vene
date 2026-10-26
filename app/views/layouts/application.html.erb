@@ -89,10 +89,9 @@
     <%= tiktok_pixel_flash_event %>
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2 focus:z-50 vn-btn vn-btn--primary vn-btn--sm"><%= t("vene.skip_to_content") %></a>
     <%= render "shared/vene/site_header" %>
-    <% if flash.any? %>
+    <% if (messages = vn_flash_messages).any? %>
       <div class="vn-container pt-6 flex flex-col gap-3">
-        <% flash.each do |key, value| %>
-          <% next unless value.is_a?(String) %>
+        <% messages.each do |key, value| %>
           <%= render "shared/vene/notice", text: value, tone: vn_flash_tone(key) %>
         <% end %>
       </div>

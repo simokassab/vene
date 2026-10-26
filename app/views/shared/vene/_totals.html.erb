@@ -1,0 +1,16 @@
+<%# locals: (rows:, total:, total_label: nil, total_suffix: nil, ruled: false) %>
+<%# TotalsList.dc.html. rows: [[label, value], ...]; value may be HTML. A row is muted unless its
+    value carries a figure (a vn-price / bdi), matching the artboard. %>
+<div class="flex flex-col gap-6">
+  <dl class="m-0 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 text-[15px] leading-6 <%= 'pt-6 border-t border-line' if ruled %>">
+    <% rows.each do |label, value| %>
+      <% figure = value.to_s.include?("<bdi") %>
+      <dt class="text-ink-muted"><%= label %></dt>
+      <dd class="m-0 text-end <%= figure ? 'vn-num' : 'text-ink-muted' %>"><%= value %></dd>
+    <% end %>
+  </dl>
+  <div class="flex justify-between items-baseline gap-4 pt-6 border-t border-line">
+    <span class="font-display text-2xl leading-8 font-medium rtl:font-bold rtl:text-xl"><%= total_label || t("orders.total") %></span>
+    <span class="text-xl leading-7"><%= total %><% if total_suffix.present? %><span class="text-[13px] text-ink-muted"> <%= total_suffix %></span><% end %></span>
+  </div>
+</div>

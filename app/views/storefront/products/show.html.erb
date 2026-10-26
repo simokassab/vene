@@ -4,10 +4,13 @@
   content_for :og_image, image_url(@product.primary_image.image.url) if @product.primary_image&.image&.url.present?
   content_for :og_type, "product"
   content_for :head, meta_catalog_microdata(@product)
+  content_for :full_width, true
 %>
 <%
   images = @product.product_images
   primary_url = images.first&.image&.url
+  name = @product.name(I18n.locale)
+  category = @product.category
 
   # Build variant stock data for Alpine.js
   variant_stocks = {}
@@ -22,16 +25,16 @@
       }
     end
   end
+  metal_line = [@product.metal, @product.diamonds, @product.gemstones].compact_blank.join(" · ")
 %>
-<!-- Alpine.js State Management -->
+<%# Product.dc.html: gallery on the start side, the buy box beside it, accordions under the
+    actions, then related pieces. The Alpine state below is the product's purchase logic and is
+    kept as it was; only the markup around it changed. %>
 <div x-data="{
   activeImage: '<%= primary_url || '' %>',
   quantity: 1,
   selectedVariant: null,
-  selectedTab: 'description',
   showImageModal: false,
-  showVideoModal: false,
-  addedToCart: false,
   imageZoom: false,
   zoomX: 0,
   zoomY: 0,
@@ -42,7 +45,7 @@
   productAllowPreorder: <%= @product.allow_preorder? %>,
   productEstimatedDate: '<%= @product.estimated_delivery_date&.iso8601 %>',
   // Made to order: driven by the flag alone, never by stock level. The property keeps its
-  // historical name because it is referenced throughout this 766-line file.
+  // historical name because the purchase logic below refers to it.
   productPreorderOnly: <%= @product.made_to_order? %>,
   viewingVideo: false,
 
@@ -64,713 +67,311 @@
       // even when the selected variant is not itself made to order.
       this.currentIsPreorder = this.productAllowPreorder || allowPreorder;
       this.currentCanPurchase = stock > 0 || allowPreorder;
-  this.currentMaxQty = stock;
-  this.currentEstimatedDate = variantStatus?.estimated_date || '';
-  } else {
-  this.currentStock = this.productStockQuantity;
-  this.currentIsPreorder = this.productPreorderOnly;
-  this.currentCanPurchase = this.productStockQuantity > 0 || this.productAllowPreorder;
-  this.currentMaxQty = this.productStockQuantity;
-  this.currentEstimatedDate = this.productEstimatedDate;
-  }
+      this.currentMaxQty = stock;
+      this.currentEstimatedDate = variantStatus?.estimated_date || '';
+    } else {
+      this.currentStock = this.productStockQuantity;
+      this.currentIsPreorder = this.productPreorderOnly;
+      this.currentCanPurchase = this.productStockQuantity > 0 || this.productAllowPreorder;
+      this.currentMaxQty = this.productStockQuantity;
+      this.currentEstimatedDate = this.productEstimatedDate;
+    }
   },
   incrementQuantity() {
-  if (this.quantity < this.currentMaxQty) {
+    if (this.quantity < this.currentMaxQty) {
       this.quantity++;
     }
   },
-
   decrementQuantity() {
     if (this.quantity > 1) {
-    this.quantity--;
+      this.quantity--;
     }
-    },
-    handleMouseMove(e) {
+  },
+  handleMouseMove(e) {
     const rect = e.currentTarget.getBoundingClientRect();
     this.zoomX = ((e.clientX - rect.left) / rect.width) * 100;
     this.zoomY = ((e.clientY - rect.top) / rect.height) * 100;
-    },
-    init() {
+  },
+  init() {
     this.$watch('selectedVariant', () => {
-    // Reset quantity to 1 when variant changes
-    this.quantity = 1;
+      // Reset quantity to 1 when variant changes
+      this.quantity = 1;
     });
     this.$watch('quantity', (value) => {
-    // Ensure quantity doesn't exceed max. The property is currentMaxQty — reading the
-    // non-existent this.maxQuantity here used to silently set quantity to undefined.
-    if (this.currentMaxQty > 0 && value > this.currentMaxQty) {
-    this.quantity = this.currentMaxQty;
-    }
-    if (value < 1) {
+      // Ensure quantity doesn't exceed max. The property is currentMaxQty — reading the
+      // non-existent this.maxQuantity here used to silently set quantity to undefined.
+      if (this.currentMaxQty > 0 && value > this.currentMaxQty) {
+        this.quantity = this.currentMaxQty;
+      }
+      if (value < 1) {
         this.quantity = 1;
       }
     });
   }
-}" class="pb-16">
-      <!-- Breadcrumb -->
-      <div class="mb-6 mt-20">
-        <div class="flex items-center text-sm text-gray-600">
-          <%= link_to t("common.home", default: "Home"), root_path(locale: I18n.locale),
-        class: "hover:text-gray-900 transition-colors" %>
-          <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-          <%= link_to @product.category.name(I18n.locale), category_path(@product.category.slug, locale: I18n.locale),
-        class: "hover:text-gray-900 transition-colors" %>
-          <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-          <span class="text-gray-900 font-medium"><%= @product.name(I18n.locale) %></span>
-        </div>
-      </div>
-      <!-- Product Details Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <!-- LEFT: Image/Video Gallery -->
-        <div class="lg:sticky lg:top-24 lg:self-start">
-          <!-- Main Display Area -->
-          <div class="relative bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden mb-6">
-            <%# Written inline rather than via shared/_made_to_order_badge because it must track
-                the selected variant live, which a server-rendered partial cannot do. %>
-            <span x-show="currentIsPreorder" x-cloak
-              class="absolute top-4 left-4 z-20 inline-block bg-gray-900 text-white text-xs font-medium uppercase tracking-wide px-3 py-2 rounded pointer-events-none">
-              <%= t("products.made_to_order_badge") %>
-            </span>
-            <!-- Video View -->
-            <% if @product.video.present? %>
-              <div x-show="viewingVideo"
-               x-transition:enter="transition ease-out duration-300"
-               x-transition:enter-start="opacity-0"
-               x-transition:enter-end="opacity-100"
-               class="aspect-square flex items-center justify-center bg-black relative">
-                <video controls
-                   class="w-full h-full object-contain"
+}" @keydown.escape.window="showImageModal = false" class="vn-container">
+  <%= render "shared/vene/breadcrumb", trail: [[category.name(I18n.locale), category_path(category.slug, locale: I18n.locale)]], current: name %>
+
+  <div class="flex flex-wrap items-start gap-y-12 gap-x-[clamp(48px,6vw,96px)] pb-[var(--section)]">
+    <%# ---------- Gallery ---------- %>
+    <section aria-label="<%= t('vene.product.images') %>" class="flex-[1_1_560px] min-w-0 flex flex-col gap-4 lg:sticky lg:top-[180px]">
+      <div class="relative aspect-square bg-media overflow-hidden">
+        <%# Inline rather than shared/_made_to_order_badge: it tracks the selected variant live. %>
+        <span x-show="currentIsPreorder" x-cloak class="vn-badge vn-badge--gold absolute top-4 start-4 z-20 pointer-events-none">
+          <%= t("products.made_to_order_badge") %>
+        </span>
+        <% if @product.video.present? %>
+          <div x-show="viewingVideo" x-cloak class="absolute inset-0 bg-media">
+            <video controls controlsList="nodownload" class="w-full h-full object-contain"
                    x-init="$watch('viewingVideo', value => { if (!value) { $el.pause(); $el.currentTime = 0; } })">
-                  <source src="<%= @product.video.url %>" type="video/mp4">
-                  <%= t("products.video_not_supported") %>
-                </video>
-                <!-- Close Video Button -->
-                <button @click="viewingVideo = false"
-                    class="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-all duration-200 z-10">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-            <% end %>
-            <!-- Image View -->
-            <div x-show="!viewingVideo"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             class="aspect-square flex items-center justify-center bg-gray-50 relative overflow-hidden cursor-pointer"
-             @mouseenter="imageZoom = true"
-             @mouseleave="imageZoom = false"
-             @mousemove="handleMouseMove"
-             @click="showImageModal = true">
-              <% if primary_url %>
-                <div class="w-full h-full flex items-center justify-center p-8">
-                  <img :src="activeImage"
-                   data-main-image
-                   class="max-h-full w-full object-contain transition-all duration-300"
-                   :class="imageZoom ? 'opacity-0' : 'opacity-100'" />
-                </div>
-                <!-- Zoomed Image (appears on hover) -->
-                <div x-show="imageZoom"
-                 class="absolute inset-0 pointer-events-none"
-                 style="display: none;">
-                  <div class="w-full h-full"
-                   :style="{
-                     backgroundImage: `url(${activeImage})`,
-                     backgroundPosition: `${zoomX}% ${zoomY}%`,
-                     backgroundSize: '200%',
-                     backgroundRepeat: 'no-repeat'
-                   }">
-                  </div>
-                </div>
-              <% else %>
-                <div class="flex flex-col items-center justify-center text-gray-400 py-24">
-                  <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                  </svg>
-                  <p><%= t("common.no_image", default: "No image available") %></p>
-                </div>
-              <% end %>
-            </div>
-            <!-- Zoom Hint (only show when not viewing video) -->
-            <% if primary_url %>
-              <%# Shifted down when a made-to-order badge occupies the top-left corner. %>
-              <div x-show="!viewingVideo" :class="currentIsPreorder ? 'top-16' : 'top-4'" class="absolute left-4 right-4 flex items-center justify-between pointer-events-none">
-                <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity"
-                 :class="imageZoom ? 'opacity-100' : ''">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                  </svg>
-                  <span x-show="!imageZoom"><%= t("products.hover_to_zoom") %></span>
-                  <span x-show="imageZoom"><%= t("products.move_to_explore") %></span>
-                </div>
-                <div class="bg-black/70 text-white rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
-                  </svg>
-                  <%= t("products.click_fullscreen") %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-          <!-- Thumbnail Gallery -->
-          <div class="flex gap-2 overflow-x-auto pb-2">
-            <!-- Video Thumbnail (if video exists) -->
-            <% if @product.video.present? %>
-              <button type="button"
-                  @click="viewingVideo = true; imageZoom = false;"
-                  :class="viewingVideo ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
-                  class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600 shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer group">
-                <!-- Video Play Icon -->
-                <div class="w-full h-full flex items-center justify-center">
-                  <div class="relative">
-                    <div class="absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
-                    <svg class="w-8 h-8 text-white relative z-10 group-hover:scale-125 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                </div>
-                <!-- Video Label -->
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent py-1">
-                  <p class="text-white text-[10px] font-bold text-center uppercase tracking-wide"><%= t("products.video") %></p>
-                </div>
-                <!-- Selected indicator -->
-                <div x-show="viewingVideo"
-                 class="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
-                  <div class="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  </div>
-                </div>
-              </button>
-            <% end %>
-            <!-- Image Thumbnails -->
-            <% if images.any? %>
-              <% images.each_with_index do |img, index| %>
-                <button type="button"
-                    @click="activeImage = '<%= img.image.url %>'; imageZoom = false; viewingVideo = false;"
-                    :class="(activeImage === '<%= img.image.url %>' && !viewingVideo) ? 'border-gray-900 border-2 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300 hover:border-gray-900'"
-                    class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-white shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer group">
-                  <%= image_tag img.image.url, class: "w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" %>
-                  <!-- Selected indicator -->
-                  <div x-show="activeImage === '<%= img.image.url %>' && !viewingVideo"
-                   class="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
-                    <div class="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                      </svg>
-                    </div>
-                  </div>
-                </button>
-              <% end %>
-            <% end %>
-          </div>
-          <!-- Trust Badges -->
-          <div class="grid grid-cols-3 gap-4 mt-8">
-            <div class="text-center p-4 bg-gray-50 rounded-xl">
-              <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-              </div>
-              <p class="text-xs font-medium text-gray-900"><%= t("common.authentic", default: "100% Authentic") %></p>
-            </div>
-            <div class="text-center p-4 bg-gray-50 rounded-xl">
-              <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-                </svg>
-              </div>
-              <p class="text-xs font-medium text-gray-900"><%= t("common.gift_ready", default: "Gift Ready") %></p>
-            </div>
-            <div class="text-center p-4 bg-gray-50 rounded-xl">
-              <div class="w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-              </div>
-              <p class="text-xs font-medium text-gray-900"><%= t("common.fast_ship", default: "Fast Shipping") %></p>
-            </div>
-          </div>
-        </div>
-        <!-- RIGHT: Product Information -->
-        <div class="space-y-6">
-          <!-- Category Badge -->
-          <div>
-            <%= link_to @product.category.name(I18n.locale), category_path(@product.category.slug, locale: I18n.locale),
-          class: "inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium text-gray-700 transition-colors" %>
-          </div>
-          <!-- Product Title & Price -->
-          <div>
-            <h1 class="text-2xl md:text-3xl text-gray-900 mb-4 leading-snug">
-              <%= @product.name(I18n.locale) %>
-            </h1>
-            <div class="flex items-center flex-wrap gap-3">
-              <span x-show="currentIsPreorder" x-cloak class="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                <%= t("products.starting_from", default: "Starting from") %>
-              </span>
-              <%= render "shared/product_price", product: @product, size: :page %>
-              <% if @product.on_sale_with_price? %>
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-50 text-red-700 font-semibold text-sm">
-                  <%= t("common.sale", default: "Sale") %>
-                  <span class="ml-2 text-xs font-bold">-<%= number_to_percentage(@product.discount_percentage, precision: 0) %></span>
-                </span>
-              <% end %>
-              <% if current_settings.show_tax_notice %>
-                <span class="text-sm text-gray-500">
-                  <%= t("common.prices_include_tax", default: "Prices include all applicable taxes") %>
-                </span>
-              <% end %>
-            </div>
-            <%# x-show rather than an ERB conditional so it tracks variant selection, like
-                the "Starting from" label above. Lead time is per product, so no variant branch. %>
-            <p x-show="currentIsPreorder" x-cloak class="mt-3 text-sm text-gray-600">
-              <%= t("products.made_to_order_line", lead_time: @product.lead_time(I18n.locale)) %>
-            </p>
-          </div>
-          <!-- Rating -->
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1 text-yellow-400">
-              <% 5.times do %>
-                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                </svg>
-              <% end %>
-            </div>
-            <span class="text-sm text-gray-600">(4.9) • 127 reviews</span>
-          </div>
-          <!-- Wishlist Button -->
-          <div class="pt-2">
-            <%= render "shared/wishlist_button", product: @product %>
-          </div>
-          <!-- Variant Selector (if product has variants) -->
-          <% if @product.has_variants? %>
-            <%
-          first_variant = @product.product_variants.active.first
-          variant_type = first_variant&.variant_type
-          variant_type_name = variant_type&.name || first_variant&.name || "Select Option"
-
-          # Get all variant options for this variant type
-          all_variant_options = variant_type ? variant_type.variant_options.active.ordered : []
-
-          # Build a hash of variant_option_id => product_variant for quick lookup
-          product_variants_by_option = @product.product_variants.active.index_by(&:variant_option_id)
-        %>
-            <div class="space-y-4 p-6 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
-              <div class="flex items-center justify-between">
-                <label class="text-base font-semibold text-gray-900">
-                  <%= variant_type_name %>
-                  <span class="text-red-600">*</span>
-                </label>
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded"><%= t("auth.required") %></span>
-              </div>
-              <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                <% all_variant_options.each do |variant_option| %>
-                  <% product_variant = product_variants_by_option[variant_option.id] %>
-                  <% in_stock = product_variant && product_variant.stock_quantity > 0 %>
-                  <% can_preorder = product_variant && product_variant.allow_preorder? %>
-                  <% if in_stock %>
-                    <!-- In stock variant - clickable -->
-                    <button type="button"
-                        @click="selectedVariant = <%= product_variant.id %>; updateCurrentState()"
-                        :class="selectedVariant === <%= product_variant.id %> ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900 hover:shadow-sm'"
-                        class="px-3 py-2.5 border-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
-                      <%= variant_option.value %>
-                    </button>
-                  <% elsif can_preorder %>
-                    <!-- Pre-order available - TailAdmin inspired badge design -->
-                    <button type="button"
-                        @click="selectedVariant = <%= product_variant.id %>; updateCurrentState()"
-                        :class="selectedVariant === <%= product_variant.id %> ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-900 border-gray-300 hover:border-gray-400 hover:shadow-sm'"
-                        class="relative px-3 py-2.5 border-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 group">
-                      <!-- Variant value -->
-                      <%= variant_option.value %>
-                      <!-- Modern badge with dot indicator -->
-                      <span class="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-full text-[9px] font-bold uppercase tracking-tight shadow-md border border-white">
-                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                        <span>Pre</span>
-                      </span>
-                      <!-- Elegant hover tooltip -->
-                      <div class="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap">
-                        <%= t("products.available_preorder") %>
-                        <svg class="absolute top-full left-1/2 -translate-x-1/2 -mt-px" width="8" height="4" viewBox="0 0 8 4">
-                          <path d="M0 0L4 4L8 0" fill="#1f2937"/>
-                        </svg>
-                      </div>
-                    </button>
-                  <% else %>
-                    <!-- Out of stock and no pre-order - disabled -->
-                    <div class="relative px-3 py-2.5 border-2 border-gray-200 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed opacity-60 group/variant">
-                      <%= variant_option.value %>
-                      <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/variant:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                        <%= t("products.out_of_stock") %>
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                      </div>
-                    </div>
-                  <% end %>
-                <% end %>
-              </div>
-              <div x-show="!selectedVariant && hasVariants"
-               x-transition:enter="transition ease-out duration-200"
-               x-transition:enter-start="opacity-0 translate-y-1"
-               x-transition:enter-end="opacity-100 translate-y-0"
-               class="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <span><%= t("auth.please_select", option: variant_type_name.downcase) %></span>
-              </div>
-            </div>
-          <% end %>
-          <!-- Quantity Selector & Add to Cart -->
-          <div class="space-y-4 p-6 bg-gray-50 rounded-2xl">
-            <div class="space-y-2" x-show="!currentIsPreorder">
-              <div class="flex items-center justify-between">
-                <label class="text-sm font-medium text-gray-700"><%= t("common.quantity", default: "Quantity") %>:</label>
-                <span class="text-xs text-gray-600" x-show="!currentIsPreorder && currentStock > 0">
-                  <span x-text="currentStock"></span> <%= t("products.available") %>
-                </span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="flex items-center border-2 border-gray-300 rounded-lg bg-white">
-                  <button @click="decrementQuantity()"
-                      type="button"
-                      :disabled="quantity <= 1"
-                      :class="quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
-                      class="px-4 py-2 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                    </svg>
-                  </button>
-                  <input type="number"
-                     x-model.number="quantity"
-                     min="1"
-                     :max="currentMaxQty"
-                     class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold" />
-                  <button @click="incrementQuantity()"
-                      type="button"
-                      :disabled="quantity >= currentMaxQty"
-                    :class="quantity >= currentMaxQty ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
-                    class="px-4 py-2 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <!-- Stock warning - only show when variant is selected OR product has no variants -->
-              <div x-show="!currentIsPreorder && currentStock > 0 && currentStock <= 5 && (!hasVariants || selectedVariant)" class="text-xs text-orange-600 flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                  </svg>
-                  <span x-text="'<%= j t('products.low_stock', count: '__COUNT__') %>'.replace('__COUNT__', currentStock)"></span>
-                </div>
-                <div x-show="!currentCanPurchase && (!hasVariants || selectedVariant)" class="text-xs text-red-600 flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  <span><%= t("products.out_of_stock_no_preorder") %></span>
-                </div>
-              </div>
-              <%
-                # One href per variant so the enquiry names the exact piece. The variants are
-                # already loaded above (variant_stocks uses the same relation), so this is free.
-                wa_hrefs = { "default" => made_to_order_whatsapp_url(@product, url: request.original_url) }
-                if @product.has_variants?
-                  # display_name reads variant_type and variant_option, so eager-load both.
-                  @product.product_variants.active.includes(:variant_type, :variant_option).each do |pv|
-                    wa_hrefs[pv.id.to_s] = made_to_order_whatsapp_url(@product, variant: pv, url: request.original_url)
-                  end
-                end
-              %>
-              <div :class="(currentCanPurchase && !currentIsPreorder) ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1'"
-                x-data="{ waHrefs: <%= wa_hrefs.to_json %> }">
-                <!-- Made-to-order items: order over WhatsApp instead of online checkout -->
-                <% if wa_hrefs["default"].present? %>
-                <a x-show="currentIsPreorder" x-cloak
-                  :href="waHrefs[selectedVariant] || waHrefs['default']" target="_blank" rel="noopener"
-                  class="w-full bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.874 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                  </svg>
-                  <%= t("products.order_on_whatsapp") %>
-                </a>
-                <% end %>
-                <!-- In-stock items: normal add to cart -->
-                <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post" x-show="!currentIsPreorder">
-                  <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-                  <%= hidden_field_tag :product_id, @product.id %>
-                  <input type="hidden" name="product_variant_id" x-model="selectedVariant">
-                  <input type="hidden" name="quantity" x-model="quantity">
-                  <button type="submit"
-                    :disabled="(hasVariants && !selectedVariant) || !currentCanPurchase"
-                    :class="((hasVariants && !selectedVariant) || !currentCanPurchase) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800 hover:shadow-xl hover:scale-105'"
-                    class="w-full bg-gray-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span x-show="currentCanPurchase"><%= t("products.add_to_cart", default: "Add to Cart") %></span>
-                    <span x-show="!currentCanPurchase"><%= t("products.not_available", default: "Not Available") %></span>
-                  </button>
-                </form>
-                <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post" x-show="!currentIsPreorder && currentCanPurchase">
-                  <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-                  <%= hidden_field_tag :product_id, @product.id %>
-                  <%= hidden_field_tag :redirect_to, checkout_path(locale: I18n.locale) %>
-                  <input type="hidden" name="product_variant_id" x-model="selectedVariant">
-                  <input type="hidden" name="quantity" x-model="quantity">
-                  <button type="submit"
-                    :disabled="(hasVariants && !selectedVariant) || !currentCanPurchase"
-                    :class="((hasVariants && !selectedVariant) || !currentCanPurchase) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 hover:text-white hover:scale-105'"
-                    class="w-full border-2 border-gray-700 text-gray-700 font-semibold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    <span x-show="currentCanPurchase"><%= t("products.buy_now", default: "Buy Now") %></span>
-                    <span x-show="!currentCanPurchase"><%= t("products.not_available", default: "Not Available") %></span>
-                  </button>
-                </form>
-              </div>
-            </div>
-            <!-- Product Tabs -->
-            <div class="border-t border-gray-200 pt-6">
-              <!-- Tab Headers -->
-              <div class="flex gap-4 border-b border-gray-200 mb-6">
-                <button @click="selectedTab = 'description'"
-                  :class="selectedTab === 'description' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
-                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
-                  <%= t("common.description", default: "Description") %>
-                </button>
-                <% if @product.video.present? %>
-                  <button @click="selectedTab = 'video'"
-                    :class="selectedTab === 'video' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
-                    class="pb-4 px-2 border-b-2 font-medium transition-colors flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <%= t("common.video", default: "Video") %>
-                  </button>
-                <% end %>
-                <button @click="selectedTab = 'specifications'"
-                  :class="selectedTab === 'specifications' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
-                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
-                  <%= t("common.specifications", default: "Specifications") %>
-                </button>
-                <button @click="selectedTab = 'shipping'"
-                  :class="selectedTab === 'shipping' ? 'border-gray-700 text-gray-700' : 'border-transparent text-gray-600 hover:text-gray-700'"
-                  class="pb-4 px-2 border-b-2 font-medium transition-colors">
-                  <%= t("common.shipping", default: "Shipping & Returns") %>
-                </button>
-              </div>
-              <!-- Tab Content -->
-              <div>
-                <!-- Description Tab -->
-                <div x-show="selectedTab === 'description'"
-               x-transition:enter="transition-opacity duration-300"
-               x-transition:enter-start="opacity-0"
-               x-transition:enter-end="opacity-100"
-               class="prose max-w-none text-gray-700">
-                  <%= simple_format(@product.description(I18n.locale)) %>
-                </div>
-                <!-- Video Tab -->
-                <% if @product.video.present? %>
-                  <div x-show="selectedTab === 'video'"
-                 x-transition:enter="transition-opacity duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 class="space-y-4">
-                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 shadow-2xl">
-                      <h3 class="text-white text-lg font-semibold mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                        <%= t("products.watch_video") %>
-                      </h3>
-                      <div class="rounded-xl overflow-hidden bg-black shadow-xl">
-                        <video controls class="w-full" controlsList="nodownload">
-                          <source src="<%= @product.video.url %>" type="video/mp4">
-                          <%= t("products.video_not_supported") %>
-                        </video>
-                      </div>
-                      <p class="text-gray-300 text-sm mt-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <%= t("products.video_description") %>
-                      </p>
-                    </div>
-                  </div>
-                <% end %>
-                <!-- Specifications Tab -->
-                <div x-show="selectedTab === 'specifications'"
-               x-transition:enter="transition-opacity duration-300"
-               x-transition:enter-start="opacity-0"
-               x-transition:enter-end="opacity-100"
-               class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="text-sm text-gray-500 mb-1"><%= t("products.metal", default: "Metal") %></div>
-                    <div class="font-semibold text-gray-900"><%= @product.metal.presence || '-' %></div>
-                  </div>
-                  <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="text-sm text-gray-500 mb-1"><%= t("products.diamonds", default: "Diamonds") %></div>
-                    <div class="font-semibold text-gray-900"><%= @product.diamonds.presence || '-' %></div>
-                  </div>
-                  <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="text-sm text-gray-500 mb-1"><%= t("products.gemstones", default: "Gemstones") %></div>
-                    <div class="font-semibold text-gray-900"><%= @product.gemstones.presence || '-' %></div>
-                  </div>
-                  <% if @product.others.present? %>
-                    <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
-                      <div class="text-sm text-gray-500 mb-1"><%= t("products.others", default: "Others") %></div>
-                      <div class="font-semibold text-gray-900"><%= @product.others %></div>
-                    </div>
-                  <% end %>
-                  <div class="p-4 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="text-sm text-gray-500 mb-1"><%= t("products.category", default: "Category") %></div>
-                    <div class="font-semibold text-gray-900"><%= @product.category.name(I18n.locale) %></div>
-                  </div>
-                </div>
-                <!-- Shipping Tab -->
-                <div x-show="selectedTab === 'shipping'"
-               x-transition:enter="transition-opacity duration-300"
-               x-transition:enter-start="opacity-0"
-               x-transition:enter-end="opacity-100"
-               class="space-y-4">
-                  <div class="p-6 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="flex items-start gap-4">
-                      <div class="flex-shrink-0 w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                        </svg>
-                      </div>
-                      <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900 mb-2"><%= t("products.shipping_title") %></h4>
-                        <p class="text-gray-600 text-sm"><%= t("products.shipping_note", default: "Fast and secure worldwide shipping via DHL Express. Delivery within 3-7 business days.") %></p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="p-6 bg-white rounded-xl border-2 border-gray-200">
-                    <div class="flex items-start gap-4">
-                      <div class="flex-shrink-0 w-12 h-12 bg-gray-900/10 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                        </svg>
-                      </div>
-                      <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900 mb-2"><%= t("products.shipping_time_title") %></h4>
-                        <p class="text-gray-600 text-sm"><%= t("products.shipping_time", default: "Delivery within 5-10 business days.") %></p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Related Products Section -->
-        <% if @related_products.any? %>
-          <div class="mt-20">
-            <div class="flex items-center justify-between mb-8">
-              <h2 class="text-3xl font-bold text-gray-900">
-                <%= t("products.related", default: "You May Also Like") %>
-              </h2>
-              <%= link_to category_path(@product.category.slug, locale: I18n.locale),
-          class: "text-gray-900 hover:text-gray-700 font-medium flex items-center gap-2 transition-colors" do %>
-                <%= t("home.view_all", default: "View All") %>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-              <% end %>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <% @related_products.each_with_index do |product, index| %>
-                <div class="group relative animate-fade-in" style="animation-delay: <%= index * 100 %>ms;">
-                  <div class="relative overflow-hidden rounded-md bg-white shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
-                    <!-- Product Image -->
-                    <div class="relative aspect-square overflow-hidden bg-gray-100">
-                      <%= render "shared/made_to_order_badge", product: product %>
-                      <% if product.primary_image&.image&.url %>
-                        <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                          <%= image_tag product.primary_image.image.url,
-                      class: "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" %>
-                        <% end %>
-                      <% else %>
-                        <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                          <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                          </svg>
-                        </div>
-                      <% end %>
-                      <!-- Quick View -->
-                      <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <%= link_to product_path(product.slug, locale: I18n.locale),
-                    class: "px-4 py-2 bg-white text-gray-900 font-semibold rounded-full text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300" do %>
-                          <%= t("common.quick_view", default: "Quick View") %>
-                        <% end %>
-                      </div>
-                    </div>
-                    <!-- Product Info -->
-                    <div class="p-4">
-                      <div class="text-xs text-gray-500 mb-1"><%= product.category.name(I18n.locale) %></div>
-                      <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                        <h3 class="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-gray-700 transition-colors">
-                          <%= product.name(I18n.locale) %>
-                        </h3>
-                      <% end %>
-                      <div>
-                        <%= render "shared/product_price", product: product %>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-            </div>
+              <source src="<%= @product.video.url %>" type="video/mp4">
+              <%= t("products.video_not_supported") %>
+            </video>
+            <button type="button" @click="viewingVideo = false" class="vn-icon-btn absolute top-3 end-3 z-10 bg-surface-raised/80" aria-label="<%= t('common.close') %>">
+              <%= vn_icon(:close, size: 20) %>
+            </button>
           </div>
         <% end %>
-        <!-- Image Modal -->
-        <div x-show="showImageModal"
-       x-transition:enter="transition-opacity duration-300"
-       x-transition:enter-start="opacity-0"
-       x-transition:enter-end="opacity-100"
-       @click="showImageModal = false"
-       class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div class="relative max-w-6xl w-full" @click.stop>
-            <button @click="showImageModal = false"
-              class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-            <img :src="activeImage" class="w-full h-auto max-h-[90vh] object-contain" />
-          </div>
+        <div x-show="!viewingVideo" class="absolute inset-0 flex items-center justify-center cursor-zoom-in"
+             @mouseenter="imageZoom = true" @mouseleave="imageZoom = false" @mousemove="handleMouseMove"
+             @click="showImageModal = true">
+          <% if primary_url %>
+            <img :src="activeImage" src="<%= primary_url %>" alt="<%= name %>" data-main-image
+                 class="block w-[88%] h-[88%] object-contain transition-opacity duration-400 ease-vene"
+                 :class="imageZoom ? 'opacity-0' : 'opacity-100'">
+            <div x-show="imageZoom" x-cloak class="absolute inset-0 pointer-events-none"
+                 :style="{ backgroundImage: `url(${activeImage})`, backgroundPosition: `${zoomX}% ${zoomY}%`, backgroundSize: '200%', backgroundRepeat: 'no-repeat' }"></div>
+            <span class="vn-hide-sm absolute bottom-4 end-4 vn-small pointer-events-none" x-show="!imageZoom"><%= t("products.hover_to_zoom") %> · <%= t("products.click_fullscreen") %></span>
+          <% else %>
+            <div class="flex flex-col items-center gap-3 text-ink-subtle"><%= vn_icon(:diamond, size: 56, stroke: 1) %><span class="vn-small"><%= t("vene.product.no_image") %></span></div>
+          <% end %>
         </div>
       </div>
-      <!-- Custom CSS Animations -->
-      <style>
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+      <% if images.size > 1 || @product.video.present? %>
+        <div class="grid grid-cols-4 gap-4">
+          <% if @product.video.present? %>
+            <button type="button" @click="viewingVideo = true; imageZoom = false" :aria-pressed="viewingVideo.toString()"
+                    class="aspect-square bg-surface-sunken flex flex-col items-center justify-center gap-1 cursor-pointer border transition-colors duration-400"
+                    :class="viewingVideo ? 'border-ink' : 'border-transparent hover:border-line-control'" aria-label="<%= t('products.watch_video') %>">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="M7 4v16l13-8Z"/></svg>
+              <span class="vn-label !text-[10px] rtl:!text-xs"><%= t("products.video") %></span>
+            </button>
+          <% end %>
+          <% images.each_with_index do |img, index| %>
+            <button type="button" @click="activeImage = '<%= img.image.url %>'; imageZoom = false; viewingVideo = false"
+                    :aria-pressed="(activeImage === '<%= img.image.url %>' && !viewingVideo).toString()"
+                    aria-label="<%= t('vene.product.show_image', number: index + 1, count: images.size) %>"
+                    class="aspect-square bg-media shadow-hairline cursor-pointer border transition-colors duration-400 p-1"
+                    :class="(activeImage === '<%= img.image.url %>' && !viewingVideo) ? 'border-ink' : 'border-transparent hover:border-line-control'">
+              <%= image_tag img.image.url, alt: "", loading: "lazy", class: "block w-full h-full object-contain" %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
 
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
-        }
-      </style>
-      <%# GA4 ecommerce: product detail view %>
-      <%= ga4_data_layer Ga4.view_item_event(@product) %>
-      <%# Meta Pixel: product detail view %>
-      <%= meta_pixel_event MetaPixel.view_content_event(@product) %>
+    <%# ---------- Buy box ---------- %>
+    <section aria-labelledby="pdp-title" class="flex-[1_1_400px] min-w-0 max-w-[520px] flex flex-col gap-8">
+      <div class="flex flex-col gap-3 items-start">
+        <%= link_to category.name(I18n.locale), category_path(category.slug, locale: I18n.locale), class: "vn-eyebrow vn-eyebrow--muted no-underline hover:!text-gold-text" %>
+        <h1 id="pdp-title" class="m-0 mt-1 font-display font-normal text-[clamp(32px,3.4vw,44px)] leading-[1.15] rtl:font-bold rtl:leading-[1.5]"><%= name %></h1>
+        <% if metal_line.present? %><span class="vn-caps text-ink-muted !text-[13px]"><%= metal_line %></span><% end %>
+        <div class="flex flex-wrap items-baseline gap-3 pt-2">
+          <span x-show="currentIsPreorder" x-cloak class="vn-small"><%= t("products.starting_from") %></span>
+          <%= render "shared/product_price", product: @product, size: :page %>
+          <% if @product.on_sale_with_price? %>
+            <span class="vn-badge vn-badge--outline self-center"><%= t("vene.product.sale") %></span>
+          <% end %>
+          <% if current_settings.show_tax_notice %>
+            <span class="vn-small"><%= t("common.prices_include_tax") %></span>
+          <% end %>
+        </div>
+        <%# x-show so it tracks variant selection. Lead time is per product. %>
+        <p x-show="currentIsPreorder" x-cloak class="m-0 vn-small"><%= t("products.made_to_order_line", lead_time: @product.lead_time(I18n.locale)) %></p>
+      </div>
+
+      <% if @product.has_variants? %>
+        <%
+          first_variant = @product.product_variants.active.first
+          variant_type = first_variant&.variant_type
+          variant_type_name = variant_type&.name || first_variant&.name || t("auth.select_option")
+          all_variant_options = variant_type ? variant_type.variant_options.active.ordered : []
+          product_variants_by_option = @product.product_variants.active.index_by(&:variant_option_id)
+          ring = category.slug.to_s.include?("ring") || variant_type_name.to_s.casecmp?("size")
+        %>
+        <div role="group" aria-labelledby="variant-label" class="pt-6 border-t border-line flex flex-col gap-4 min-w-0">
+          <div class="flex justify-between items-baseline gap-4">
+            <span id="variant-label" class="vn-label"><%= variant_type_name %></span>
+            <% if ring %>
+              <button type="button" class="vn-link bg-transparent border-x-0 border-t-0 cursor-pointer text-[13px] leading-5 p-0 pb-0.5" @click="ringSizeModal = true"><%= t("footer.ring_size_guide") %></button>
+            <% end %>
+          </div>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-2">
+            <% all_variant_options.each do |variant_option| %>
+              <% product_variant = product_variants_by_option[variant_option.id] %>
+              <% in_stock = product_variant && product_variant.stock_quantity > 0 %>
+              <% can_preorder = product_variant && product_variant.allow_preorder? %>
+              <% if in_stock || can_preorder %>
+                <button type="button" class="vn-chip !px-0 justify-center relative font-latin vn-num !tracking-wide"
+                        @click="selectedVariant = <%= product_variant.id %>; updateCurrentState()"
+                        :aria-pressed="(selectedVariant === <%= product_variant.id %>).toString()"
+                        <% if can_preorder && !in_stock %>title="<%= t('products.available_preorder') %>"<% end %>>
+                  <bdi><%= variant_option.value %></bdi>
+                  <% if can_preorder && !in_stock %>
+                    <span aria-hidden="true" class="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-gold"></span>
+                    <span class="sr-only"><%= t("products.available_preorder") %></span>
+                  <% end %>
+                </button>
+              <% else %>
+                <span class="vn-chip !px-0 justify-center font-latin vn-num opacity-40 line-through cursor-not-allowed" aria-disabled="true" title="<%= t('products.out_of_stock') %>">
+                  <bdi><%= variant_option.value %></bdi><span class="sr-only"> — <%= t("products.out_of_stock") %></span>
+                </span>
+              <% end %>
+            <% end %>
+          </div>
+          <p x-show="!selectedVariant && hasVariants" class="m-0 text-[13px] leading-5 text-ink-muted">
+            <%= t("auth.please_select", option: variant_type_name.downcase) %>
+          </p>
+        </div>
+      <% end %>
+
+      <div class="flex flex-col gap-4">
+        <div x-show="!currentIsPreorder" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-4">
+            <span class="vn-label" id="qty-label"><%= t("vene.product.quantity") %></span>
+            <span class="vn-small" x-show="!currentIsPreorder && currentStock > 0"><bdi class="font-latin vn-num" x-text="currentStock"></bdi> <%= t("products.available") %></span>
+          </div>
+          <div class="inline-flex items-center self-start border border-line-control" role="group" aria-labelledby="qty-label">
+            <button type="button" class="vn-icon-btn" @click="decrementQuantity()" :disabled="quantity <= 1" :class="quantity <= 1 && 'opacity-40 cursor-not-allowed'" aria-label="<%= t('vene.product.decrease') %>"><%= vn_icon(:minus, size: 16) %></button>
+            <input type="number" x-model.number="quantity" min="1" :max="currentMaxQty" aria-labelledby="qty-label"
+                   class="w-14 h-11 text-center border-0 bg-transparent font-latin vn-num text-[15px] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
+            <button type="button" class="vn-icon-btn" @click="incrementQuantity()" :disabled="quantity >= currentMaxQty" :class="quantity >= currentMaxQty && 'opacity-40 cursor-not-allowed'" aria-label="<%= t('vene.product.increase') %>"><%= vn_icon(:plus, size: 16) %></button>
+          </div>
+          <p x-show="!currentIsPreorder && currentStock > 0 && currentStock <= 5 && (!hasVariants || selectedVariant)" class="m-0 text-[13px] leading-5 text-gold-text"
+             x-text="'<%= j t('products.low_stock', count: '__COUNT__') %>'.replace('__COUNT__', currentStock)"></p>
+          <p x-show="!currentCanPurchase && (!hasVariants || selectedVariant)" role="alert" class="m-0 text-[13px] leading-5 text-danger"><%= t("products.out_of_stock_no_preorder") %></p>
+        </div>
+
+        <%
+          # One href per variant so the enquiry names the exact piece.
+          wa_hrefs = { "default" => made_to_order_whatsapp_url(@product, url: request.original_url) }
+          if @product.has_variants?
+            # display_name reads variant_type and variant_option, so eager-load both.
+            @product.product_variants.active.includes(:variant_type, :variant_option).each do |pv|
+              wa_hrefs[pv.id.to_s] = made_to_order_whatsapp_url(@product, variant: pv, url: request.original_url)
+            end
+          end
+        %>
+        <div class="flex flex-col gap-3" x-data="{ waHrefs: <%= wa_hrefs.to_json %> }">
+          <%# Made-to-order pieces are ordered over WhatsApp instead of online checkout. %>
+          <% if wa_hrefs["default"].present? %>
+            <a x-show="currentIsPreorder" x-cloak :href="waHrefs[selectedVariant] || waHrefs['default']" href="<%= wa_hrefs['default'] %>"
+               target="_blank" rel="noopener" class="vn-btn vn-btn--primary vn-btn--block">
+              <%= render "shared/whatsapp_icon", css_class: "w-4 h-4" %><span><%= t("products.order_on_whatsapp") %></span>
+            </a>
+          <% end %>
+          <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post" x-show="!currentIsPreorder">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= hidden_field_tag :product_id, @product.id %>
+            <input type="hidden" name="product_variant_id" x-model="selectedVariant">
+            <input type="hidden" name="quantity" x-model="quantity">
+            <button type="submit" class="vn-btn vn-btn--primary vn-btn--block"
+                    :disabled="(hasVariants && !selectedVariant) || !currentCanPurchase"
+                    :aria-disabled="((hasVariants && !selectedVariant) || !currentCanPurchase).toString()">
+              <span x-show="currentCanPurchase"><%= t("vene.product.add_to_bag") %></span>
+              <span x-show="!currentCanPurchase" x-cloak><%= t("products.not_available") %></span>
+            </button>
+          </form>
+          <form action="<%= add_item_cart_path(locale: I18n.locale) %>" method="post" x-show="!currentIsPreorder && currentCanPurchase">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= hidden_field_tag :product_id, @product.id %>
+            <%= hidden_field_tag :redirect_to, checkout_path(locale: I18n.locale) %>
+            <input type="hidden" name="product_variant_id" x-model="selectedVariant">
+            <input type="hidden" name="quantity" x-model="quantity">
+            <button type="submit" class="vn-btn vn-btn--outline vn-btn--block"
+                    :disabled="(hasVariants && !selectedVariant) || !currentCanPurchase"
+                    :aria-disabled="((hasVariants && !selectedVariant) || !currentCanPurchase).toString()">
+              <%= t("products.buy_now") %>
+            </button>
+          </form>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center gap-x-6 gap-y-2 pt-2">
+          <span class="inline-flex items-center gap-2 vn-small">
+            <%= vn_icon(:truck, size: 18) %>
+            <span x-show="currentIsPreorder" x-cloak><%= t("vene.product.mto_shipping", lead_time: @product.lead_time(I18n.locale)) %></span>
+            <span x-show="!currentIsPreorder"><%= t("products.shipping_note") %></span>
+          </span>
+          <%= render "shared/wishlist_button", product: @product %>
+        </div>
+      </div>
+
+      <ul class="list-none m-0 p-0 grid grid-cols-3 gap-4 py-6 border-y border-line">
+        <li><%= render "shared/vene/feature_item", icon: :shield, text: t("vene.product.authentic"), layout: :compact %></li>
+        <li><%= render "shared/vene/feature_item", icon: :package, text: t("vene.product.gift_ready"), layout: :compact %></li>
+        <li><%= render "shared/vene/feature_item", icon: :gem, text: t("vene.home.promise.handcrafted_title"), layout: :compact %></li>
+      </ul>
+
+      <div class="-mt-8">
+        <% summary = "flex justify-between items-center min-h-14 cursor-pointer list-none vn-caps !text-[13px] [&::-webkit-details-marker]:hidden" %>
+        <details open class="group border-b border-line">
+          <summary class="<%= summary %>"><%= t("vene.product.description") %><span aria-hidden="true" class="font-latin text-lg group-open:hidden">+</span><span aria-hidden="true" class="font-latin text-lg hidden group-open:inline">−</span></summary>
+          <div class="pb-6 flex flex-col gap-3 vn-prose !max-w-none [&_p]:!text-[15px] [&_p]:!leading-6 rtl:[&_p]:!text-base rtl:[&_p]:!leading-7">
+            <%= simple_format(@product.description(I18n.locale)) %>
+            <p class="!text-[13px] !leading-5"><%= t("vene.product.appearance_note") %></p>
+          </div>
+        </details>
+        <details class="group border-b border-line">
+          <summary class="<%= summary %>"><%= t("vene.product.specifications") %><span aria-hidden="true" class="font-latin text-lg group-open:hidden">+</span><span aria-hidden="true" class="font-latin text-lg hidden group-open:inline">−</span></summary>
+          <dl class="m-0 pb-6 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-6 gap-y-3 text-[15px] leading-6">
+            <dt class="text-ink-muted"><%= t("products.metal") %></dt><dd class="m-0"><%= @product.metal.presence || "—" %></dd>
+            <dt class="text-ink-muted"><%= t("products.diamonds") %></dt><dd class="m-0"><%= @product.diamonds.presence || "—" %></dd>
+            <dt class="text-ink-muted"><%= t("products.gemstones") %></dt><dd class="m-0"><%= @product.gemstones.presence || "—" %></dd>
+            <% if @product.others.present? %>
+              <dt class="text-ink-muted"><%= t("vene.product.others") %></dt><dd class="m-0"><%= @product.others %></dd>
+            <% end %>
+            <dt class="text-ink-muted"><%= t("vene.product.category") %></dt><dd class="m-0"><%= category.name(I18n.locale) %></dd>
+            <dt class="text-ink-muted"><%= t("vene.product.made_in") %></dt><dd class="m-0"><%= t("vene.product.beirut") %></dd>
+          </dl>
+        </details>
+        <details class="group border-b border-line">
+          <summary class="<%= summary %>"><%= t("vene.product.delivery_returns") %><span aria-hidden="true" class="font-latin text-lg group-open:hidden">+</span><span aria-hidden="true" class="font-latin text-lg hidden group-open:inline">−</span></summary>
+          <div class="pb-6 flex flex-col gap-3 text-[15px] leading-6 text-ink-muted">
+            <p class="m-0"><strong class="font-medium text-ink"><%= t("products.shipping_title") %>.</strong> <%= t("vene.home.promise.dhl_text") %></p>
+            <p class="m-0"><strong class="font-medium text-ink"><%= t("products.shipping_time_title") %>.</strong> <%= t("vene.product.shipping_time") %></p>
+            <p class="m-0"><%= t("vene.product.duties") %></p>
+            <%= link_to t("pages.refund"), page_path("refund-and-cancellation-policy", locale: I18n.locale), class: "vn-link self-start text-[13px]" %>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <%# ---------- Related pieces ---------- %>
+  <% if @related_products.any? %>
+    <section aria-labelledby="related-title" class="pb-[var(--section)]">
+      <header class="flex flex-wrap items-end justify-between gap-6 mb-12">
+        <div class="flex flex-col gap-4">
+          <%= render "shared/vene/eyebrow", text: category.name(I18n.locale) %>
+          <h2 id="related-title" class="vn-h1 m-0"><%= t("products.related") %></h2>
+        </div>
+        <%= render "shared/vene/button", label: t("home.view_all"), href: category_path(category.slug, locale: I18n.locale), variant: :link, arrow: true %>
+      </header>
+      <div class="vn-products">
+        <% @related_products.each do |product| %>
+          <%= render "shared/vene/product_card", product: product %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <%# ---------- Fullscreen image ---------- %>
+  <div x-show="showImageModal" x-cloak x-transition.opacity.duration.400ms @click="showImageModal = false"
+       class="fixed inset-0 z-50 bg-media flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="<%= name %>">
+    <button type="button" @click="showImageModal = false" class="vn-icon-btn absolute top-4 end-4" aria-label="<%= t('common.close') %>"><%= vn_icon(:close, size: 24) %></button>
+    <img :src="activeImage" alt="<%= name %>" class="block max-w-full max-h-[90vh] object-contain" @click.stop>
+  </div>
+</div>
+<%# GA4 ecommerce: product detail view %>
+<%= ga4_data_layer Ga4.view_item_event(@product) %>
+<%# Meta Pixel: product detail view %>
+<%= meta_pixel_event MetaPixel.view_content_event(@product) %>

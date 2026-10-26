@@ -1,603 +1,253 @@
 <% content_for :full_width, true %>
-<!-- Alpine.js State Management -->
-<div x-data="{
-  currentSlide: 0,
-  autoplay: true,
-  hoveredProduct: null,
-  scrollY: 0,
-  init() {
-    setInterval(() => {
-  if (this.autoplay) {
-  this.currentSlide = (this.currentSlide + 1) % <%= @banners.any? ? @banners.length : 1 %>;
-  }
-  }, 5000);
-  window.addEventListener('scroll', () => {
-  this.scrollY = window.scrollY;
-  });
-  }
-  }" class="overflow-hidden">
-  <!-- Hero Banner Section -->
-  <section id="hero-banner" class="relative overflow-hidden pt-20 md:pt-36 h-[85vh] md:h-screen">
-    <% if @banners.any? %>
-      <% @banners.each_with_index do |banner, index| %>
-        <div x-show="currentSlide === <%= index %>"
-             x-transition:enter="transition-all ease-out duration-1000"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-all ease-in duration-500"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="absolute inset-0">
-          <!-- Background Image -->
-          <div class="absolute inset-0 bg-cover bg-center"
-               style="background-image: url(<%= banner.image.url %>);">
-            <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50"></div>
-          </div>
-          <!-- Hero Content - Left Aligned with Background -->
-          <div class="relative h-full flex items-center px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto w-full">
-              <div x-show="currentSlide === <%= index %>"
-                   x-transition:enter="transition-all ease-out duration-1000 delay-300"
-                   x-transition:enter-start="opacity-0 transform translate-x-[-20px]"
-                   x-transition:enter-end="opacity-100 transform translate-x-0"
-                   class="space-y-4 max-w-2xl">
-                <div class="w-fit">
-                  <h1 class="bg-gray-900/80 backdrop-blur-sm px-4 py-3 md:px-6 md:py-4 text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-white">
-                    <%= banner.title(I18n.locale) %>
-                  </h1>
-                </div>
-                <div class="w-fit">
-                  <p class="bg-gray-900/80 backdrop-blur-sm px-4 py-3 md:px-6 md:py-4 text-sm md:text-lg text-white">
-                    <%= banner.subtitle(I18n.locale) %>
-                  </p>
-                </div>
-                <%
-                  button_url = if banner.product.present?
-                    product_path(banner.product.slug, locale: I18n.locale)
-                  elsif banner.url.present?
-                    banner.url
-                  else
-                    root_path(locale: I18n.locale)
-                  end
-                %>
-                <%= link_to button_url, class: "inline-flex items-center px-6 py-2.5 md:px-8 md:py-3 bg-white hover:bg-gray-100 text-gray-900 font-medium uppercase text-xs md:text-sm tracking-wide transition-all duration-300" do %>
-                  <%= t("common.shop_now", default: "Shop Now") %>
-                <% end %>
-              </div>
-            </div>
-          </div>
+<%# Home (Main.dc.html, HomeAr-9vjr.dc.html). Sections: hero banners, categories, the house edit
+    (top pieces per category), new arrivals, the story band, the featured marquee, the must-have
+    piece on noir, the long-form story, and the house promises. %>
+<% reveal = { "x-data": "{ shown: false }", "x-intersect.once": "shown = true", "x-init": "setTimeout(() => shown = true, 900)", ":class": "shown && 'is-shown'" } %>
+
+<%# ---------- Hero: banners advance every 7s (never under 6s), pausing on interaction ---------- %>
+<section aria-label="<%= t('vene.home.hero_label') %>" class="relative bg-media border-b border-line"
+         x-data="{ slide: 0, autoplay: true, count: <%= [@banners.size, 1].max %>,
+                   init() { if (this.count > 1) setInterval(() => { if (this.autoplay) this.slide = (this.slide + 1) % this.count }, 7000) } }">
+  <% if @banners.any? %>
+    <% @banners.each_with_index do |banner, index| %>
+      <% product = banner.product %>
+      <% button_url = if product.present?
+                        product_path(product.slug, locale: I18n.locale)
+                      elsif banner.url.present?
+                        banner.url
+                      else
+                        products_path(locale: I18n.locale)
+                      end %>
+      <div x-show="slide === <%= index %>" <%= "x-cloak" if index.positive? %>
+           x-transition:enter="transition-opacity duration-700 ease-vene" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+           class="grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] min-h-[clamp(520px,calc(100svh-170px),920px)]"
+           role="group" aria-roledescription="slide" aria-label="<%= index + 1 %> / <%= @banners.size %>">
+        <div class="relative order-1 md:order-2 min-h-[320px] overflow-hidden bg-media">
+          <%= image_tag banner.image.url, alt: banner.title(I18n.locale).to_s, class: "absolute inset-0 w-full h-full object-cover", loading: (index.zero? ? "eager" : "lazy") %>
         </div>
-      <% end %>
-    <% else %>
-      <!-- Static Fallback Banner -->
-      <div class="absolute inset-0">
-        <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-500">
-          <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50"></div>
-        </div>
-        <div class="relative h-full flex items-center px-4 sm:px-6 lg:px-8">
-          <div class="max-w-7xl mx-auto w-full">
-            <div class="space-y-4 max-w-2xl">
-              <div class="w-fit">
-                <h1 class="bg-gray-900/80 backdrop-blur-sm px-6 py-4 text-4xl md:text-5xl lg:text-6xl font-serif text-white">
-                  <%= t("brand.name", default: "Milanccelos") %>
-                </h1>
-              </div>
-              <div class="w-fit">
-                <p class="bg-gray-900/80 backdrop-blur-sm px-6 py-4 text-base md:text-lg text-white">
-                  <%= t("brand.tagline", default: "Discover unique jewelry that celebrates your style") %>
-                </p>
-              </div>
-              <%= link_to root_path(locale: I18n.locale), class: "inline-flex items-center px-8 py-3 bg-white hover:bg-gray-100 text-gray-900 font-medium uppercase text-sm tracking-wide transition-all duration-300" do %>
-                <%= t("common.shop_now", default: "Shop Now") %>
+        <div class="order-2 md:order-1 flex items-center px-[var(--gutter)] py-12 md:py-20 md:ps-[max(var(--gutter),calc((100vw-var(--container-site))/2+var(--gutter)))]">
+          <div class="max-w-[560px] flex flex-col gap-6 md:gap-8">
+            <%= render "shared/vene/eyebrow", text: (product&.name(I18n.locale) || t("storefront.home.hero_eyebrow")) %>
+            <h1 class="vn-display-xl m-0"><%= banner.title(I18n.locale).presence || t("vene.brand.tagline") %></h1>
+            <% if banner.subtitle(I18n.locale).present? %>
+              <p class="vn-lead m-0 !text-[26px] !leading-9 rtl:!text-lg rtl:!leading-8"><%= banner.subtitle(I18n.locale) %></p>
+            <% end %>
+            <div class="flex flex-wrap items-center gap-8">
+              <%= render "shared/vene/button", label: t("common.shop_now"), href: button_url, arrow: true %>
+              <% if product.present? %>
+                <%= render "shared/vene/button", label: t("vene.home.discover", name: product.name(I18n.locale)), href: products_path(locale: I18n.locale), variant: :link %>
               <% end %>
             </div>
+            <% if product.present? %>
+              <div class="flex flex-wrap justify-between gap-3 pt-6 border-t border-line max-w-[520px]">
+                <span class="vn-caps text-ink-muted"><%= [product.metal, product.diamonds].compact_blank.join(" · ") %></span>
+                <%= render "shared/product_price", product: product %>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
     <% end %>
-    <!-- Quick Access Buttons - Bottom Right -->
-    <!-- Banner Navigation Dots -->
-    <% if @banners.any? && @banners.length > 1 %>
-      <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-        <% @banners.each_with_index do |_, index| %>
-          <button @click="currentSlide = <%= index %>; autoplay = false"
-                  class="w-2 h-2 rounded-full bg-white/50 hover:bg-white transition-all duration-300"
-                  :class="currentSlide === <%= index %> ? 'bg-white' : ''">
+    <% if @banners.size > 1 %>
+      <div class="absolute bottom-6 start-[var(--gutter)] md:start-[max(var(--gutter),calc((100vw-var(--container-site))/2+var(--gutter)))] z-10 flex items-center gap-3">
+        <% @banners.size.times do |index| %>
+          <button type="button" @click="slide = <%= index %>; autoplay = false"
+                  class="w-8 h-8 flex items-center justify-center cursor-pointer bg-transparent border-0 p-0"
+                  :aria-current="(slide === <%= index %>).toString()" aria-label="<%= t('vene.home.go_to_slide', number: index + 1) %>">
+            <span class="block h-px w-6 transition-colors duration-400" :class="slide === <%= index %> ? 'bg-ink' : 'bg-line-control'"></span>
           </button>
         <% end %>
       </div>
     <% end %>
-  </section>
-  <!-- Brand Story: video + text (directly under the hero banner) -->
-  <section class="relative w-full overflow-hidden bg-gray-50 py-16 md:py-24 lg:py-28">
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
-        <!-- LEFT: video -->
-        <div x-data="{ shown: false }" x-intersect.once="shown = true" x-init="setTimeout(() => shown = true, 700)"
-          class="relative flex justify-center lg:justify-start transition-all duration-1000 ease-out"
-          :class="shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'">
-          <div class="relative w-full max-w-[440px] overflow-hidden rounded-[1.75rem] shadow-2xl ring-1 ring-gray-900/10">
-            <div class="aspect-square bg-gray-100">
-              <video class="h-full w-full object-cover rounded-[1.75rem]"
-                     autoplay muted loop playsinline preload="metadata"
-                     aria-label="<%= t('storefront.home.hero_heading', default: 'Timeless by Design') %>">
-                <source src="/videos/vene-hero.mp4" type="video/mp4">
-              </video>
-            </div>
-          </div>
-        </div>
-        <!-- RIGHT: text -->
-        <div x-data="{ shown: false }" x-intersect.once="shown = true" x-init="setTimeout(() => shown = true, 700)"
-          class="text-center lg:text-start transition-all duration-1000 delay-150 ease-out"
-          :class="shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'">
-          <p class="font-serif text-xs md:text-sm uppercase tracking-[0.3em] text-gray-500">
-            <%= t("storefront.home.hero_eyebrow", default: "Fine Jewelry") %>
-          </p>
-          <h2 class="mt-4 md:mt-6 font-serif uppercase leading-[1.05] tracking-tight text-4xl sm:text-5xl lg:text-6xl text-gray-900">
-            <%= t("storefront.home.hero_heading", default: "Timeless by Design") %>
-          </h2>
-          <p class="mt-6 md:mt-8 mx-auto lg:mx-0 max-w-xl text-base md:text-lg leading-relaxed text-gray-600">
-            <%= t("storefront.home.hero_body") %>
-          </p>
-          <div class="mt-8 md:mt-10">
-            <%= link_to products_path(locale: I18n.locale),
-                class: "group inline-flex items-center gap-3 text-xs md:text-sm font-semibold uppercase tracking-[0.25em] text-gray-800 hover:text-gray-900 transition-colors" do %>
-              <span class="relative pb-1">
-                <%= t("storefront.home.hero_cta", default: "Discover the Collection") %>
-                <span class="absolute left-0 -bottom-0 h-px w-full bg-gray-900 origin-left scale-x-100 lg:scale-x-0 lg:group-hover:scale-x-100 transition-transform duration-500"></span>
-              </span>
-              <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-              </svg>
-            <% end %>
-          </div>
+  <% else %>
+    <div class="grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] min-h-[clamp(520px,calc(100svh-170px),920px)]">
+      <div class="relative order-1 md:order-2 min-h-[320px] overflow-hidden bg-media">
+        <video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+          <source src="/videos/vene-hero.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="order-2 md:order-1 flex items-center px-[var(--gutter)] py-12 md:py-20 md:ps-[max(var(--gutter),calc((100vw-var(--container-site))/2+var(--gutter)))]">
+        <div class="max-w-[560px] flex flex-col gap-6 md:gap-8">
+          <%= render "shared/vene/eyebrow", text: t("storefront.home.hero_eyebrow") %>
+          <h1 class="vn-display-xl m-0"><%= t("vene.brand.tagline") %></h1>
+          <p class="vn-lead m-0"><%= t("vene.brand.lifetime") %></p>
+          <div><%= render "shared/vene/button", label: t("common.shop_now"), href: products_path(locale: I18n.locale), arrow: true %></div>
         </div>
       </div>
     </div>
+  <% end %>
+</section>
+
+<%# ---------- Shop by category ---------- %>
+<% if @categories.any? %>
+  <section aria-labelledby="cat-title" class="vn-container pt-[var(--section)]">
+    <header class="flex flex-col items-center gap-4 text-center mb-12">
+      <%= render "shared/vene/eyebrow", text: t("vene.home.shop_by_category") %>
+      <h2 id="cat-title" class="vn-h1 m-0"><%= t("vene.home.find_your_piece") %></h2>
+    </header>
+    <nav aria-label="<%= t('vene.home.categories') %>" class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-x-6 border-t border-line">
+      <% @categories.each do |category| %>
+        <% note = category.sub_categories.select(&:active?).sort_by { |sc| sc.position || 999 }.first(3).map { |sc| sc.name(I18n.locale) }.to_sentence %>
+        <%= link_to category_path(category.slug, locale: I18n.locale), class: "vn-quiet !text-ink hover:!text-gold-text flex flex-col gap-2 py-8 pe-6 border-b border-line h-full" do %>
+          <span class="font-display text-[32px] leading-10 rtl:text-[28px] rtl:leading-[44px]"><%= category.name(I18n.locale) %> <span aria-hidden="true" class="font-latin text-base"><%= vn_arrow %></span></span>
+          <% if note.present? %><span class="vn-small rtl:text-sm rtl:leading-[22px]"><%= note %></span><% end %>
+        <% end %>
+      <% end %>
+    </nav>
   </section>
-  <!-- Our Story: long-form brand narrative -->
-  <section id="our-story" class="w-full bg-white py-16 md:py-24 lg:py-28">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div x-data="{ shown: false }" x-intersect.once="shown = true" x-init="setTimeout(() => shown = true, 700)"
-        class="transition-all duration-1000 ease-out"
-        :class="shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'">
-        <!-- Section Header -->
-        <div class="text-center">
-          <p class="text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">
-            <%= t("storefront.home.story_eyebrow", default: "Our Story") %>
-          </p>
-          <h2 class="mt-4 md:mt-6 font-serif uppercase leading-[1.1] tracking-tight text-3xl sm:text-4xl lg:text-5xl text-gray-900">
-            <%= t("storefront.home.story_heading", default: "The Story Behind VENÈ Jewelry") %>
-          </h2>
-          <span class="mt-6 md:mt-8 inline-block h-px w-16 bg-gray-300"></span>
-        </div>
-        <!-- Narrative -->
-        <div class="mt-8 md:mt-12 space-y-6 text-start text-base md:text-lg leading-relaxed text-gray-600">
-          <p><%= t("storefront.home.story_p1") %></p>
-          <p><%= t("storefront.home.story_p2") %></p>
-          <p><%= t("storefront.home.story_p3") %></p>
-          <p><%= t("storefront.home.story_p4") %></p>
-          <p><%= t("storefront.home.story_p5") %></p>
-        </div>
-        <!-- Closing Line -->
-        <p class="font-serif italic mt-10 md:mt-14 text-xl md:text-2xl lg:text-3xl leading-snug text-gray-900 text-center">
-          <%= t("storefront.home.story_closing") %>
-        </p>
+<% end %>
+
+<%# ---------- The house edit: top pieces per category ---------- %>
+<% edit_categories = @categories.take(6).select { |c| @category_products[c.id].present? } %>
+<% if edit_categories.any? %>
+  <section aria-labelledby="edit-title" class="vn-container vn-section" x-data="{ selected: <%= edit_categories.first.id %> }">
+    <header class="flex flex-col items-center gap-4 text-center mb-10">
+      <%= render "shared/vene/eyebrow", text: t("vene.home.house_edit") %>
+      <h2 id="edit-title" class="vn-h1 m-0"><%= t("storefront.home.top_product") %></h2>
+      <p class="vn-lead m-0 max-w-[620px]"><%= t("vene.home.edit_lead") %></p>
+    </header>
+    <div class="vn-scroll-x flex gap-3 overflow-x-auto pb-2 mb-12 md:justify-center" role="tablist" aria-label="<%= t('vene.home.categories') %>">
+      <% edit_categories.each do |category| %>
+        <button type="button" class="vn-chip" role="tab" @click="selected = <%= category.id %>"
+                :aria-selected="(selected === <%= category.id %>).toString()" :aria-pressed="(selected === <%= category.id %>).toString()"
+                aria-controls="edit-<%= category.id %>"><%= category.name(I18n.locale) %></button>
+      <% end %>
+    </div>
+    <% edit_categories.each_with_index do |category, i| %>
+      <div id="edit-<%= category.id %>" role="tabpanel" x-show="selected === <%= category.id %>" <%= "x-cloak" if i.positive? %>
+           x-transition:enter="transition-opacity duration-600 ease-vene" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+           class="vn-products">
+        <% @category_products[category.id].take(4).each do |product| %>
+          <%= render "shared/vene/product_card", product: product %>
+        <% end %>
       </div>
+    <% end %>
+    <div class="flex justify-center mt-16">
+      <%= render "shared/vene/button", label: t("vene.home.view_all_jewelry"), href: products_path(locale: I18n.locale), variant: :outline %>
     </div>
   </section>
-  <!-- Top Product Section -->
-  <section class="w-full py-10 md:py-16 bg-white" x-data="{ selectedCategory: <%= @categories.first&.id || 'null' %> }">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Section Header with Tabs -->
-      <div class="mb-8 md:mb-12">
-        <h2 class="text-2xl md:text-3xl font-serif text-gray-700 mb-4 md:mb-6 text-center">
-          <%= t("storefront.home.top_product", default: "Top Product") %>
-        </h2>
-        <div class="flex gap-4 md:gap-6 text-sm overflow-x-auto pb-2 justify-center scrollbar-hide">
-          <% @categories.take(6).each do |category| %>
-            <button @click="selectedCategory = <%= category.id %>"
-                    :class="selectedCategory === <%= category.id %> ? 'text-gray-700 border-b-2 border-gray-700 font-medium' : 'text-gray-400 hover:text-gray-700'"
-                    class="whitespace-nowrap pb-2 transition-colors">
-              <%= category.name(I18n.locale) %>
-            </button>
-          <% end %>
-        </div>
+<% end %>
+
+<%# ---------- Story band: the atelier film in an arched frame ---------- %>
+<section aria-labelledby="story-title" class="bg-surface-sunken">
+  <div class="vn-container vn-section flex flex-wrap items-center gap-[clamp(48px,7vw,128px)]">
+    <div class="flex-[1_1_340px] max-w-[460px] min-w-0 aspect-[3/4] bg-media overflow-hidden mx-auto md:mx-0" style="border-radius: var(--radius-arch) var(--radius-arch) 0 0;">
+      <video class="block w-full h-full object-cover" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+        <source src="/videos/vene-hero.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="flex-[1_1_440px] min-w-0 max-w-[620px] flex flex-col gap-6 vn-reveal" <%= tag.attributes(reveal) %>>
+      <%= render "shared/vene/eyebrow", text: t("storefront.home.hero_eyebrow") %>
+      <h2 id="story-title" class="vn-h1 m-0"><%= t("storefront.home.hero_heading") %></h2>
+      <p class="vn-body m-0"><%= t("storefront.home.hero_body") %></p>
+      <div class="pt-2"><%= render "shared/vene/button", label: t("storefront.home.hero_cta"), href: products_path(locale: I18n.locale), variant: :link, arrow: true %></div>
+    </div>
+  </div>
+</section>
+
+<%# ---------- New arrivals ---------- %>
+<% if @featured_products.any? %>
+  <section aria-labelledby="new-title" class="vn-container vn-section">
+    <header class="flex flex-wrap items-end justify-between gap-6 mb-12">
+      <div class="flex flex-col gap-4">
+        <%= render "shared/vene/eyebrow", text: t("vene.home.just_in") %>
+        <h2 id="new-title" class="vn-h1 m-0"><%= t("storefront.home.new_arrivals") %></h2>
       </div>
-      <!-- Product Grid -->
-      <% @categories.take(6).each do |category| %>
-        <div x-show="selectedCategory === <%= category.id %>"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 transform translate-x-4"
-             x-transition:enter-end="opacity-100 transform translate-x-0"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-          <% (@category_products[category.id] || []).take(4).each do |product| %>
-            <div class="group">
-              <!-- Product Image -->
-              <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-sm flex items-center justify-center">
-                <%= render "shared/made_to_order_badge", product: product %>
-                <% if product.primary_image %>
-                  <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
-                    <%= image_tag product.primary_image.image.url,
-                      class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
-                  <% end %>
-                <% else %>
-                  <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
-                <% end %>
-              </div>
-              <!-- Product Info -->
-              <div class="text-center">
-                <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                  <h3 class="text-xs md:text-sm font-medium text-gray-900 mb-1 md:mb-2 line-clamp-2">
-                    <%= product.name(I18n.locale) %>
-                  </h3>
-                <% end %>
-                <% if product.made_to_order? && (wa = made_to_order_whatsapp_url(product)) %>
-                  <%= link_to wa, target: "_blank", rel: "noopener",
-                    class: "text-xs text-gray-900 font-medium underline hover:text-black" do %>
-                    <%= t("products.order_on_whatsapp") %>
-                  <% end %>
-                <% else %>
-                  <%= link_to product_path(product.slug, locale: I18n.locale),
-                    class: "text-xs text-gray-700 underline hover:text-gray-900" do %>
-                    <%= t("common.shop_now", default: "Shop Now") %>
-                  <% end %>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
+      <%= render "shared/vene/button", label: t("common.view_all"), href: products_path(locale: I18n.locale), variant: :link, arrow: true %>
+    </header>
+    <div class="vn-products">
+      <% @featured_products.each do |product| %>
+        <%= render "shared/vene/product_card", product: product %>
       <% end %>
     </div>
   </section>
-  <!-- New Arrivals Section -->
-  <section class="w-full py-10 md:py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Section Header -->
-      <div class="text-center mb-8 md:mb-12">
-        <h2 class="text-2xl md:text-3xl font-serif text-gray-700">
-          <%= t("storefront.home.new_arrivals", default: "New Arrivals") %>
-        </h2>
+<% end %>
+
+<%# ---------- Must have: one piece on noir, with the gleam ---------- %>
+<% sale_product = Product.active.on_sale.includes(:product_images).first %>
+<% if sale_product.present? %>
+  <section aria-labelledby="must-title" class="vn-noir">
+    <div class="vn-container vn-section flex flex-wrap-reverse items-center gap-[clamp(48px,7vw,128px)]">
+      <div class="flex-[1_1_440px] min-w-0 max-w-[560px] flex flex-col gap-6">
+        <%= render "shared/vene/eyebrow", text: t("storefront.home.must_have") %>
+        <h2 id="must-title" class="vn-display-l m-0"><%= sale_product.name(I18n.locale) %></h2>
+        <% if sale_product.description(I18n.locale).present? %>
+          <p class="vn-body m-0 line-clamp-4"><%= strip_tags(sale_product.description(I18n.locale)) %></p>
+        <% end %>
+        <span class="vn-small"><%= [sale_product.metal, sale_product.diamonds].compact_blank.join(" · ") %></span>
+        <div class="text-xl"><%= render "shared/product_price", product: sale_product, size: :page %></div>
+        <div class="flex flex-wrap gap-3 pt-2">
+          <% if sale_product.made_to_order? && (wa = made_to_order_whatsapp_url(sale_product)) %>
+            <%= link_to wa, target: "_blank", rel: "noopener", class: "vn-btn vn-btn--gold" do %>
+              <%= render "shared/whatsapp_icon", css_class: "w-4 h-4" %><span><%= t("products.order_on_whatsapp") %></span>
+            <% end %>
+          <% else %>
+            <%= render "shared/vene/button", label: t("common.shop_now"), href: product_path(sale_product.slug, locale: I18n.locale), variant: :gold, arrow: true %>
+          <% end %>
+        </div>
       </div>
-      <!-- Product Grid -->
-      <% if @featured_products.any? %>
-        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
-          <% @featured_products.each_with_index do |product, index| %>
-            <div class="group bg-white rounded-md overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-              <!-- Product Image with Badge -->
-              <div class="relative aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
-                <%= render "shared/made_to_order_badge", product: product %>
-                <% if product.primary_image %>
-                  <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
-                    <%= image_tag product.primary_image.image.url,
-                      class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
-                  <% end %>
-                <% else %>
-                  <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <svg class="w-12 md:w-20 h-12 md:h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
-                <% end %>
-              </div>
-              <!-- Product Info -->
-              <div class="p-3 md:p-6">
-                <div class="flex items-start justify-between mb-1 md:mb-2">
-                  <div class="flex-1 min-w-0">
-                    <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                      <h3 class="text-xs md:text-base font-medium text-gray-900 mb-1 hover:text-gray-700 line-clamp-2">
-                        <%= product.name(I18n.locale) %>
-                      </h3>
-                    <% end %>
-                    <div>
-                      <%= render "shared/product_price", product: product %>
-                    </div>
-                  </div>
-                  <% if product.made_to_order? %>
-                    <% if (wa = made_to_order_whatsapp_url(product)) %>
-                      <%= link_to wa, target: "_blank", rel: "noopener",
-                        title: t("products.order_on_whatsapp"),
-                        "aria-label": t("products.order_on_whatsapp"),
-                        class: "text-gray-900 hover:text-black flex-shrink-0 ml-1" do %>
-                        <%= render "shared/whatsapp_icon", css_class: "w-5 h-5 md:w-6 md:h-6" %>
-                      <% end %>
-                    <% end %>
-                  <% else %>
-                    <%# NOTE: link_to with method: :post is Rails-UJS syntax and is ignored under
-                        Turbo, so this emits a GET and 404s. Left as-is deliberately — fixing it
-                        would turn a dead control into a live purchase path inside this change. %>
-                    <%= link_to add_item_cart_path(locale: I18n.locale, product_id: product.id),
-                      method: :post,
-                      class: "text-gray-700 hover:text-gray-900 flex-shrink-0 ml-1" do %>
-                      <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                      </svg>
-                    <% end %>
-                  <% end %>
-                </div>
-              </div>
-            </div>
+      <div class="flex-[1_1_420px] min-w-0 max-w-[520px] mx-auto">
+        <%= link_to product_path(sale_product.slug, locale: I18n.locale), class: "relative block w-full aspect-square bg-media shadow-gleam overflow-hidden", "aria-label": sale_product.name(I18n.locale) do %>
+          <div class="vn-card__badge"><%= render "shared/made_to_order_badge", product: sale_product, positioned: false %></div>
+          <% if (src = vn_product_image_url(sale_product)) %>
+            <%= image_tag src, alt: "", loading: "lazy", class: "block w-[84%] h-[84%] m-[8%] object-contain" %>
           <% end %>
-        </div>
-        <!-- View All Button -->
-        <div class="text-center">
-          <%= link_to root_path(locale: I18n.locale),
-            class: "inline-flex items-center px-8 py-3 border-2 border-gray-700 text-gray-700 hover:bg-gray-700 hover:text-white font-medium uppercase text-sm tracking-wide transition-all duration-300" do %>
-            <%= t("common.view_all", default: "View All") %>
-          <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   </section>
-  <!-- Featured Products Section (Auto-scrollable) -->
-  <% if @scrolling_featured_products.any? %>
-    <section class="w-full py-10 md:py-16 bg-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl md:text-3xl font-serif text-gray-700 text-center mb-8 md:mb-12">
-          <%= t("storefront.home.featured_products", default: "Featured Products") %>
-        </h2>
-        <!-- Auto-scrollable Container -->
-        <% featured = @scrolling_featured_products.to_a %>
-        <div class="relative overflow-hidden">
-          <div class="flex gap-3 md:gap-6 <%= marquee_scrollable?(featured) ? "animate-scroll-horizontal" : "flex-wrap justify-center" %>">
-            <% marquee_products(featured).each do |product| %>
-              <div class="flex-none w-48 md:w-80 group">
-                <!-- Product Image -->
-                <div class="relative aspect-square bg-gray-50 mb-2 md:mb-4 overflow-hidden rounded-md shadow-sm flex items-center justify-center">
-                  <%= render "shared/made_to_order_badge", product: product %>
-                  <% if product.primary_image %>
-                    <%= link_to product_path(product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-3" do %>
-                      <%= image_tag product.primary_image.image.url,
-                        class: "max-h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" %>
-                    <% end %>
-                  <% else %>
-                    <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <svg class="w-12 md:w-20 h-12 md:h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                      </svg>
-                    </div>
-                  <% end %>
-                </div>
-                <!-- Product Info -->
-                <div class="text-center">
-                  <%= link_to product_path(product.slug, locale: I18n.locale) do %>
-                    <h3 class="text-xs md:text-base font-medium text-gray-900 mb-1 md:mb-2 line-clamp-2">
-                      <%= product.name(I18n.locale) %>
-                    </h3>
-                  <% end %>
-                  <div>
-                    <%= render "shared/product_price", product: product %>
-                  </div>
-                </div>
-              </div>
-            <% end %>
+<% end %>
+
+<%# ---------- Featured pieces: a slow marquee (static under reduced motion) ---------- %>
+<% featured = @scrolling_featured_products.to_a %>
+<% if featured.any? %>
+  <section aria-labelledby="featured-title" class="vn-section overflow-hidden">
+    <header class="vn-container flex flex-col items-center gap-4 text-center mb-12">
+      <%= render "shared/vene/eyebrow", text: t("vene.header.featured") %>
+      <h2 id="featured-title" class="vn-h1 m-0"><%= t("storefront.home.featured_products") %></h2>
+    </header>
+    <% if marquee_scrollable?(featured) %>
+      <div class="vn-marquee px-[var(--gutter)]">
+        <% marquee_products(featured).each_with_index do |product, i| %>
+          <div class="flex-none w-56 md:w-72" <%= 'aria-hidden="true" inert' .html_safe if i >= featured.size %>>
+            <%= render "shared/vene/product_card", product: product, wishlist: false %>
           </div>
-        </div>
+        <% end %>
       </div>
-    </section>
-  <% end %>
-  <!-- Must Have Section (Sale Products) -->
-  <% sale_product = Product.active.on_sale.first %>
-  <% if sale_product.present? %>
-    <section class="w-full py-10 md:py-16 bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl md:text-3xl font-serif text-gray-700 text-center mb-8 md:mb-12">
-          <%= t("storefront.home.must_have", default: "Must Have") %>
-        </h2>
-        <div class="max-w-4xl mx-auto">
-          <div class="bg-white rounded-lg overflow-hidden shadow-lg">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
-              <!-- Product Image -->
-              <div class="relative aspect-[4/3] md:aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
-                <%# Stacked: this is the one card where a made-to-order badge and the SALE
-                    badge can both fire, and they share the top-left corner. %>
-                <div class="absolute top-3 left-3 md:top-4 md:left-4 z-10 flex flex-col gap-2 items-start">
-                  <%= render "shared/made_to_order_badge", product: sale_product, positioned: false %>
-                  <% if sale_product.on_sale && sale_product.sale_price.present? %>
-                    <span class="bg-gray-700 text-white text-[10px] md:text-xs font-medium px-2 py-1.5 md:px-3 md:py-2 rounded">
-                      <%= t("common.sale_up_to", default: "SALE UP TO") %> <%= number_to_percentage((sale_product.price - sale_product.sale_price) / sale_product.price * 100, precision: 0) %> <%= t("common.off", default: "OFF") %>
-                    </span>
-                  <% end %>
-                </div>
-                <% if sale_product.primary_image %>
-                  <%= link_to product_path(sale_product.slug, locale: I18n.locale), class: "w-full h-full flex items-center justify-center p-4" do %>
-                    <%= image_tag sale_product.primary_image.image.url,
-                      class: "max-h-full w-full object-contain hover:scale-110 transition-transform duration-700" %>
-                  <% end %>
-                <% else %>
-                  <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                    <svg class="w-16 md:w-24 h-16 md:h-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
-                <% end %>
-              </div>
-              <!-- Product Info -->
-              <div class="flex flex-col justify-center p-6 md:p-12 text-center md:text-left">
-                <% if sale_product.on_sale && sale_product.sale_price.present? %>
-                  <p class="text-xs md:text-sm text-gray-600 mb-3 md:mb-4 uppercase tracking-wide">
-                    <%= t("common.sale_up_to", default: "SALE UP TO") %> <%= number_to_percentage((sale_product.price - sale_product.sale_price) / sale_product.price * 100, precision: 0) %> <%= t("common.off", default: "OFF") %>
-                  </p>
-                <% end %>
-                <%= link_to product_path(sale_product.slug, locale: I18n.locale) do %>
-                  <h3 class="text-xl md:text-3xl font-semibold text-gray-900 mb-3 md:mb-4">
-                    <%= sale_product.name(I18n.locale) %>
-                  </h3>
-                <% end %>
-                <div class="mb-5 md:mb-6">
-                  <%= render "shared/product_price", product: sale_product, size: :page %>
-                </div>
-                <% if sale_product.made_to_order? && (wa = made_to_order_whatsapp_url(sale_product)) %>
-                  <%= link_to wa, target: "_blank", rel: "noopener",
-                    class: "inline-flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-gray-900 hover:bg-black text-white text-xs md:text-sm font-medium uppercase tracking-wide transition-all duration-300 text-center" do %>
-                    <%= render "shared/whatsapp_icon", css_class: "w-4 h-4" %>
-                    <%= t("products.order_on_whatsapp") %>
-                  <% end %>
-                <% else %>
-                  <%= link_to product_path(sale_product.slug, locale: I18n.locale),
-                    class: "inline-block px-6 py-2.5 md:px-8 md:py-3 bg-gray-700 hover:bg-gray-800 text-white text-xs md:text-sm font-medium uppercase tracking-wide transition-all duration-300 text-center" do %>
-                    <%= t("common.shop_now", default: "SHOP NOW") %>
-                  <% end %>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Trust Badges -->
-        <!--        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">-->
-        <!--          <div class="flex items-center gap-3">-->
-        <!--            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
-        <!--              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>-->
-        <!--            </svg>-->
-        <!--            <div>-->
-        <!--              <h4 class="font-semibold text-gray-900">FREE IN-STORE RETURN</h4>-->
-        <!--              <p class="text-sm text-gray-600">Lorem ipsum dolor sit amet.</p>-->
-        <!--            </div>-->
-        <!--          </div>-->
-        <!--          <div class="flex items-center gap-3">-->
-        <!--            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
-        <!--              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>-->
-        <!--            </svg>-->
-        <!--            <div>-->
-        <!--              <h4 class="font-semibold text-gray-900">100% SECURE CHECKOUT</h4>-->
-        <!--              <p class="text-sm text-gray-600">Lorem ipsum dolor sit amet.</p>-->
-        <!--            </div>-->
-        <!--          </div>-->
-        <!--        </div>-->
+    <% else %>
+      <div class="vn-container flex flex-wrap justify-center gap-6">
+        <% featured.each do |product| %>
+          <div class="w-56 md:w-72"><%= render "shared/vene/product_card", product: product, wishlist: false %></div>
+        <% end %>
       </div>
-    </section>
-  <% end %>
-</div>
-<!-- Custom CSS Animations -->
-<style>
-  /* Hide scrollbar for category tabs */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+    <% end %>
+  </section>
+<% end %>
 
-  @keyframes ken-burns {
-    0% {
-      transform: scale(1);
-    }
-    100% {
-      transform: scale(1.1);
-    }
-  }
+<%# ---------- Our story, long form ---------- %>
+<section id="our-story" aria-labelledby="narrative-title" class="bg-surface-sunken">
+  <div class="vn-container vn-section flex flex-col items-center">
+    <div class="vn-measure w-full flex flex-col gap-6 vn-reveal" <%= tag.attributes(reveal) %>>
+      <%= render "shared/vene/eyebrow", text: t("storefront.home.story_eyebrow") %>
+      <h2 id="narrative-title" class="vn-h1 m-0"><%= t("storefront.home.story_heading") %></h2>
+      <div class="vn-prose">
+        <% (1..5).each do |n| %><p><%= t("storefront.home.story_p#{n}") %></p><% end %>
+      </div>
+      <p class="vn-lead m-0 pt-6 border-t border-line"><%= t("storefront.home.story_closing") %></p>
+    </div>
+  </div>
+</section>
 
-  .animate-ken-burns {
-    animation: ken-burns 20s ease-in-out infinite alternate;
-  }
-
-  @keyframes slide-up {
-    0% {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.8s ease-out forwards;
-  }
-
-  .animation-delay-200 {
-    animation-delay: 0.2s;
-    opacity: 0;
-  }
-
-  .animation-delay-400 {
-    animation-delay: 0.4s;
-    opacity: 0;
-  }
-
-  @keyframes scroll-horizontal {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-33.33%);
-    }
-  }
-
-  .animate-scroll-horizontal {
-    animation: scroll-horizontal 30s linear infinite;
-  }
-
-  .animate-scroll-horizontal:hover {
-    animation-play-state: paused;
-  }
-
-  @keyframes scroll {
-    0% {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(12px);
-      opacity: 0;
-    }
-  }
-
-  .animate-scroll {
-    animation: scroll 1.5s ease-in-out infinite;
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.8s ease-out forwards;
-  }
-
-  @keyframes slide-in-left {
-    from {
-      opacity: 0;
-      transform: translateX(-50px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.8s ease-out forwards;
-  }
-
-  @keyframes slide-in-right {
-    from {
-      opacity: 0;
-      transform: translateX(50px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.8s ease-out forwards;
-  }
-</style>
+<%# ---------- The house promises ---------- %>
+<section aria-label="<%= t('vene.home.promise_label') %>" class="vn-container py-[clamp(64px,7vw,96px)]">
+  <ul class="list-none m-0 p-0 grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-x-8 gap-y-12">
+    <li><%= render "shared/vene/feature_item", icon: :gem, title: t("vene.home.promise.handcrafted_title"), text: t("vene.home.promise.handcrafted_text") %></li>
+    <li><%= render "shared/vene/feature_item", icon: :truck, title: t("vene.home.promise.dhl_title"), text: t("vene.home.promise.dhl_text") %></li>
+    <% if current_settings.show_tax_notice %>
+      <li><%= render "shared/vene/feature_item", icon: :shield, title: t("vene.home.promise.taxes_title"), text: t("common.prices_include_tax") %></li>
+    <% else %>
+      <li><%= render "shared/vene/feature_item", icon: :lock, title: t("vene.home.promise.secure_title"), text: t("vene.home.promise.secure_text") %></li>
+    <% end %>
+    <li><%= render "shared/vene/feature_item", icon: :package, title: t("vene.home.promise.track_title"), text: t("vene.home.promise.track_text") %></li>
+  </ul>
+</section>

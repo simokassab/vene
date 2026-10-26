@@ -1,0 +1,17 @@
+<%# locals: (title:, text:, variant: :band, label: nil) %>
+<%# HelpCard.dc.html. variant: band (inline) | banner (large, sunken) | card (outlined). The block holds the actions. %>
+<% variant = variant.to_sym %>
+<% root = { band: "flex flex-wrap justify-between items-center gap-x-8 gap-y-4 p-8 bg-surface-sunken",
+            banner: "flex flex-wrap items-center justify-between gap-x-12 gap-y-6 py-12 px-[clamp(24px,4vw,64px)] bg-surface-sunken",
+            card: "p-8 border border-line flex flex-col items-start gap-4" }[variant] %>
+<aside aria-label="<%= label || title %>" class="<%= root %>">
+  <div class="flex flex-col <%= variant == :banner ? 'gap-2 flex-[1_1_360px] min-w-0' : (variant == :card ? 'gap-4' : 'gap-1') %>">
+    <% if variant == :band %>
+      <span class="font-display font-medium text-2xl leading-8 rtl:font-bold rtl:text-xl"><%= title %></span>
+    <% else %>
+      <h2 class="m-0 <%= variant == :banner ? 'vn-h2' : 'vn-h3 !text-2xl !leading-8' %>"><%= title %></h2>
+    <% end %>
+    <span class="text-[15px] leading-6 text-ink-muted rtl:text-base rtl:leading-7"><%= text %></span>
+  </div>
+  <% if block_given? %><div class="flex flex-wrap gap-3"><%= yield %></div><% end %>
+</aside>

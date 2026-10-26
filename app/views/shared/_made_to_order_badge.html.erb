@@ -9,7 +9,7 @@
   positioned: false for containers that already own an absolute badge stack.
 %>
 <% if product.made_to_order_with?(variant) %>
-  <span class="<%= "absolute top-3 left-3 md:top-4 md:left-4 z-10 " if positioned %>inline-block bg-gray-900 text-white text-[10px] md:text-xs font-medium uppercase tracking-wide px-2 py-1.5 md:px-3 md:py-2 rounded pointer-events-none <%= extra_class %>">
+  <span class="<%= "absolute top-3 start-3 z-10 " if positioned %>vn-badge vn-badge--gold pointer-events-none <%= extra_class %>">
     <%= t("products.made_to_order_badge") %>
   </span>
 <% end %>

@@ -341,3 +341,25 @@
 }
 
 [x-cloak] { display: none !important; }
+
+/* ---------- Storefront motion (README → Motion): slow fades, 12px rises, no bounce ---------- */
+@layer components {
+  .vn-reveal { opacity: 0; transform: translateY(12px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
+  .vn-reveal.is-shown { opacity: 1; transform: none; }
+
+  /* Featured pieces marquee: the track holds three copies and moves by one. */
+  .vn-marquee { display: flex; gap: var(--space-6); width: max-content; animation: vn-marquee 60s linear infinite; }
+  .vn-marquee:hover, .vn-marquee:focus-within { animation-play-state: paused; }
+  [dir="rtl"] .vn-marquee { animation-name: vn-marquee-rtl; }
+
+  .vn-scroll-x { scrollbar-width: none; }
+  .vn-scroll-x::-webkit-scrollbar { display: none; }
+}
+
+@keyframes vn-marquee { to { transform: translateX(-33.3333%); } }
+@keyframes vn-marquee-rtl { to { transform: translateX(33.3333%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-reveal { transform: none; transition: opacity .6s var(--ease); }
+  .vn-marquee { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
+}

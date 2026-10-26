@@ -1,0 +1,29 @@
+<%# locals: (title:, image: nil, href: nil, meta: nil, detail: nil, price: nil, size: :sm, heading: nil, alt: "") %>
+<%# LineItem.dc.html. size: xs | sm (price at the end) | md (price below) | lg (price beside the name,
+    actions from the block under the details). price is pre-rendered HTML (vn_price / product_price). %>
+<% size = size.to_sym %>
+<% thumb = { xs: "w-16 h-20", sm: "w-[72px] h-[88px]", md: "w-[88px] h-[110px]", lg: "w-[120px] h-[150px] sm:w-40 sm:h-[200px]" }[size] %>
+<% small = %i[xs sm].include?(size) %>
+<% thumb_class = "flex-none #{thumb} bg-media flex items-center justify-center #{'shadow-hairline' unless size == :lg}" %>
+<% thumb_inner = image.present? ? image_tag(image, alt: alt, loading: "lazy", class: "block w-[88%] h-[88%] object-contain") : vn_icon(:diamond, size: 24, stroke: 1, css: "text-line-control") %>
+<% name_class = "m-0 font-display font-medium #{small ? 'text-xl leading-[26px]' : 'text-[22px] leading-7'} rtl:font-normal" %>
+<% price_class = "text-[15px] leading-6 whitespace-nowrap" %>
+<div class="<%= size == :lg ? 'flex gap-6 sm:gap-8 items-start' : "flex #{size == :md ? 'gap-5' : 'gap-4'} items-center" %>">
+  <%= href ? link_to(thumb_inner, href, class: thumb_class, tabindex: "-1", "aria-hidden": "true") : tag.span(thumb_inner, class: thumb_class) %>
+  <span class="flex-1 min-w-0 flex flex-col <%= { xs: 'gap-0', sm: 'gap-0.5', md: 'gap-1', lg: 'gap-2' }[size] %> <%= 'self-stretch' if size == :lg %>">
+    <span class="flex justify-between items-baseline gap-4">
+      <% title_html = href ? link_to(title, href, class: "text-inherit no-underline hover:text-gold-text") : title %>
+      <%= content_tag(heading || :span, title_html, class: name_class) %>
+      <% if size == :lg && price.present? %><span class="<%= price_class %>"><%= price %></span><% end %>
+    </span>
+    <% if meta.present? %>
+      <span class="<%= small ? 'text-[13px] leading-5 text-ink-muted' : 'vn-caps !text-xs text-ink-muted' %>"><%= meta %></span>
+    <% end %>
+    <% if detail.present? %><span class="text-[13px] leading-5 text-ink-muted"><%= detail %></span><% end %>
+    <% if size == :md && price.present? %><span class="<%= price_class %>"><%= price %></span><% end %>
+    <% if block_given? %>
+      <span class="flex flex-wrap items-center justify-between gap-4 mt-auto pt-4"><%= yield %></span>
+    <% end %>
+  </span>
+  <% if small && price.present? %><span class="<%= price_class %>"><%= price %></span><% end %>
+</div>

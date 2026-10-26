@@ -1,0 +1,26 @@
+<%# locals: (active:, tabs: false) %>
+<%# AccountNav.dc.html. The account lives on orders#index as tabs (orders, profile, addresses,
+    security) plus the wishlist page. tabs: true when rendered inside orders#index, where the
+    links switch the Alpine activeTab instead of reloading. %>
+<% items = [
+     [:orders, t("vene.account.orders"), orders_path(locale: I18n.locale)],
+     [:wishlist, t("vene.header.wishlist"), wishlist_items_path(locale: I18n.locale)],
+     [:addresses, t("vene.account.addresses"), orders_path(locale: I18n.locale, tab: "addresses")],
+     [:profile, t("vene.account.details"), orders_path(locale: I18n.locale, tab: "profile")],
+     [:security, t("vene.account.security"), orders_path(locale: I18n.locale, tab: "security")]
+   ] %>
+<nav aria-label="<%= t('vene.account.nav') %>" class="vn-scroll-x flex gap-x-10 overflow-x-auto border-b border-line text-xs leading-5 tracking-nav uppercase rtl:text-sm">
+  <% items.each do |key, label, href| %>
+    <% if tabs && key != :wishlist %>
+      <a href="<%= href %>" class="vn-navlink whitespace-nowrap !py-3.5 -mb-px border-b-2"
+         @click.prevent="activeTab = '<%= key %>'; history.replaceState(null, '', '<%= href %>')"
+         :class="activeTab === '<%= key %>' ? '!border-ink' : '!border-transparent !text-ink-muted'"
+         :aria-current="activeTab === '<%= key %>' ? 'page' : null"><%= label %></a>
+    <% else %>
+      <%= link_to label, href, class: "vn-navlink whitespace-nowrap !py-3.5 -mb-px border-b-2 #{key == active ? '!border-ink' : '!border-transparent !text-ink-muted'}",
+            "aria-current": (key == active ? "page" : nil) %>
+    <% end %>
+  <% end %>
+  <%= button_to t("vene.account.sign_out"), destroy_user_session_path(locale: I18n.locale), method: :delete,
+        class: "vn-navlink whitespace-nowrap !py-3.5 bg-transparent border-0 cursor-pointer uppercase tracking-nav !text-ink-muted rtl:normal-case", form: { class: "flex" } %>
+</nav>
