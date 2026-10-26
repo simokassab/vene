@@ -1,45 +1,18 @@
-<h2 style="margin: 0 0 20px 0; font-size: 22px; color: #1a1a1a;">Price Drop Alert!</h2>
-
-<p style="margin: 0 0 8px 0; font-size: 15px; color: #333333; line-height: 1.6;">
-  <%= I18n.t("mailers.wishlist_mailer.price_drop.greeting", name: @user.name) %>
-</p>
-<p style="margin: 0 0 25px 0; font-size: 15px; color: #333333; line-height: 1.6;">
-  <%= I18n.t("mailers.wishlist_mailer.price_drop.body", product: @product.name, percentage: @percentage) %>
-</p>
-
-<!-- Product card -->
-<div style="background-color: #f9fafb; border-radius: 4px; padding: 20px; margin-bottom: 25px;">
-  <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: bold; color: #1a1a1a;"><%= @product.name %></p>
-  <% if @variant %>
-    <p style="margin: 0 0 10px 0; font-size: 13px; color: #888888;"><%= @variant.display_name %></p>
-  <% end %>
-  <table cellpadding="0" cellspacing="0" style="font-size: 14px; color: #333333;">
-    <tr>
-      <td style="padding: 4px 0;"><%= I18n.t("wishlist.original_price") %>:</td>
-      <td style="padding: 4px 0 4px 12px; text-decoration: line-through; color: #999999;"><%= number_to_currency(@original_price) %></td>
-    </tr>
-    <tr>
-      <td style="padding: 4px 0; font-weight: bold;"><%= I18n.t("wishlist.new_price") %>:</td>
-      <td style="padding: 4px 0 4px 12px; font-weight: bold; color: #059669;"><%= number_to_currency(@current_price) %></td>
-    </tr>
-    <tr>
-      <td style="padding: 4px 0;"><%= I18n.t("wishlist.you_save") %>:</td>
-      <td style="padding: 4px 0 4px 12px; color: #059669;"><%= number_to_currency(@original_price - @current_price) %> (<%= @percentage %>%)</td>
-    </tr>
-  </table>
-</div>
-
-<!-- CTA button -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
-  <tr>
-    <td align="center">
-      <a href="<%= product_url(@product.slug, locale: I18n.locale) %>" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; padding: 14px 40px; font-size: 14px; font-weight: bold; border-radius: 4px; letter-spacing: 0.5px;">
-        <%= I18n.t("mailers.wishlist_mailer.price_drop.cta").upcase %>
-      </a>
-    </td>
-  </tr>
-</table>
-
-<p style="margin: 0; font-size: 12px; color: #999999; text-align: center;">
-  <%= I18n.t("mailers.wishlist_mailer.common.footer") %>
-</p>
+<%# Wishlist alert: a saved piece now costs less. Stated plainly, never discount-led. %>
+<% content_for :preheader, t("mailers.wishlist_mailer.price_drop.subject", product: @product.name, percentage: @percentage) %>
+<% content_for :footer_note, t("mailers.wishlist_mailer.common.footer") %>
+<%= vn_email_section(ground: :surface, padding: "56px 56px 40px") do %>
+  <%= vn_email_eyebrow(t("vene.email.wishlist.eyebrow")) %>
+  <%= vn_email_title(t("vene.email.wishlist.price_title"), size: 44) %>
+  <%= vn_email_text(t("mailers.wishlist_mailer.price_drop.greeting", name: @user.name), muted: false) %>
+  <%= vn_email_text(t("mailers.wishlist_mailer.price_drop.body", product: @product.name, percentage: @percentage)) %>
+<% end %>
+<%= vn_email_section(ground: :raised) do %>
+  <%= vn_email_line_item(name: @product.name, image: vn_email_image_url(@product), meta: @product.metal.presence,
+                         detail: @variant&.display_name, price: vn_email_usd(@current_price)) %>
+  <%= vn_email_totals([[t("wishlist.original_price"), vn_email_usd(@original_price)],
+                       [t("wishlist.you_save"), "#{vn_email_usd(@original_price - @current_price)} (#{@percentage}%)"]],
+                      total_label: t("wishlist.new_price"), total: vn_email_usd(@current_price)) %>
+  <div style="height: 24px; line-height: 24px;">&nbsp;</div>
+  <%= vn_email_button(t("mailers.wishlist_mailer.price_drop.cta"), product_url(@product.slug, locale: I18n.locale)) %>
+<% end %>

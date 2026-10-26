@@ -1,63 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale %>" dir="<%= vn_email_rtl? ? 'rtl' : 'ltr' %>">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <%# Clients that honour <link> get the house fonts; the rest fall back to Georgia and Helvetica. %>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,400&family=Jost:wght@300;400;500&family=Amiri:wght@700&family=IBM+Plex+Sans+Arabic:wght@300;500&display=swap">
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: Arial, Helvetica, sans-serif;">
-  <!-- Outer wrapper -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 30px 0;">
+<%# EmailLayout.dc.html: a 600px card on the sunken ground — noir band with the mark, the
+    email's own sections, then the house footer. Tables and inline styles only. %>
+<body style="margin: 0; padding: 0; background-color: <%= vn_email_color(:sunken) %>; -webkit-text-size-adjust: 100%;">
+  <% if content_for?(:preheader) %>
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: <%= vn_email_color(:sunken) %>;"><%= yield :preheader %></div>
+  <% end %>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: <%= vn_email_color(:sunken) %>;">
     <tr>
-      <td align="center">
-        <!-- Main container -->
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden;">
-
-          <!-- Header with logo -->
+      <td align="center" style="padding: 24px 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" dir="<%= vn_email_rtl? ? 'rtl' : 'ltr' %>"
+               style="width: 100%; max-width: 600px; background-color: <%= vn_email_color(:surface) %>;">
           <tr>
-            <td style="background-color: #1a1a1a; padding: 30px; text-align: center;">
+            <td align="center" style="background-color: <%= vn_email_color(:noir_ground) %>; padding: 40px 32px; text-align: center;">
               <% if attachments["logo.jpg"] %>
-                <%= image_tag attachments["logo.jpg"].url, alt: "VENÈ Jewelry", style: "width: 140px; height: auto;", width: "140" %>
+                <%= image_tag attachments["logo.jpg"].url, alt: "VENÈ Jewelry", width: "160", style: "display: block; margin: 0 auto; width: 160px; height: auto; border: 0;" %>
               <% else %>
-                <span style="color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: 2px;">VENÈ JEWELRY</span>
+                <span style="font-family: <%= VeneEmailHelper::EMAIL_SERIF %>; font-weight: 500; font-size: 32px; letter-spacing: 0.12em; color: <%= vn_email_color(:on_noir) %>;">VENÈ</span>
               <% end %>
             </td>
           </tr>
-
-          <!-- Body content -->
+          <%= yield %>
           <tr>
-            <td style="padding: 40px 40px 30px 40px;">
-              <%= yield %>
+            <td align="center" style="padding: 40px 56px 48px; text-align: center; font-family: <%= vn_email_sans %>; font-size: 12px; line-height: 20px; color: <%= vn_email_color(:muted) %>;">
+              <p style="margin: 0 0 24px; padding-bottom: 24px; border-bottom: 1px solid <%= vn_email_color(:line) %>; font-family: <%= vn_email_serif %>; font-style: <%= vn_email_rtl? ? 'normal' : 'italic' %>; font-size: 18px; line-height: 28px; color: <%= vn_email_color(:muted) %>;"><%= t("vene.email.signature") %></p>
+              <p style="margin: 0 0 8px; font-family: <%= VeneEmailHelper::EMAIL_SERIF %>; font-weight: 500; font-size: 22px; letter-spacing: 0.12em; color: <%= vn_email_color(:ink) %>;" lang="en" dir="ltr">VENÈ</p>
+              <p style="margin: 0 0 16px;"><%= t("vene.brand.tagline") %></p>
+              <% if content_for?(:footer_note) %><p style="margin: 0 0 16px;"><%= yield :footer_note %></p><% end %>
+              <p style="margin: 0;" dir="ltr">GOLDEN ARCH FOR COMMERCIAL · 1100 Beirut, Lebanon · <a href="tel:+96178729590" style="color: <%= vn_email_color(:muted) %>;">+961 78 729 590</a></p>
+              <p style="margin: 4px 0 0;"><a href="https://venejewelry.com" style="color: <%= vn_email_color(:ink) %>; text-decoration: none; border-bottom: 1px solid <%= vn_email_color(:gold) %>;">venejewelry.com</a></p>
             </td>
           </tr>
-
-          <!-- Footer signature -->
-          <tr>
-            <td style="padding: 0 40px 30px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="border-top: 1px solid #e4e4e7; padding-top: 25px;">
-                    <p style="margin: 0 0 6px 0; font-size: 14px; color: #333333; line-height: 1.6;">
-                      Thank you for choosing from our jewelry collection and stepping into the
-                      <strong>WORLD OF VEN&Egrave;</strong> &mdash; where every piece is crafted to mirror your grace,
-                      your story, and your timeless elegance.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer bar -->
-          <tr>
-            <td style="background-color: #1a1a1a; padding: 20px 40px; text-align: center;">
-              <p style="margin: 0 0 4px 0; color: #999999; font-size: 12px;">GOLDEN ARCH FOR COMMERCIAL</p>
-              <p style="margin: 0 0 4px 0; color: #999999; font-size: 11px;">+961 78729590 &nbsp;|&nbsp; 1100 Beirut, Lebanon</p>
-              <p style="margin: 0; color: #666666; font-size: 11px;">
-                <a href="https://venejewelry.com" style="color: #999999; text-decoration: none;">venejewelry.com</a>
-              </p>
-            </td>
-          </tr>
-
         </table>
       </td>
     </tr>

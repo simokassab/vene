@@ -494,15 +494,15 @@ ar:
         subject: "تم استلام طلب #%{id}"
     wishlist_mailer:
       back_in_stock:
-        subject: "خبر سار! %{product} متوفر الآن"
-        greeting: "مرحباً %{name}،"
-        body: "أخبار رائعة! منتج من قائمة أمنياتك أصبح متوفراً الآن."
-        cta: "تسوق الآن قبل نفاد الكمية"
+        subject: "%{product} متوفرة من جديد"
+        greeting: "عزيزنا %{name}،"
+        body: "قطعة حفظتها في قائمة أمنياتك متوفرة من جديد: %{product}."
+        cta: "شاهد القطعة"
       price_drop:
-        subject: "تنبيه انخفاض السعر! %{product} الآن بخصم %{percentage}%"
-        greeting: "مرحباً %{name}،"
-        body: "اعتقدنا أنك ستود معرفة ذلك - %{product} من قائمة أمنياتك انخفض سعره %{percentage}%%!"
-        cta: "احصل عليه الآن بالسعر الجديد المنخفض"
+        subject: "%{product} الآن بسعر أقل بنسبة %{percentage}%"
+        greeting: "عزيزنا %{name}،"
+        body: "أصبح سعر %{product}، المحفوظة في قائمة أمنياتك، أقل بنسبة %{percentage}%."
+        cta: "شاهد القطعة"
       common:
         footer: "تلقيت هذا البريد الإلكتروني لأن لديك هذا المنتج في قائمة أمنياتك في VENÈ Jewelry."
   wishlist:
@@ -850,3 +850,35 @@ ar:
       lead: "نصقل بعض التفاصيل لتكون زيارتك بقدر عناية قطعنا."
       body: "سيُعاد فتح المتجر قريبًا. شكرًا لصبرك."
       help: "تحتاجنا في هذه الأثناء؟"
+    email:
+      signature: "شكرًا لدخولك عالم VENÈ، حيث تُصاغ كل قطعة لتعكس أناقتك وحكايتك وجمالك الخالد."
+      delivery: "التوصيل"
+      view_order: "اعرض طلبك"
+      your_pieces: "قطعك"
+      qty:
+        one: "الكمية 1"
+        other: "الكمية %{count}"
+      made_to_order: "حسب الطلب"
+      taxes: "الضرائب"
+      included: "مشمولة"
+      next: "ما الذي يلي"
+      steps:
+        crafted: "يُحضَّر في مشغلنا"
+        shipped: "يُشحن · نرسل إليك بوليصة الشحن"
+        delivered: "يُسلَّم · خلال ٥–١٠ أيام عمل"
+      guest_title: "أتممت الطلب كضيف؟"
+      guest_text: "احتفظ بهذا الطلب في حساب لتتابعه وتجده في أي وقت."
+      confirmation:
+        preheader: "تم تأكيد الطلب %{number}. إليك ما يلي."
+        eyebrow: "استلمنا طلبك"
+        title: "شكرًا لك، %{name}."
+        body: "طلبك بين أيدينا. تجد التفاصيل كاملة أدناه، وسنراسلك على %{email} يوم مغادرته مشغلنا."
+      admin:
+        eyebrow: "طلب جديد"
+        title: "وصل طلب جديد"
+        customer: "العميل"
+        open: "افتح في لوحة الإدارة"
+      wishlist:
+        eyebrow: "من قائمة أمنياتك"
+        back_title: "متوفرة من جديد"
+        price_title: "سعر جديد"

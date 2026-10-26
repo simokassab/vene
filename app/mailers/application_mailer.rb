@@ -1,6 +1,7 @@
 class ApplicationMailer < ActionMailer::Base
   default from: "VENÈ Jewelry <nadin@venejewelry.com>"
   layout "mailer"
+  helper :application, :vene, :vene_email
 
   private
 

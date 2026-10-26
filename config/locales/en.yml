@@ -494,15 +494,15 @@ en:
         subject: "New order #%{id} received"
     wishlist_mailer:
       back_in_stock:
-        subject: "Good news! %{product} is back in stock"
-        greeting: "Hi %{name},"
-        body: "Great news! An item from your wishlist is now back in stock."
-        cta: "Shop now before it sells out"
+        subject: "%{product} is available again"
+        greeting: "Dear %{name},"
+        body: "A piece you saved to your wishlist is available again: %{product}."
+        cta: "View the piece"
       price_drop:
-        subject: "Price drop alert! %{product} is now %{percentage}% off"
-        greeting: "Hi %{name},"
-        body: "We thought you'd want to know - %{product} from your wishlist just dropped %{percentage}%% in price!"
-        cta: "Get it now at the new lower price"
+        subject: "%{product} is now %{percentage}% less"
+        greeting: "Dear %{name},"
+        body: "The price of %{product}, saved in your wishlist, is now %{percentage}% lower."
+        cta: "View the piece"
       common:
         footer: "You received this email because you have this item in your wishlist at VENÈ Jewelry."
   wishlist:
@@ -830,3 +830,35 @@ en:
       lead: "We are polishing a few details so your visit feels as considered as our pieces."
       body: "The store will reopen shortly. Thank you for your patience."
       help: "Need us in the meantime?"
+    email:
+      signature: "Thank you for stepping into the world of VENÈ, where every piece is crafted to mirror your grace, your story and your timeless elegance."
+      delivery: "Delivery"
+      view_order: "View your order"
+      your_pieces: "Your pieces"
+      qty:
+        one: "Qty 1"
+        other: "Qty %{count}"
+      made_to_order: "Made to order"
+      taxes: "Taxes"
+      included: "Included"
+      next: "What happens next"
+      steps:
+        crafted: "Prepared in our atelier"
+        shipped: "Shipped · we email your waybill"
+        delivered: "Delivered · 5–10 business days"
+      guest_title: "Checked out as a guest?"
+      guest_text: "Keep this order in an account to track it and find it again anytime."
+      confirmation:
+        preheader: "Order %{number} is confirmed. Here is what happens next."
+        eyebrow: "Order received"
+        title: "Thank you, %{name}."
+        body: "Your order is in our hands. A copy of everything is below; we will write to %{email} again the day it leaves our atelier."
+      admin:
+        eyebrow: "New order"
+        title: "A new order has arrived"
+        customer: "Customer"
+        open: "Open in admin"
+      wishlist:
+        eyebrow: "From your wishlist"
+        back_title: "Available again"
+        price_title: "A new price"

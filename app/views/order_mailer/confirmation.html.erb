@@ -1,102 +1,89 @@
-<h2 style="margin: 0 0 20px 0; font-size: 22px; color: #1a1a1a;">Order Confirmation</h2>
-<p style="margin: 0 0 8px 0; font-size: 15px; color: #333333; line-height: 1.6;">
-  <%= I18n.t("mailers.order_mailer.confirmation.greeting", name: @order.name) %>
-</p>
-<p style="margin: 0 0 25px 0; font-size: 15px; color: #333333; line-height: 1.6;">
-  <%= I18n.t("mailers.order_mailer.confirmation.body", id: @order.id, total: number_to_currency(@order.total_amount, unit: @order.currency)) %>
-</p>
-<!-- Order info -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; font-size: 14px; color: #333333;">
-  <tr>
-    <td style="padding: 4px 0;"><strong>Order Number:</strong> #<%= @order.id %></td>
-  </tr>
-  <tr>
-    <td style="padding: 4px 0;"><strong>Date:</strong> <%= @order.created_at.strftime('%B %d, %Y') %></td>
-  </tr>
-  <tr>
-    <td style="padding: 4px 0;"><strong>Status:</strong> <%= @order.status.titleize %></td>
-  </tr>
-</table>
-<!-- Items table -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px; border-collapse: collapse;">
-  <tr>
-    <td style="background-color: #333333; color: #ffffff; padding: 10px 12px; font-size: 13px; font-weight: bold;">Description</td>
-    <td style="background-color: #333333; color: #ffffff; padding: 10px 12px; font-size: 13px; font-weight: bold; text-align: center;">Qty</td>
-    <td style="background-color: #333333; color: #ffffff; padding: 10px 12px; font-size: 13px; font-weight: bold; text-align: right;">Unit Price</td>
-    <td style="background-color: #333333; color: #ffffff; padding: 10px 12px; font-size: 13px; font-weight: bold; text-align: right;">Cost</td>
-  </tr>
+<%# EmailPurchase.dc.html: thanks and order meta, the pieces and totals, delivery and what
+    happens next, then (for guests) an invitation to keep the order in an account. %>
+<% content_for :preheader, t("vene.email.confirmation.preheader", number: "##{@order.id}") %>
+<% content_for :footer_note do %>
+  <%= t("vene.product.duties") %>
+  <%= link_to t("pages.delivery"), page_url("delivery-policy", locale: I18n.locale), style: "color: #{vn_email_color(:muted)};" %> ·
+  <%= link_to t("pages.refund"), page_url("refund-and-cancellation-policy", locale: I18n.locale), style: "color: #{vn_email_color(:muted)};" %>
+<% end %>
+<% first_name = @order.name.to_s.split.first %>
+
+<%= vn_email_section(ground: :surface, padding: "56px 56px 40px") do %>
+  <%= vn_email_eyebrow(t("vene.email.confirmation.eyebrow"), tone: :success) %>
+  <%= vn_email_title(t("vene.email.confirmation.title", name: first_name)) %>
+  <%= vn_email_text(t("vene.email.confirmation.body", email: @order.email)) %>
+  <%= vn_email_meta([
+        [t("vene.orders.order_label"), "##{@order.id}"],
+        [t("vene.orders.placed"), l(@order.created_at.to_date, format: :long)],
+        [t("vene.email.delivery"), "DHL Express"]
+      ]) %>
+  <%= vn_email_button(t("vene.email.view_order"), order_url(@order, locale: I18n.locale)) %>
+<% end %>
+
+<%= vn_email_section(ground: :raised) do %>
+  <%= vn_email_heading(t("vene.email.your_pieces")) %>
   <% @order.order_items.each do |item| %>
+    <%= vn_email_line_item(
+          name: item.product.name(I18n.locale),
+          image: vn_email_image_url(item.product),
+          meta: [item.product.metal.presence, item.product_variant&.display_name].compact.join(" · "),
+          detail: [t("vene.email.qty", count: item.quantity), (t("vene.email.made_to_order") if item.is_preorder)].compact.join(" · "),
+          price: vn_email_order_price(item.line_total, @order)) %>
+  <% end %>
+  <%
+    rows = [[t("orders.subtotal"), vn_email_order_price(@order.subtotal, @order)],
+            [t("vene.cart.delivery"), vn_email_order_price(@order.shipping_amount, @order)]]
+    rows << ["#{t('coupons.discount')} (#{@order.coupon_code})", "−#{vn_email_order_price(@order.discount_amount, @order)}"] if @order.discount_amount.to_f.positive?
+    rows << [t("vene.email.taxes"), t("vene.email.included")] if Setting.current.show_tax_notice
+  %>
+  <%= vn_email_totals(rows, total_label: t("orders.total"), total: vn_email_order_price(@order.total_amount, @order)) %>
+<% end %>
+
+<% if @order.has_preorder_items? %>
+  <%= vn_email_section(ground: :gold_soft, padding: "32px 56px") do %>
+    <%= vn_email_eyebrow(t("mailers.order_mailer.confirmation.preorder_notice")) %>
+    <%= vn_email_text(Setting.current.preorder_disclaimer(I18n.locale), muted: false, size: 15) if Setting.current.preorder_disclaimer(I18n.locale).present? %>
+    <% if @order.order_items.preorders.any? && @order.order_items.regular_orders.any? %>
+      <%= vn_email_text(t("mailers.order_mailer.confirmation.ship_together"), size: 15) %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<%= vn_email_section(ground: :surface) do %>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333;">
-        <%= item.product.name(I18n.locale) %>
-        <% if item.product_variant %>
-          <br>
-          <span style="font-size: 12px; color: #888888;"><%= item.product_variant.display_name %></span>
-        <% end %>
-        <% if item.is_preorder %>
-          <br>
-          <span style="font-size: 11px; color: #b45309; font-weight: bold;">PRE-ORDER</span>
+      <td width="50%" style="vertical-align: top; padding-<%= vn_email_rtl? ? 'left' : 'right' %>: 20px; text-align: <%= vn_email_align %>;">
+        <%= vn_email_eyebrow(t("vene.orders.deliver_to"), tone: :muted) %>
+        <p style="margin: 0; font-family: <%= vn_email_sans %>; font-size: 15px; line-height: 24px; color: <%= vn_email_color(:ink) %>;">
+          <%= @order.name %><br>
+          <% if @order.street_address.present? %>
+            <%= @order.street_address %><br>
+            <% if @order.building.present? %><%= @order.building %><br><% end %>
+            <%= [@order.city, @order.postal_code].compact_blank.join(", ") %><br>
+            <%= @order.country %>
+          <% else %>
+            <%= @order.address_text %><br><%= @order.city %>, <%= @order.country %>
+          <% end %>
+        </p>
+      </td>
+      <td width="50%" style="vertical-align: top; text-align: <%= vn_email_align %>;">
+        <%= vn_email_eyebrow(t("vene.email.next"), tone: :muted) %>
+        <% %w[crafted shipped delivered].each_with_index do |step, i| %>
+          <p style="margin: 0 0 6px; font-family: <%= vn_email_sans %>; font-size: 15px; line-height: 24px; color: <%= vn_email_color(:ink) %>;">
+            <span style="font-family: <%= VeneEmailHelper::EMAIL_SERIF %>; font-size: 18px; color: <%= vn_email_color(:gold_text) %>;"><%= %w[I II III][i] %></span>&nbsp;&nbsp;<%= t("vene.email.steps.#{step}") %>
+          </p>
         <% end %>
       </td>
-      <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333; text-align: center;"><%= item.quantity %></td>
-      <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333; text-align: right;"><%= number_to_currency(item.unit_price, unit: @order.currency) %></td>
-      <td style="padding: 12px; border-bottom: 1px solid #e4e4e7; font-size: 14px; color: #333333; text-align: right;"><%= number_to_currency(item.line_total, unit: @order.currency) %></td>
     </tr>
-  <% end %>
-</table>
-<!-- Totals -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
-  <tr>
-    <td width="60%"></td>
-    <td width="40%">
-      <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #333333;">
-        <tr>
-          <td style="padding: 6px 0;">Subtotal</td>
-          <td style="padding: 6px 0; text-align: right;"><%= number_to_currency(@order.subtotal, unit: @order.currency) %></td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0;">Shipping (<%= @order.shipping_method.presence || "DHL" %> Express)</td>
-          <td style="padding: 6px 0; text-align: right;"><%= number_to_currency(@order.shipping_amount, unit: @order.currency) %></td>
-        </tr>
-        <% if @order.discount_amount.to_f > 0 %>
-          <tr>
-            <td style="padding: 6px 0; color: #059669;">Discount (<%= @order.coupon_code %>)</td>
-            <td style="padding: 6px 0; text-align: right; color: #059669;">-<%= number_to_currency(@order.discount_amount, unit: @order.currency) %></td>
-          </tr>
-        <% end %>
-        <tr>
-          <td colspan="2" style="border-top: 1px solid #e4e4e7; padding-top: 10px;"></td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; font-size: 16px; font-weight: bold; color: #1a1a1a;">Total</td>
-          <td style="padding: 6px 0; font-size: 16px; font-weight: bold; color: #1a1a1a; text-align: right;"><%= number_to_currency(@order.total_amount, unit: @order.currency) %></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<% if @order.has_preorder_items? %>
-  <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px; font-size: 14px; color: #92400e;">
-    <strong><%= I18n.t("mailers.order_mailer.confirmation.preorder_notice") %></strong>
-    <p style="margin: 8px 0 0 0;"><%= Setting.current.preorder_disclaimer(I18n.locale) %></p>
-    <% if @order.order_items.preorders.any? && @order.order_items.regular_orders.any? %>
-      <p style="margin: 8px 0 0 0;"><%= I18n.t("mailers.order_mailer.confirmation.ship_together") %></p>
-    <% end %>
-  </div>
+  </table>
 <% end %>
-<!-- Shipping address -->
-<div style="background-color: #f9fafb; border-radius: 4px; padding: 15px; margin-bottom: 10px;">
-  <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #1a1a1a; text-transform: uppercase;">Shipping Address</p>
-  <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.6;">
-    <% if @order.street_address.present? %>
-      <%= @order.street_address %><br>
-      <% if @order.building.present? %><%= @order.building %><br>
-      <% end %>
-      <%= [@order.city, @order.postal_code].compact_blank.join(", ") %><br>
-      <%= @order.country %>
-    <% else %>
-      <%= @order.address_text %><br>
-      <%= @order.city %>, <%= @order.country %>
-    <% end %>
-  </p>
-</div>
+
+<% if @order.is_guest? %>
+  <%= vn_email_section(ground: :gold_soft, padding: "32px 56px") do %>
+    <p style="margin: 0 0 8px; font-family: <%= vn_email_serif %>; font-weight: <%= vn_email_rtl? ? 700 : 500 %>; font-size: 22px; line-height: 28px; color: <%= vn_email_color(:ink) %>;"><%= t("vene.email.guest_title") %></p>
+    <p style="margin: 0; font-family: <%= vn_email_sans %>; font-size: 15px; line-height: 24px; color: <%= vn_email_color(:muted) %>;">
+      <%= t("vene.email.guest_text") %>
+      <%= link_to t("vene.auth.create"), new_user_registration_url(locale: I18n.locale), style: "color: #{vn_email_color(:ink)}; text-decoration: none; border-bottom: 1px solid #{vn_email_color(:gold)};" %>
+    </p>
+  <% end %>
+<% end %>
