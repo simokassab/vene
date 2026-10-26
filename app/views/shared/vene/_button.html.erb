@@ -1,0 +1,9 @@
+<%# locals: (label:, href: nil, variant: :primary, size: nil, block: false, arrow: false, type: "button", css: nil, data: {}, attrs: {}) %>
+<%# Button.dc.html. variant: primary | gold | outline | link | danger. With href it renders a link. %>
+<% classes = ["vn-btn", "vn-btn--#{variant}", ("vn-btn--#{size}" if size), ("vn-btn--block" if block), css].compact.join(" ") %>
+<% content = capture do %><span><%= label %></span><% if arrow %><span class="vn-btn__arrow" aria-hidden="true">→</span><% end %><% end %>
+<% if href %>
+  <%= link_to content, href, class: classes, data: data, **attrs %>
+<% else %>
+  <%= button_tag content, type: type, class: classes, data: data, **attrs %>
+<% end %>

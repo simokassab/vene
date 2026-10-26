@@ -1,0 +1,20 @@
+<%# locals: (icon:, title: nil, text: nil, layout: :stack, tone: :current) %>
+<%# FeatureItem.dc.html. layout: stack (icon, title, text) | inline (bold lead-in) | compact (icon + small text). %>
+<% case layout.to_sym %>
+<% when :inline %>
+  <div class="flex gap-4 items-start text-[15px] leading-6 text-ink-muted min-w-0">
+    <%= vn_icon(icon, size: 20, tone: tone, css: "mt-0.5") %>
+    <span><% if title.present? %><strong class="font-medium text-ink"><%= title %></strong> <% end %><%= text %></span>
+  </div>
+<% when :compact %>
+  <div class="flex gap-3 items-start vn-small min-w-0">
+    <%= vn_icon(icon, size: 18, tone: tone) %>
+    <span><%= text %></span>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3 min-w-0">
+    <%= vn_icon(icon, size: 28, tone: tone) %>
+    <h3 class="vn-h3 m-0"><%= title %></h3>
+    <% if text.present? %><p class="m-0 text-[15px] leading-6 text-ink-muted rtl:text-base rtl:leading-7"><%= text %></p><% end %>
+  </div>
+<% end %>

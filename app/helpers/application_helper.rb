@@ -1,19 +1,28 @@
 module ApplicationHelper
   include Pagy::Frontend
 
-  def display_price(amount_usd)
+  # compact: the VENÈ price style ("$2,762", no decimals for whole amounts). Off by default so
+  # WhatsApp messages and other plain-text uses keep their existing format.
+  def display_price(amount_usd, compact: false)
     return "" if amount_usd.nil?
 
     currency = visitor_currency
     if currency == "USD"
-      number_to_currency(amount_usd, unit: "$ ")
+      return number_to_currency(amount_usd, unit: "$ ") unless compact
+
+      number_to_currency(amount_usd, unit: "$", precision: whole_amount?(amount_usd) ? 0 : 2)
     else
       rate = ExchangeRateService.rate_for(currency)
       converted = amount_usd * rate
       symbol = ExchangeRateService.symbol_for(currency)
       precision = ExchangeRateService.three_decimal?(currency) ? 3 : 2
+      precision = 0 if compact && whole_amount?(converted.round(precision))
       number_to_currency(converted, unit: symbol, precision: precision)
     end
+  end
+
+  def whole_amount?(amount)
+    (amount.to_d % 1).zero?
   end
 
   # Builds the wa.me deep link for a made-to-order enquiry. This is the single place the

@@ -1,0 +1,59 @@
+<%# SiteFooter.dc.html: noir ground, the silver-white mark, three link columns, then the
+    copyright, currencies and language switch. The newsletter form has no backend yet
+    (docs/design/GAPS.md), so the intro column carries the house tagline instead. %>
+<% whatsapp = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "") %>
+<% columns = [
+     [t("vene.footer.shop"), navigation_categories.map { |c| [c.name(I18n.locale), category_path(c.slug, locale: I18n.locale)] }],
+     [t("vene.footer.client_care"), [
+       [t("vene.footer.track_order"), orders_path(locale: I18n.locale)],
+       [t("pages.delivery"), page_path("delivery-policy", locale: I18n.locale)],
+       [t("pages.refund"), page_path("refund-and-cancellation-policy", locale: I18n.locale)],
+       [t("footer.ring_size_guide"), :ring_size],
+       ([t("vene.header.whatsapp"), "https://wa.me/#{whatsapp}"] if whatsapp.present?)
+     ].compact],
+     [t("vene.footer.house"), [
+       [t("vene.footer.our_story"), page_path("our-story", locale: I18n.locale)],
+       (user_signed_in? ? [t("orders.my_orders"), orders_path(locale: I18n.locale)] : [t("vene.footer.sign_in"), new_user_session_path(locale: I18n.locale)]),
+       [t("pages.terms"), page_path("terms-and-conditions", locale: I18n.locale)],
+       [t("pages.privacy"), page_path("privacy-policy", locale: I18n.locale)]
+     ]]
+   ] %>
+<footer class="vn-noir">
+  <div class="vn-container pt-24 pb-12 flex flex-wrap gap-x-12 gap-y-16">
+    <div class="flex-[1_1_320px] min-w-0 max-w-[420px] flex flex-col gap-6 rtl:gap-5">
+      <%= image_tag "logo-hq.png", alt: "VENÈ Jewelry", width: 160, height: 109, class: "block w-40 h-auto" %>
+      <p class="vn-h2 m-0 !font-light rtl:!font-bold rtl:!text-[26px]"><%= t("vene.brand.tagline") %></p>
+      <p class="m-0 text-[15px] leading-6 text-ink-muted rtl:text-base rtl:leading-7"><%= t("vene.footer.lead") %></p>
+      <div class="[&_a]:!text-ink-muted [&_a:hover]:!text-gold-text [&>div]:justify-start"><%= render "shared/social_links" %></div>
+    </div>
+    <% columns.each_with_index do |(title, links), i| %>
+      <nav aria-label="<%= title %>" class="flex-[1_1_160px] min-w-0 flex flex-col gap-3 rtl:gap-2.5">
+        <h3 class="m-0 mb-2 vn-label <%= i.zero? ? '!text-gold-text' : '' %>"><%= title %></h3>
+        <% links.each do |label, href| %>
+          <% if href == :ring_size %>
+            <button type="button" @click="ringSizeModal = true" class="vn-quiet self-start bg-transparent border-0 p-0 cursor-pointer text-start text-[15px] leading-6 rtl:text-base rtl:leading-7"><%= label %></button>
+          <% else %>
+            <%= link_to label, href, class: "vn-quiet text-[15px] leading-6 rtl:text-base rtl:leading-7", **(href.to_s.start_with?("https://") ? { target: "_blank", rel: "noopener" } : {}) %>
+          <% end %>
+        <% end %>
+      </nav>
+    <% end %>
+  </div>
+  <div class="border-t border-line">
+    <div class="vn-container py-6 flex flex-wrap justify-between items-center gap-x-8 gap-y-3 text-[13px] leading-5 text-ink-muted rtl:text-sm rtl:leading-[22px]">
+      <span><%= t("vene.footer.copyright", year: Date.current.year) %></span>
+      <span dir="ltr" class="font-latin tracking-nav"><%= currency_options.map { |o| o[:code] }.join(" · ") %></span>
+      <span class="inline-flex items-center gap-4">
+        <%= image_tag "visa.png", alt: "Visa", class: "h-5 w-auto opacity-80" %>
+        <%= image_tag "dhl.svg", alt: "DHL", class: "h-5 w-auto opacity-80" %>
+      </span>
+      <span class="inline-flex gap-2 items-center">
+        <% if vn_arabic? %>
+          <%= link_to "EN", url_for(locale: :en), lang: "en", class: "vn-quiet font-latin text-xs tracking-nav" %><span aria-hidden="true">|</span><span class="text-ink">العربية</span>
+        <% else %>
+          <span class="text-ink">EN</span><span aria-hidden="true">|</span><%= link_to "العربية", url_for(locale: :ar), lang: "ar", class: "vn-quiet font-arabic" %>
+        <% end %>
+      </span>
+    </div>
+  </div>
+</footer>

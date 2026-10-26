@@ -1,0 +1,25 @@
+<%# Ring size guide (RingSizeGuide.dc.html): a raised panel over a dimmed page; opened by any
+    control that sets ringSizeModal on <body>. %>
+<div x-show="ringSizeModal" x-cloak x-transition.opacity.duration.400ms
+     @click.self="ringSizeModal = false" @keydown.escape.window="ringSizeModal = false"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60"
+     role="dialog" aria-modal="true" aria-labelledby="ring-size-title">
+  <div class="bg-surface-raised shadow-lift w-full max-w-5xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-line">
+      <div class="flex flex-col gap-1">
+        <%= render "shared/vene/eyebrow", text: t("vene.ring_size.eyebrow") %>
+        <h2 id="ring-size-title" class="vn-h3 m-0"><%= t("footer.ring_size_guide") %></h2>
+      </div>
+      <button type="button" class="vn-icon-btn" @click="ringSizeModal = false" aria-label="<%= t('common.close') %>"><%= vn_icon(:close, size: 22) %></button>
+    </div>
+    <div class="flex-1 overflow-hidden bg-media">
+      <template x-if="ringSizeModal">
+        <iframe src="/documents/ring-size-guide.pdf" title="<%= t('footer.ring_size_guide') %>" class="w-full h-full min-h-[70vh] border-0"></iframe>
+      </template>
+    </div>
+    <div class="px-6 py-4 border-t border-line flex flex-wrap justify-between items-center gap-4">
+      <a href="/documents/ring-size-guide.pdf" download class="vn-btn vn-btn--outline vn-btn--sm"><%= vn_icon(:download, size: 16) %><span><%= t("common.download") %></span></a>
+      <button type="button" class="vn-btn vn-btn--primary vn-btn--sm" @click="ringSizeModal = false"><%= t("common.close") %></button>
+    </div>
+  </div>
+</div>

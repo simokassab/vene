@@ -526,3 +526,33 @@ ar:
         default_address: "العنوان"
   errors:
     not_authorized: "غير مصرح لك بالدخول"
+  vene:
+    skip_to_content: "انتقل إلى المحتوى"
+    brand:
+      tagline: "صُنعت يدويًا في بيروت. لأجل العالم أجمع."
+      lifetime: "مجوهرات راقية تدوم مدى الحياة."
+    header:
+      whatsapp: "اطلب عبر واتساب"
+      account: "حسابك"
+      wishlist: "المفضلة"
+      primary: "القائمة الرئيسية"
+      featured: "قطع مختارة"
+      show_all: "عرض كل %{name}"
+      menu: "القائمة"
+      close_menu: "إغلاق القائمة"
+      home_label: "VENÈ Jewelry، الصفحة الرئيسية"
+      search_placeholder: "ابحث عن خواتم أو قلائد أو أقراط…"
+      bag_label:
+        one: "حقيبة التسوق، قطعة واحدة"
+        other: "حقيبة التسوق، %{count} قطع"
+    footer:
+      shop: "تسوّق"
+      client_care: "خدمة العملاء"
+      house: "الدار"
+      track_order: "تتبّع طلبًا"
+      our_story: "قصتنا"
+      sign_in: "تسجيل الدخول أو إنشاء حساب"
+      lead: "ذهب عيار ١٨ وألماس وفضة ٩٢٥، تُصقل يدويًا في مشغلنا وتُسلَّم عبر DHL Express في لبنان ودول الخليج."
+      copyright: "© %{year} VENÈ Jewelry · صُنعت يدويًا في بيروت، لبنان"
+    ring_size:
+      eyebrow: "اعثر على مقاسك"

@@ -1,0 +1,4 @@
+<%# locals: (text:, tone: :gold, rule: nil, tag_name: :span, css: nil) %>
+<%# Eyebrow.dc.html: uppercase, tracked label. The gold tone carries a 32px gold rule by default. %>
+<% rule = tone.to_sym == :gold if rule.nil? %>
+<%= content_tag tag_name, text, class: ["vn-eyebrow", ("vn-eyebrow--rule" if rule), ("vn-eyebrow--#{tone}" unless tone.to_sym == :gold), css].compact.join(" ") %>

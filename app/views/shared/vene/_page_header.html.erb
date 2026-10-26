@@ -1,0 +1,16 @@
+<%# locals: (title:, eyebrow: nil, lead: nil, lead_style: :italic, meta: nil, align: :start, tag_name: :h1, css: nil) %>
+<%# PageHeader.dc.html: eyebrow, light display title, optional italic lead. A block adds actions below. %>
+<% center = align.to_sym == :center %>
+<header class="flex flex-col gap-4 max-w-[760px] <%= center ? 'items-center text-center mx-auto' : 'items-start text-start' %> <%= css %>">
+  <% if eyebrow.present? %>
+    <%= render "shared/vene/eyebrow", text: eyebrow %>
+  <% end %>
+  <%= content_tag tag_name, title, class: "vn-display-l m-0" %>
+  <% if lead.present? %>
+    <p class="m-0 <%= lead_style.to_sym == :italic ? 'vn-lead' : 'vn-small text-[15px] leading-6' %>"><%= lead %></p>
+  <% end %>
+  <% if meta.present? %>
+    <span class="vn-small"><%= meta %></span>
+  <% end %>
+  <%= yield if block_given? %>
+</header>

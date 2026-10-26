@@ -1,0 +1,191 @@
+<%# SiteHeader.dc.html. A noir utility bar (WhatsApp, tagline, currency, language) scrolls away;
+    the header below it is sticky, with the centred wordmark, the category nav and its mega menu,
+    and a drawer on mobile. Alpine state (mobileMenu, searchOpen, userMenu) lives on <body>. %>
+<% whatsapp = current_settings.whatsapp_phone_number.to_s.gsub(/[^0-9]/, "") %>
+<% menus = vn_mega_menus %>
+<% active_slug = params[:slug] if controller_name == "categories" %>
+
+<div class="vn-noir border-b border-line">
+  <div class="vn-container min-h-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 text-xs leading-5 tracking-wide rtl:text-[13px] rtl:leading-[22px]">
+    <% if whatsapp.present? %>
+      <a href="https://wa.me/<%= whatsapp %>" target="_blank" rel="noopener" class="vn-quiet inline-flex items-center gap-2 min-h-10">
+        <%= vn_icon(:message, size: 16) %><%= t("vene.header.whatsapp") %>
+      </a>
+    <% else %>
+      <span></span>
+    <% end %>
+    <span class="vn-hide-sm text-ink-muted"><%= t("vene.brand.tagline") %></span>
+    <div class="flex items-center gap-4">
+      <label for="hdr-currency" class="sr-only"><%= t("nav.currency") %></label>
+      <select id="hdr-currency" dir="ltr"
+              class="h-10 border-0 bg-transparent text-ink font-latin text-xs tracking-nav cursor-pointer focus:outline-none"
+              onchange="window.location.href = this.value">
+        <% currency_options.each do |opt| %>
+          <option value="<%= url_for(request.query_parameters.merge(set_currency: opt[:code])) %>" <%= "selected" if visitor_currency == opt[:code] %>><%= opt[:label] %></option>
+        <% end %>
+      </select>
+      <span aria-hidden="true" class="w-px h-3.5 bg-line-control"></span>
+      <span class="inline-flex items-center gap-2">
+        <%= link_to "EN", url_for(locale: :en), lang: "en", class: "vn-quiet font-latin text-xs tracking-nav #{'text-ink' if I18n.locale == :en}", "aria-current": (I18n.locale == :en ? "true" : nil) %>
+        <span aria-hidden="true" class="text-ink-subtle">|</span>
+        <%= link_to "العربية", url_for(locale: :ar), lang: "ar", class: "vn-quiet font-arabic text-[13px] #{'text-ink' if I18n.locale == :ar}", "aria-current": (I18n.locale == :ar ? "true" : nil) %>
+      </span>
+    </div>
+  </div>
+</div>
+
+<header class="sticky top-0 z-30 bg-surface border-b border-line text-ink"
+        x-data="{ mega: null, sub: null }"
+        @mouseleave="mega = null"
+        @keydown.escape.window="mega = null; mobileMenu = false; searchOpen = false">
+  <div class="vn-container min-h-16 md:min-h-[88px] grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4" @mouseenter="mega = null">
+    <div class="flex items-center">
+      <button type="button" class="vn-icon-btn vn-show-sm" @click="mobileMenu = !mobileMenu"
+              :aria-expanded="mobileMenu.toString()" aria-controls="hdr-menu"
+              :aria-label="mobileMenu ? '<%= j t("vene.header.close_menu") %>' : '<%= j t("vene.header.menu") %>'">
+        <span x-show="!mobileMenu"><%= vn_icon(:menu, size: 22) %></span>
+        <span x-show="mobileMenu" x-cloak><%= vn_icon(:close, size: 22) %></span>
+      </button>
+      <button type="button" class="vn-icon-btn" @click="searchOpen = !searchOpen; $nextTick(() => searchOpen && $refs.searchInput.focus())"
+              :aria-expanded="searchOpen.toString()" aria-controls="hdr-search" aria-label="<%= t('nav.search') %>">
+        <%= vn_icon(:search, size: 22) %>
+        <span class="vn-hide-sm text-xs tracking-nav uppercase"><%= t("nav.search") %></span>
+      </button>
+    </div>
+
+    <%= link_to root_path(locale: I18n.locale), lang: "en", dir: "ltr", class: "flex flex-col items-center gap-0.5 py-2 text-ink no-underline", "aria-label": t("vene.header.home_label") do %>
+      <span class="font-display font-medium text-[26px] leading-[26px] md:text-[32px] md:leading-8 tracking-nav uppercase ps-[0.12em]" style="font-family: var(--font-display); letter-spacing: var(--tracking-nav); text-transform: uppercase;">VENÈ</span>
+      <span class="font-latin text-[9px] leading-3 font-medium uppercase ps-[0.5em]" style="letter-spacing: 0.5em; text-transform: uppercase;">Jewelry</span>
+    <% end %>
+
+    <div class="flex items-center justify-end gap-1">
+      <% if user_signed_in? %>
+        <div class="relative" @click.outside="userMenu = false">
+          <button type="button" class="vn-icon-btn" @click="userMenu = !userMenu" :aria-expanded="userMenu.toString()" aria-haspopup="true" aria-label="<%= t('vene.header.account') %>">
+            <%= vn_icon(:user, size: 22) %>
+          </button>
+          <div x-show="userMenu" x-cloak x-transition.opacity.duration.300ms
+               class="absolute end-0 top-full mt-2 w-56 z-50 bg-surface-raised shadow-soft rounded-sm py-2">
+            <%= link_to t("orders.my_orders"), orders_path(locale: I18n.locale), class: "vn-quiet flex items-center min-h-11 px-5 text-sm" %>
+            <%= link_to t("wishlist.title"), wishlist_items_path(locale: I18n.locale), class: "vn-quiet flex items-center min-h-11 px-5 text-sm" %>
+            <%= button_to t("nav.logout"), destroy_user_session_path(locale: I18n.locale), method: :delete,
+                  class: "vn-quiet flex items-center w-full min-h-11 px-5 text-sm text-start bg-transparent border-0 cursor-pointer", form: { class: "w-full border-t border-line mt-1 pt-1" } %>
+          </div>
+        </div>
+      <% else %>
+        <%= link_to vn_icon(:user, size: 22), new_user_session_path(locale: I18n.locale), class: "vn-icon-btn", "aria-label": t("vene.header.account") %>
+      <% end %>
+      <%= link_to vn_icon(:heart, size: 22), wishlist_items_path(locale: I18n.locale), class: "vn-icon-btn vn-hide-sm", "aria-label": t("vene.header.wishlist") %>
+      <%= link_to cart_path(locale: I18n.locale), class: "vn-icon-btn", "aria-label": t("vene.header.bag_label", count: cart_item_count) do %>
+        <%= vn_icon(:bag, size: 22) %>
+        <span class="font-latin text-xs tracking-wide vn-num"><%= cart_item_count %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <nav aria-label="<%= t('vene.header.primary') %>" class="vn-hide-sm vn-container pb-3 flex flex-wrap justify-center gap-x-10 text-[13px] leading-5 tracking-nav uppercase rtl:text-[15px] rtl:leading-6">
+    <% menus.each do |menu| %>
+      <% category = menu.category %>
+      <%= link_to category.name(I18n.locale), category_path(category.slug, locale: I18n.locale),
+            class: "vn-navlink",
+            "aria-current": (category.slug == active_slug ? "page" : nil),
+            "aria-controls": (menu.sub_categories.any? ? "hdr-mega" : nil),
+            ":aria-expanded": (menu.sub_categories.any? ? "(mega === #{category.id}).toString()" : nil),
+            ":class": "mega === #{category.id} && '!text-gold-text !border-gold'",
+            "@mouseenter": "mega = #{menu.sub_categories.any? ? category.id : 'null'}",
+            "@focus": "mega = #{menu.sub_categories.any? ? category.id : 'null'}" %>
+    <% end %>
+  </nav>
+
+  <% menus.each do |menu| %>
+    <% next if menu.sub_categories.empty? %>
+    <% category = menu.category %>
+    <div id="hdr-mega" x-show="mega === <%= category.id %>" x-cloak x-transition.opacity.duration.300ms
+         class="vn-hide-sm absolute top-full inset-x-0 z-30 bg-surface border-y border-line shadow-lift">
+      <div class="vn-container pt-10 pb-12 grid grid-cols-[minmax(220px,1fr)_minmax(0,3fr)] gap-12">
+        <div class="flex flex-col gap-1">
+          <span class="vn-label"><%= category.name(I18n.locale) %></span>
+          <ul class="list-none mt-2 p-0 flex flex-col">
+            <% menu.sub_categories.each do |sub| %>
+              <li>
+                <%= link_to sub.name(I18n.locale), category_path(category.slug, locale: I18n.locale, subcategory: sub.slug),
+                      class: "vn-quiet !text-ink hover:!text-gold-text block py-2 font-display text-[22px] leading-7" %>
+              </li>
+            <% end %>
+          </ul>
+          <%= link_to category_path(category.slug, locale: I18n.locale), class: "vn-link self-start mt-5 text-xs tracking-nav uppercase rtl:text-sm" do %>
+            <%= t("vene.header.show_all", name: category.name(I18n.locale)) %> <span aria-hidden="true"><%= vn_arrow %></span>
+          <% end %>
+        </div>
+        <% if menu.products.any? %>
+          <div class="flex flex-col gap-4 min-w-0">
+            <span class="vn-label"><%= t("vene.header.featured") %></span>
+            <ul class="list-none m-0 p-0 grid grid-cols-4 gap-6">
+              <% menu.products.each do |product| %>
+                <li>
+                  <%= link_to product_path(product.slug, locale: I18n.locale), class: "vn-quiet !text-ink flex flex-col gap-2" do %>
+                    <span class="aspect-square overflow-hidden bg-media shadow-hairline flex items-center justify-center">
+                      <% if (src = vn_product_image_url(product)) %>
+                        <%= image_tag src, alt: "", loading: "lazy", class: "block w-[84%] h-[84%] object-contain" %>
+                      <% end %>
+                    </span>
+                    <span class="font-display font-medium text-lg leading-6"><%= product.name(I18n.locale) %></span>
+                    <span class="vn-small"><%= vn_price(product.current_price, css: "!text-[13px]") %></span>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div id="hdr-search" x-show="searchOpen" x-cloak x-transition.opacity.duration.300ms class="border-t border-line bg-surface">
+    <%= form_with url: search_path(locale: I18n.locale), method: :get, local: true, class: "vn-container py-5 flex items-end gap-4 max-w-[760px]" do %>
+      <div class="vn-field flex-1">
+        <label for="hdr-search-input" class="vn-field__label"><%= t("nav.search") %></label>
+        <input id="hdr-search-input" type="search" name="q" value="<%= params[:q] %>" x-ref="searchInput"
+               placeholder="<%= t('vene.header.search_placeholder') %>" class="vn-input">
+      </div>
+      <button type="submit" class="vn-btn vn-btn--primary vn-btn--sm"><%= t("nav.search") %></button>
+      <button type="button" class="vn-icon-btn" @click="searchOpen = false" aria-label="<%= t('common.close') %>"><%= vn_icon(:close, size: 20) %></button>
+    <% end %>
+  </div>
+
+  <nav id="hdr-menu" aria-label="<%= t('vene.header.primary') %>" x-show="mobileMenu" x-cloak
+       class="vn-show-sm flex flex-col px-[var(--gutter)] pt-2 pb-8 border-t border-line bg-surface max-h-[calc(100vh-64px)] overflow-y-auto">
+    <% menus.each do |menu| %>
+      <% category = menu.category %>
+      <div class="border-b border-line">
+        <% if menu.sub_categories.any? %>
+          <button type="button" class="w-full flex justify-between items-center min-h-14 p-0 bg-transparent border-0 cursor-pointer text-start text-ink font-display text-[26px] rtl:text-[22px]"
+                  @click="sub = sub === <%= category.id %> ? null : <%= category.id %>" :aria-expanded="(sub === <%= category.id %>).toString()">
+            <span><%= category.name(I18n.locale) %></span>
+            <span aria-hidden="true" class="font-latin text-xl text-ink-subtle" x-text="sub === <%= category.id %> ? '−' : '+'">+</span>
+          </button>
+          <ul x-show="sub === <%= category.id %>" x-cloak class="list-none m-0 p-0 pb-4 flex flex-col">
+            <% menu.sub_categories.each do |s| %>
+              <li><%= link_to s.name(I18n.locale), category_path(category.slug, locale: I18n.locale, subcategory: s.slug), class: "vn-quiet block py-2.5 text-[15px] leading-[22px]" %></li>
+            <% end %>
+            <li class="pt-2"><%= link_to t("vene.header.show_all", name: category.name(I18n.locale)), category_path(category.slug, locale: I18n.locale), class: "vn-link text-[13px]" %></li>
+          </ul>
+        <% else %>
+          <%= link_to category.name(I18n.locale), category_path(category.slug, locale: I18n.locale), class: "flex items-center min-h-14 text-ink font-display text-[26px] rtl:text-[22px]" %>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="flex flex-col gap-1 pt-4 text-sm">
+      <%= link_to wishlist_items_path(locale: I18n.locale), class: "vn-quiet inline-flex items-center gap-3 min-h-11" do %><%= vn_icon(:heart, size: 20) %><%= t("vene.header.wishlist") %><% end %>
+      <% if user_signed_in? %>
+        <%= link_to orders_path(locale: I18n.locale), class: "vn-quiet inline-flex items-center gap-3 min-h-11" do %><%= vn_icon(:package, size: 20) %><%= t("orders.my_orders") %><% end %>
+        <%= button_to destroy_user_session_path(locale: I18n.locale), method: :delete, class: "vn-quiet inline-flex items-center gap-3 min-h-11 bg-transparent border-0 p-0 cursor-pointer" do %><%= vn_icon(:logout, size: 20) %><%= t("nav.logout") %><% end %>
+      <% else %>
+        <%= link_to new_user_session_path(locale: I18n.locale), class: "vn-quiet inline-flex items-center gap-3 min-h-11" do %><%= vn_icon(:user, size: 20) %><%= t("vene.header.account") %><% end %>
+      <% end %>
+      <% if whatsapp.present? %>
+        <a href="https://wa.me/<%= whatsapp %>" target="_blank" rel="noopener" class="vn-quiet inline-flex items-center gap-3 min-h-11"><%= vn_icon(:message, size: 20) %><%= t("vene.header.whatsapp") %></a>
+      <% end %>
+    </div>
+  </nav>
+</header>

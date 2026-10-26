@@ -526,3 +526,33 @@ en:
         default_address: "Street Address"
   errors:
     not_authorized: "You are not authorized to access this area."
+  vene:
+    skip_to_content: "Skip to content"
+    brand:
+      tagline: "Handcrafted in Beirut. Made for the world."
+      lifetime: "Fine jewelry crafted to last a lifetime."
+    header:
+      whatsapp: "Order on WhatsApp"
+      account: "Your account"
+      wishlist: "Wishlist"
+      primary: "Primary"
+      featured: "Featured pieces"
+      show_all: "Show all %{name}"
+      menu: "Menu"
+      close_menu: "Close menu"
+      home_label: "VENÈ Jewelry, home"
+      search_placeholder: "Search rings, necklaces, earrings…"
+      bag_label:
+        one: "Shopping bag, 1 piece"
+        other: "Shopping bag, %{count} pieces"
+    footer:
+      shop: "Shop"
+      client_care: "Client care"
+      house: "The house"
+      track_order: "Track an order"
+      our_story: "Our story"
+      sign_in: "Sign in or create an account"
+      lead: "18K gold, diamonds and Silver 925, finished by hand in our atelier and delivered with DHL Express across Lebanon and the GCC."
+      copyright: "© %{year} VENÈ Jewelry · Handcrafted in Beirut, Lebanon"
+    ring_size:
+      eyebrow: "Find your fit"

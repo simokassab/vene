@@ -1,0 +1,16 @@
+<%# locals: (text:, tone: :success, variant: :card, css: nil) %>
+<%# Notice.dc.html. variant: card | toast | inline | banner; tone: success | error | note. %>
+<% tone = tone.to_sym; variant = variant.to_sym %>
+<% role = tone == :error ? "alert" : (variant == :banner ? "note" : "status") %>
+<% classes = case variant
+             when :banner then "vn-notice vn-notice--banner"
+             when :toast then "vn-notice shadow-soft"
+             when :inline then "inline-flex items-center gap-2 text-[15px] leading-6 #{tone == :error ? 'text-danger' : 'text-success'}"
+             else "vn-notice"
+             end %>
+<div role="<%= role %>" class="<%= [classes, ("vn-notice--error" if tone == :error && variant != :inline), css].compact.join(" ") %>">
+  <% if variant != :banner && tone == :success %>
+    <%= vn_icon(:check, size: 18, stroke: 1.5, tone: (variant == :inline ? :current : :success)) %>
+  <% end %>
+  <span><%= text %></span>
+</div>
