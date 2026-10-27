@@ -54,13 +54,31 @@ class Product < ApplicationRecord
     locale.to_sym == :ar ? description_ar : description_en
   end
 
+  # The cover photo: the default color's first photo (Yellow gold) when photos are tagged
+  # by color, otherwise the first photo. Uses loaded images to avoid N+1 queries.
   def primary_image
-    # If product_images are already loaded, use the loaded data to avoid N+1 queries
-    if association(:product_images).loaded?
-      product_images.min_by { |img| [img.position || 999, img.created_at] }
-    else
-      product_images.order(:position, :created_at).first
-    end
+    images = sorted_images
+    return images.first if images.none?(&:variant_option_id)
+
+    default_ids = VariantOption.default_choice_ids
+    images.find { |img| default_ids.include?(img.variant_option_id) } ||
+      images.find { |img| img.variant_option_id.nil? } ||
+      images.first
+  end
+
+  # Photos for one color first, then the shared (untagged) photos. With no color, every
+  # photo. Reads the loaded association, so callers that preload images run no query.
+  def images_for(option_id)
+    images = product_images.to_a
+    return images if option_id.nil?
+
+    images.select { |img| img.variant_option_id == option_id } + images.select { |img| img.variant_option_id.nil? }
+  end
+
+  def sorted_images
+    return product_images.order(:position, :created_at).to_a unless association(:product_images).loaded?
+
+    product_images.sort_by { |img| [ img.position || 999, img.created_at ] }
   end
 
   def featured_related(limit = 4)

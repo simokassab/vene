@@ -17,7 +17,7 @@
       <% items.each do |item| %>
         <% product = item.product %>
         <li>
-          <%= render "shared/vene/line_item", size: :sm, title: product.name(I18n.locale), image: vn_product_image_url(product, version: :thumb),
+          <%= render "shared/vene/line_item", size: :sm, title: product.name(I18n.locale), image: vn_product_image_url(product, version: :thumb, variant: item.product_variant),
                 meta: [item.product_variant&.display_name, "× #{item.quantity}"].compact.join(" · "),
                 price: (price_for ? price_for.call(item) : vn_price(item.line_total)) %>
         </li>

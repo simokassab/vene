@@ -31,7 +31,7 @@
               <td>
                 <% if item.product %>
                   <span class="flex items-center gap-3">
-                    <span class="ad-thumb"><% if (src = vn_product_image_url(item.product, version: :thumb)) %><%= image_tag src, alt: "" %><% end %></span>
+                    <span class="ad-thumb"><% if (src = vn_product_image_url(item.product, version: :thumb, variant: item.product_variant)) %><%= image_tag src, alt: "" %><% end %></span>
                     <span class="flex flex-col">
                       <span class="font-display text-lg leading-6"><%= item.product.name(I18n.locale) %></span>
                       <span class="ad-hint"><%= [item.product.sub_category&.name(I18n.locale), item.product_variant&.display_name].compact.join(" · ") %></span>

@@ -8,7 +8,7 @@
   <%= vn_email_text(t("mailers.wishlist_mailer.back_in_stock.body", product: @product.name)) %>
 <% end %>
 <%= vn_email_section(ground: :raised) do %>
-  <%= vn_email_line_item(name: @product.name, image: vn_email_image_url(@product), meta: @product.metal.presence,
+  <%= vn_email_line_item(name: @product.name, image: vn_email_image_url(@product, variant: @variant), meta: @product.metal.presence,
                          detail: @variant&.display_name, price: vn_email_usd(@wishlist_item.current_price)) %>
   <%= vn_email_button(t("mailers.wishlist_mailer.back_in_stock.cta"), product_url(@product.slug, locale: I18n.locale)) %>
 <% end %>

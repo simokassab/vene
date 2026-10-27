@@ -14,10 +14,9 @@ class Admin::ProductsController < Admin::BaseController
   def show; end
 
   def create
-    @product = Product.new(product_params.except(:images, :product_variants_attributes))
+    @product = Product.new(product_params.except(:images))
 
-    if @product.save
-      process_variants
+    if save_with_variants { @product.save }
       attach_images
       redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.created")
     else
@@ -28,8 +27,7 @@ class Admin::ProductsController < Admin::BaseController
   def edit; end
 
   def update
-    if @product.update(product_params.except(:images, :product_variants_attributes))
-      process_variants
+    if save_with_variants { @product.update(product_params.except(:images)) }
       attach_images
       redirect_to admin_products_path(locale: I18n.locale), notice: t("admin.products.updated")
     else
@@ -66,68 +64,52 @@ class Admin::ProductsController < Admin::BaseController
                                     :lead_time_en, :lead_time_ar,
                                     related_product_ids: [],
                                     images: [],
-                                    product_images_attributes: %i[id image position _destroy],
-                                    product_variants_attributes: %i[id name value variant_type_id variant_option_id stock_quantity active allow_preorder preorder_estimated_delivery_date _destroy])
+                                    product_images_attributes: %i[id image position variant_option_id _destroy])
+  end
+
+  # The grid posts product[variant_matrix][rows][n][option_ids][], stock and made-to-order
+  # per combination. Only present when the variants card was on the page.
+  def variant_matrix_rows
+    matrix = params.dig(:product, :variant_matrix)
+    return unless matrix&.dig(:submitted).present?
+
+    rows = matrix.fetch(:rows, {})
+    rows = rows.values if rows.respond_to?(:values)
+    rows.map do |row|
+      row.permit(:id, :stock_quantity, :allow_preorder, :active, :preorder_estimated_delivery_date, option_ids: []).to_h
+    end
+  end
+
+  # Product and variants save together, so a bad combination doesn't leave half an edit.
+  def save_with_variants
+    rows = variant_matrix_rows
+    saved = false
+    Product.transaction do
+      saved = yield
+      if saved && rows
+        result = Products::VariantMatrixSyncService.new(@product, rows).call
+        unless result.success?
+          result.errors.each { |message| @product.errors.add(:base, message) }
+          saved = false
+          raise ActiveRecord::Rollback
+        end
+      end
+    end
+    saved
   end
 
   def attach_images
     return unless params.dig(:product, :images).present?
 
+    # One color for the whole batch, so five rose gold photos go up in one go.
+    color_id = @product.product_variants.joins(:product_variant_options)
+                       .where(product_variant_options: { variant_option_id: params.dig(:product, :images_variant_option_id) })
+                       .pick("product_variant_options.variant_option_id")
     starting_position = (@product.product_images.maximum(:position) || 0) + 1
     params[:product][:images].each_with_index do |image_file, idx|
       next if image_file.blank?
 
-      @product.product_images.create(image: image_file, position: starting_position + idx)
-    end
-  end
-
-  def process_variants
-    return unless params.dig(:product, :product_variants_attributes).present?
-
-    variants_params = params[:product][:product_variants_attributes].values
-
-    variants_params.each do |variant_attrs|
-      # Skip if variant_option_id is blank (no variant selected)
-      next if variant_attrs[:variant_option_id].blank?
-
-      # Convert stock_quantity to integer
-      stock_qty = variant_attrs[:stock_quantity].to_i
-
-      # Find existing variant or initialize new one
-      if variant_attrs[:id].present?
-        # Update existing variant
-        variant = @product.product_variants.find_by(id: variant_attrs[:id])
-        if variant
-          variant.update(
-            variant_type_id: variant_attrs[:variant_type_id],
-            variant_option_id: variant_attrs[:variant_option_id],
-            stock_quantity: stock_qty,
-            active: variant_attrs[:active] == "1",
-            allow_preorder: variant_attrs[:allow_preorder] == "1",
-            preorder_estimated_delivery_date: variant_attrs[:preorder_estimated_delivery_date]
-          )
-        end
-      else
-        # Create new variant only if stock > 0 OR allow_preorder is true
-        if stock_qty > 0 || variant_attrs[:allow_preorder] == "1"
-          @product.product_variants.create(
-            variant_type_id: variant_attrs[:variant_type_id],
-            variant_option_id: variant_attrs[:variant_option_id],
-            stock_quantity: stock_qty,
-            active: variant_attrs[:active] == "1",
-            allow_preorder: variant_attrs[:allow_preorder] == "1",
-            preorder_estimated_delivery_date: variant_attrs[:preorder_estimated_delivery_date]
-          )
-        end
-      end
-    end
-
-    # Remove variants that are no longer in the submitted data
-    submitted_option_ids = variants_params.map { |v| v[:variant_option_id].to_i }.compact
-    @product.product_variants.each do |variant|
-      unless submitted_option_ids.include?(variant.variant_option_id)
-        variant.destroy
-      end
+      @product.product_images.create(image: image_file, position: starting_position + idx, variant_option_id: color_id)
     end
   end
 end

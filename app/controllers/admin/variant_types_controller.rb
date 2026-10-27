@@ -3,7 +3,7 @@ class Admin::VariantTypesController < Admin::BaseController
 
   def index
     @q = VariantType.includes(:variant_options).ransack(params[:q])
-    @pagy, @variant_types = pagy(@q.result, items: 20)
+    @pagy, @variant_types = pagy(@q.result.ordered, items: 20)
   end
 
   def new
@@ -44,7 +44,8 @@ class Admin::VariantTypesController < Admin::BaseController
   end
 
   def variant_type_params
-    params.require(:variant_type).permit(:name, :description, :active,
-                                         variant_options_attributes: %i[id value position active _destroy])
+    params.require(:variant_type).permit(:name, :name_ar, :description, :active, :display, :position, :drives_images,
+                                         variant_options_attributes: %i[id value value_ar slug swatch_color position
+                                                                        default_choice active _destroy])
   end
 end

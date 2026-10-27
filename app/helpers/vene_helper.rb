@@ -103,8 +103,9 @@ module VeneHelper
     end
   end
 
-  def vn_product_image_url(product, version: :medium)
-    image = product.primary_image&.image
+  # With a variant, the photo of its color (Rose gold), falling back to the cover photo.
+  def vn_product_image_url(product, version: :medium, variant: nil)
+    image = (variant&.primary_image || product.primary_image)&.image
     return if image.blank?
 
     version ? image.public_send(version).url : image.url

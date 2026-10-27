@@ -89,7 +89,7 @@ class InvoiceGenerator
     @order.order_items.each do |item|
       product_name = item.product.name_en || item.product.name_ar || "Product"
       if item.product_variant
-        product_name += "\n#{item.product_variant.display_name}"
+        product_name += "\n#{item.product_variant.display_name(:en)}"
       end
       table_data << [
         product_name,

@@ -7,108 +7,25 @@
   content_for :full_width, true
 %>
 <%
-  images = @product.product_images
-  primary_url = images.first&.image&.url
+  images = @product.product_images.to_a
+  primary_url = @product.primary_image&.image&.url
   name = @product.name(I18n.locale)
   category = @product.category
-
-  # Build variant stock data for Alpine.js
-  variant_stocks = {}
-  variant_preorder_status = {}
-  if @product.has_variants?
-    @product.product_variants.active.each do |pv|
-      variant_stocks[pv.id] = pv.stock_quantity
-      variant_preorder_status[pv.id] = {
-        allow_preorder: pv.allow_preorder?,
-        estimated_date: pv.estimated_delivery_date&.iso8601,
-        is_preorder_only: pv.preorder_only?
-      }
-    end
-  end
   metal_line = [@product.metal, @product.diamonds, @product.gemstones].compact_blank.join(" · ")
+  page_config = {
+    primaryUrl: primary_url,
+    images: images.map { |img| img.image.url },
+    hasVariants: @product.has_variants?,
+    product: { stock: @product.stock_quantity, allowPreorder: @product.allow_preorder?,
+               estimatedDate: @product.estimated_delivery_date&.iso8601 || "",
+               madeToOrder: @product.made_to_order?, purchasable: @product.purchasable? },
+    picker: (vn_variant_picker_data(@product, images) if @product.has_variants?)
+  }
 %>
 <%# Product.dc.html: gallery on the start side, the buy box beside it, accordions under the
-    actions, then related pieces. The Alpine state below is the product's purchase logic and is
-    kept as it was; only the markup around it changed. %>
-<div x-data="{
-  activeImage: '<%= primary_url || '' %>',
-  quantity: 1,
-  selectedVariant: null,
-  showImageModal: false,
-  imageZoom: false,
-  zoomX: 0,
-  zoomY: 0,
-  hasVariants: <%= @product.has_variants? %>,
-  productStockQuantity: <%= @product.stock_quantity %>,
-  variantStocks: <%= variant_stocks.to_json %>,
-  variantPreorderStatus: <%= variant_preorder_status.to_json %>,
-  productAllowPreorder: <%= @product.allow_preorder? %>,
-  productEstimatedDate: '<%= @product.estimated_delivery_date&.iso8601 %>',
-  // Made to order: driven by the flag alone, never by stock level. The property keeps its
-  // historical name because the purchase logic below refers to it.
-  productPreorderOnly: <%= @product.made_to_order? %>,
-  viewingVideo: false,
-
-  // Simple properties - NO getters to avoid reactivity issues
-  currentStock: <%= @product.stock_quantity %>,
-  currentMaxQty: <%= @product.stock_quantity %>,
-  currentIsPreorder: <%= @product.made_to_order? %>,
-  currentCanPurchase: <%= @product.purchasable? %>,
-  currentEstimatedDate: '<%= @product.estimated_delivery_date&.iso8601 %>',
-
-  updateCurrentState() {
-    if (this.hasVariants && this.selectedVariant) {
-      const stock = this.variantStocks[this.selectedVariant] || 0;
-      const variantStatus = this.variantPreorderStatus[this.selectedVariant];
-      const allowPreorder = variantStatus?.allow_preorder || false;
-
-      this.currentStock = stock;
-      // OR-semantics, mirroring Product#made_to_order_with?: the product's own flag wins
-      // even when the selected variant is not itself made to order.
-      this.currentIsPreorder = this.productAllowPreorder || allowPreorder;
-      this.currentCanPurchase = stock > 0 || allowPreorder;
-      this.currentMaxQty = stock;
-      this.currentEstimatedDate = variantStatus?.estimated_date || '';
-    } else {
-      this.currentStock = this.productStockQuantity;
-      this.currentIsPreorder = this.productPreorderOnly;
-      this.currentCanPurchase = this.productStockQuantity > 0 || this.productAllowPreorder;
-      this.currentMaxQty = this.productStockQuantity;
-      this.currentEstimatedDate = this.productEstimatedDate;
-    }
-  },
-  incrementQuantity() {
-    if (this.quantity < this.currentMaxQty) {
-      this.quantity++;
-    }
-  },
-  decrementQuantity() {
-    if (this.quantity > 1) {
-      this.quantity--;
-    }
-  },
-  handleMouseMove(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    this.zoomX = ((e.clientX - rect.left) / rect.width) * 100;
-    this.zoomY = ((e.clientY - rect.top) / rect.height) * 100;
-  },
-  init() {
-    this.$watch('selectedVariant', () => {
-      // Reset quantity to 1 when variant changes
-      this.quantity = 1;
-    });
-    this.$watch('quantity', (value) => {
-      // Ensure quantity doesn't exceed max. The property is currentMaxQty — reading the
-      // non-existent this.maxQuantity here used to silently set quantity to undefined.
-      if (this.currentMaxQty > 0 && value > this.currentMaxQty) {
-        this.quantity = this.currentMaxQty;
-      }
-      if (value < 1) {
-        this.quantity = 1;
-      }
-    });
-  }
-}" @keydown.escape.window="showImageModal = false" class="vn-container">
+    actions, then related pieces. State lives in components/product_page.js: the picker
+    (color swaps the photos), and the purchase logic, which reads selectedVariant. %>
+<div x-data="productPage(<%= page_config.to_json %>)" @keydown.escape.window="showImageModal = false" class="vn-container">
   <%= render "shared/vene/breadcrumb", trail: [[category.name(I18n.locale), category_path(category.slug, locale: I18n.locale)]], current: name %>
 
   <div class="flex flex-wrap items-start gap-y-12 gap-x-[clamp(48px,6vw,96px)] pb-[var(--section)]">
@@ -147,7 +64,7 @@
         </div>
       </div>
       <% if images.size > 1 || @product.video.present? %>
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-4 gap-4" x-show="gallery.length > 1 || <%= @product.video.present? %>">
           <% if @product.video.present? %>
             <button type="button" @click="viewingVideo = true; imageZoom = false" :aria-pressed="viewingVideo.toString()"
                     class="aspect-square bg-surface-sunken flex flex-col items-center justify-center gap-1 cursor-pointer border transition-colors duration-400"
@@ -156,15 +73,16 @@
               <span class="vn-label !text-[10px] rtl:!text-xs"><%= t("products.video") %></span>
             </button>
           <% end %>
-          <% images.each_with_index do |img, index| %>
-            <button type="button" @click="activeImage = '<%= img.image.url %>'; imageZoom = false; viewingVideo = false"
-                    :aria-pressed="(activeImage === '<%= img.image.url %>' && !viewingVideo).toString()"
-                    aria-label="<%= t('vene.product.show_image', number: index + 1, count: images.size) %>"
+          <%# The gallery follows the chosen color: its own photos, then the shared ones. %>
+          <template x-for="(src, index) in gallery" :key="src">
+            <button type="button" @click="activeImage = src; imageZoom = false; viewingVideo = false"
+                    :aria-pressed="(activeImage === src && !viewingVideo).toString()"
+                    :aria-label="'<%= j t('vene.product.show_image', number: '__N__', count: '__C__') %>'.replace('__N__', index + 1).replace('__C__', gallery.length)"
                     class="aspect-square bg-media shadow-hairline cursor-pointer border transition-colors duration-400 p-1"
-                    :class="(activeImage === '<%= img.image.url %>' && !viewingVideo) ? 'border-ink' : 'border-transparent hover:border-line-control'">
-              <%= image_tag img.image.url, alt: "", loading: "lazy", class: "block w-full h-full object-contain" %>
+                    :class="(activeImage === src && !viewingVideo) ? 'border-ink' : 'border-transparent hover:border-line-control'">
+              <img :src="src" alt="" loading="lazy" class="block w-full h-full object-contain">
             </button>
-          <% end %>
+          </template>
         </div>
       <% end %>
     </section>
@@ -190,47 +108,44 @@
       </div>
 
       <% if @product.has_variants? %>
-        <%
-          first_variant = @product.product_variants.active.first
-          variant_type = first_variant&.variant_type
-          variant_type_name = variant_type&.name || first_variant&.name || t("auth.select_option")
-          all_variant_options = variant_type ? variant_type.variant_options.active.ordered : []
-          product_variants_by_option = @product.product_variants.active.index_by(&:variant_option_id)
-          ring = category.slug.to_s.include?("ring") || variant_type_name.to_s.casecmp?("size")
-        %>
-        <div role="group" aria-labelledby="variant-label" class="pt-6 border-t border-line flex flex-col gap-4 min-w-0">
-          <div class="flex justify-between items-baseline gap-4">
-            <span id="variant-label" class="vn-label"><%= variant_type_name %></span>
-            <% if ring %>
-              <button type="button" class="vn-link bg-transparent border-x-0 border-t-0 cursor-pointer text-[13px] leading-5 p-0 pb-0.5" @click="ringSizeModal = true"><%= t("footer.ring_size_guide") %></button>
-            <% end %>
-          </div>
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-2">
-            <% all_variant_options.each do |variant_option| %>
-              <% product_variant = product_variants_by_option[variant_option.id] %>
-              <% in_stock = product_variant && product_variant.stock_quantity > 0 %>
-              <% can_preorder = product_variant && product_variant.allow_preorder? %>
-              <% if in_stock || can_preorder %>
-                <button type="button" class="vn-chip !px-0 justify-center relative font-latin vn-num !tracking-wide"
-                        @click="selectedVariant = <%= product_variant.id %>; updateCurrentState()"
-                        :aria-pressed="(selectedVariant === <%= product_variant.id %>).toString()"
-                        <% if can_preorder && !in_stock %>title="<%= t('products.available_preorder') %>"<% end %>>
-                  <bdi><%= variant_option.value %></bdi>
-                  <% if can_preorder && !in_stock %>
-                    <span aria-hidden="true" class="absolute top-1.5 end-1.5 w-1.5 h-1.5 bg-gold"></span>
-                    <span class="sr-only"><%= t("products.available_preorder") %></span>
-                  <% end %>
-                </button>
-              <% else %>
-                <span class="vn-chip !px-0 justify-center font-latin vn-num opacity-40 line-through cursor-not-allowed" aria-disabled="true" title="<%= t('products.out_of_stock') %>">
-                  <bdi><%= variant_option.value %></bdi><span class="sr-only"> — <%= t("products.out_of_stock") %></span>
+        <%# One row per type. Sold-out and missing combinations stay in place, greyed out, and
+            remain selectable so a color's photos can still be seen. %>
+        <div class="pt-6 border-t border-line flex flex-col gap-6 min-w-0">
+          <template x-for="type in types" :key="type.id">
+            <div role="group" :aria-labelledby="`variant-label-${type.id}`" class="flex flex-col gap-4">
+              <div class="flex justify-between items-baseline gap-4">
+                <span :id="`variant-label-${type.id}`" class="vn-label">
+                  <span x-text="type.name"></span><span x-show="chosenLabel(type.id)" class="!text-ink"> · <bdi x-text="chosenLabel(type.id)"></bdi></span>
                 </span>
-              <% end %>
-            <% end %>
-          </div>
-          <p x-show="!selectedVariant && hasVariants" class="m-0 text-[13px] leading-5 text-ink-muted">
-            <%= t("auth.please_select", option: variant_type_name.downcase) %>
-          </p>
+                <button type="button" x-show="type.size" class="vn-link bg-transparent border-x-0 border-t-0 cursor-pointer text-[13px] leading-5 p-0 pb-0.5" @click="ringSizeModal = true"><%= t("footer.ring_size_guide") %></button>
+              </div>
+              <div x-show="type.swatch" class="flex flex-wrap gap-5 ps-1">
+                <template x-for="option in type.options" :key="option.id">
+                  <button type="button" class="vn-metal"
+                          :class="[isChosen(type.id, option.id) && 'is-active', ['yellow','rose','white'].includes(option.swatch) && `vn-metal--${option.swatch}`, optionState(type.id, option.id) !== 'ok' && 'opacity-40']"
+                          :style="option.swatch && option.swatch.startsWith('#') ? `background:${option.swatch}` : ''"
+                          :aria-pressed="isChosen(type.id, option.id).toString()"
+                          :aria-label="option.label + (optionState(type.id, option.id) === 'ok' ? '' : ' — <%= j t('products.out_of_stock') %>')"
+                          :title="option.label"
+                          @click="choose(type.id, option.id)"></button>
+                </template>
+              </div>
+              <div x-show="!type.swatch" class="flex flex-wrap gap-2">
+                <template x-for="option in type.options" :key="option.id">
+                  <button type="button" class="vn-chip min-w-14 !px-4 justify-center relative font-latin vn-num !tracking-wide"
+                          :class="[isChosen(type.id, option.id) && 'is-active', optionState(type.id, option.id) !== 'ok' && 'opacity-40 line-through']"
+                          :aria-pressed="isChosen(type.id, option.id).toString()"
+                          @click="choose(type.id, option.id)">
+                    <bdi x-text="option.label"></bdi>
+                    <span class="sr-only" x-show="optionState(type.id, option.id) !== 'ok'"> — <%= t("products.out_of_stock") %></span>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </template>
+          <p x-show="!allChosen()" class="m-0 text-[13px] leading-5 text-ink-muted"
+             x-text="'<%= j t('auth.please_select', option: '__OPTION__') %>'.replace('__OPTION__', missingTypeNames().join(' · '))"></p>
+          <p x-show="combinationMissing" x-cloak role="status" class="m-0 text-[13px] leading-5 text-ink-muted"><%= t("vene.product.combination_missing") %></p>
         </div>
       <% end %>
 
@@ -255,8 +170,8 @@
           # One href per variant so the enquiry names the exact piece.
           wa_hrefs = { "default" => made_to_order_whatsapp_url(@product, url: request.original_url) }
           if @product.has_variants?
-            # display_name reads variant_type and variant_option, so eager-load both.
-            @product.product_variants.active.includes(:variant_type, :variant_option).each do |pv|
+            # display_name reads each option and its type, so eager-load both.
+            @product.product_variants.active.includes(:variant_type, :variant_option, product_variant_options: %i[variant_type variant_option]).each do |pv|
               wa_hrefs[pv.id.to_s] = made_to_order_whatsapp_url(@product, variant: pv, url: request.original_url)
             end
           end

@@ -1,5 +1,6 @@
 <% tf = "vene.admin.product_form" %>
 <% vf = "vene.admin.variant_form" %>
+<% swatch_tokens = VariantOption::SWATCH_TOKENS %>
 <%= form_with(model: [:admin, @variant_type], data: { turbo: false }) do |form| %>
   <%= render "shared/vene/form_errors", record: @variant_type, title: t("#{tf}.fix") %>
   <div class="flex flex-wrap items-start gap-6 mt-2">
@@ -7,6 +8,13 @@
       <%= render "admin/shared/card", title: t("#{tf}.details") do %>
         <div class="ad-grid-2">
           <div class="ad-field"><%= form.label :name, t("admin.variant_types.name"), class: "ad-label" %><%= form.text_field :name, class: "ad-input", placeholder: t("#{vf}.name_placeholder") %></div>
+          <div class="ad-field"><%= form.label :name_ar, t("#{vf}.name_ar"), class: "ad-label" %><%= form.text_field :name_ar, class: "ad-input font-arabic", dir: "rtl", lang: "ar" %></div>
+          <div class="ad-field">
+            <%= form.label :display, t("#{vf}.display"), class: "ad-label" %>
+            <%= form.select :display, VariantType::DISPLAYS.map { |d| [t("#{vf}.display_#{d}"), d] }, {}, class: "ad-select" %>
+          </div>
+          <div class="ad-field"><%= form.label :position, t("#{vf}.order"), class: "ad-label" %><%= form.number_field :position, class: "ad-input font-latin" %><span class="ad-hint"><%= t("#{vf}.order_hint") %></span></div>
+          <label class="vn-check col-span-full"><%= form.check_box :drives_images %><span><%= t("#{vf}.drives_images") %><span class="vn-check__hint"><%= t("#{vf}.drives_images_hint") %></span></span></label>
           <div class="ad-field col-span-full"><%= form.label :description, t("#{vf}.description"), class: "ad-label" %><%= form.text_area :description, rows: 2, class: "ad-textarea" %></div>
         </div>
       <% end %>
@@ -19,33 +27,48 @@
           <h2 class="ad-h2"><%= t("admin.variant_types.options") %></h2>
           <p class="m-0 ad-hint"><%= t("#{vf}.options_text") %></p>
         </header>
-        <div class="flex flex-col">
-          <div class="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)_auto_auto] gap-x-4 pb-2 border-b border-ink ad-label" aria-hidden="true">
-            <span><%= t("#{vf}.value") %></span><span><%= t("#{vf}.order") %></span><span><%= t("#{tf}.active") %></span><span></span>
-          </div>
+        <%# One block per option. "Default" works like a radio: ticking one unticks the others,
+            and VariantOption keeps one default per type on the server too. %>
+        <div class="flex flex-col" @change="if ($event.target.matches('.default-choice') && $event.target.checked) $root.querySelectorAll('.default-choice').forEach(el => { if (el !== $event.target) el.checked = false })">
           <%= form.fields_for :variant_options do |option_form| %>
-            <div class="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)_auto_auto] gap-x-4 items-center py-2 border-b border-line" x-data="{ show: true }" x-show="show">
+            <div class="flex flex-wrap items-end gap-x-4 gap-y-3 py-4 border-b border-line" x-data="{ show: true }" x-show="show">
               <%= option_form.hidden_field :id %>
               <%= option_form.hidden_field :_destroy, value: "0", class: "destroy-field" %>
-              <%= option_form.text_field :value, class: "ad-input font-latin", "aria-label": t("#{vf}.value") %>
-              <%= option_form.number_field :position, class: "ad-input font-latin", "aria-label": t("#{vf}.order") %>
-              <label class="vn-check !text-[13px]"><%= option_form.check_box :active %><span class="sr-only"><%= t("#{tf}.active") %></span></label>
-              <button type="button" class="ad-textbtn !text-danger" @click="$el.closest('[x-data]').querySelector('.destroy-field').value = '1'; show = false"><%= t("cart.remove") %></button>
+              <label class="ad-field flex-[2_1_160px]"><span class="ad-label"><%= t("#{vf}.value") %></span><%= option_form.text_field :value, class: "ad-input font-latin" %></label>
+              <label class="ad-field flex-[2_1_160px]"><span class="ad-label"><%= t("#{vf}.value_ar") %></span><%= option_form.text_field :value_ar, class: "ad-input font-arabic", dir: "rtl", lang: "ar" %></label>
+              <label class="ad-field flex-[1_1_120px]"><span class="ad-label"><%= t("#{vf}.slug") %></span><%= option_form.text_field :slug, class: "ad-input font-latin", dir: "ltr" %></label>
+              <label class="ad-field flex-[1_1_140px]">
+                <span class="ad-label"><%= t("#{vf}.swatch") %></span>
+                <%= option_form.text_field :swatch_color, class: "ad-input font-latin", dir: "ltr", list: "swatch-tokens", placeholder: "yellow / #B76E79" %>
+              </label>
+              <label class="ad-field !w-20"><span class="ad-label"><%= t("#{vf}.order") %></span><%= option_form.number_field :position, class: "ad-input font-latin" %></label>
+              <label class="vn-check !text-[13px] min-h-11"><%= option_form.check_box :default_choice, class: "default-choice" %><span><%= t("#{vf}.default") %></span></label>
+              <label class="vn-check !text-[13px] min-h-11"><%= option_form.check_box :active %><span><%= t("#{tf}.active") %></span></label>
+              <button type="button" class="ad-textbtn !text-danger min-h-11" @click="$el.closest('[x-data]').querySelector('.destroy-field').value = '1'; show = false"><%= t("cart.remove") %></button>
             </div>
           <% end %>
           <template x-for="(option, index) in newOptions" :key="option.key">
-            <div class="grid grid-cols-[minmax(0,3fr)_minmax(0,1fr)_auto_auto] gap-x-4 items-center py-2 border-b border-line">
-              <input type="text" class="ad-input font-latin" :name="`variant_type[variant_options_attributes][${option.key}][value]`" x-model="option.value" placeholder="48" aria-label="<%= t("#{vf}.value") %>">
-              <input type="number" class="ad-input font-latin" :name="`variant_type[variant_options_attributes][${option.key}][position]`" x-model="option.position" aria-label="<%= t("#{vf}.order") %>">
-              <label class="vn-check !text-[13px]">
+            <div class="flex flex-wrap items-end gap-x-4 gap-y-3 py-4 border-b border-line">
+              <label class="ad-field flex-[2_1_160px]"><span class="ad-label"><%= t("#{vf}.value") %></span><input type="text" class="ad-input font-latin" :name="`variant_type[variant_options_attributes][${option.key}][value]`" x-model="option.value" placeholder="48"></label>
+              <label class="ad-field flex-[2_1_160px]"><span class="ad-label"><%= t("#{vf}.value_ar") %></span><input type="text" class="ad-input font-arabic" dir="rtl" lang="ar" :name="`variant_type[variant_options_attributes][${option.key}][value_ar]`"></label>
+              <label class="ad-field flex-[1_1_140px]"><span class="ad-label"><%= t("#{vf}.swatch") %></span><input type="text" class="ad-input font-latin" dir="ltr" list="swatch-tokens" placeholder="yellow / #B76E79" :name="`variant_type[variant_options_attributes][${option.key}][swatch_color]`"></label>
+              <label class="ad-field !w-20"><span class="ad-label"><%= t("#{vf}.order") %></span><input type="number" class="ad-input font-latin" :name="`variant_type[variant_options_attributes][${option.key}][position]`" x-model="option.position"></label>
+              <label class="vn-check !text-[13px] min-h-11">
+                <input type="hidden" :name="`variant_type[variant_options_attributes][${option.key}][default_choice]`" value="0">
+                <input type="checkbox" class="default-choice" :name="`variant_type[variant_options_attributes][${option.key}][default_choice]`" value="1">
+                <span><%= t("#{vf}.default") %></span>
+              </label>
+              <label class="vn-check !text-[13px] min-h-11">
                 <input type="hidden" :name="`variant_type[variant_options_attributes][${option.key}][active]`" value="0">
                 <input type="checkbox" :name="`variant_type[variant_options_attributes][${option.key}][active]`" x-model="option.active" value="1">
-                <span class="sr-only"><%= t("#{tf}.active") %></span>
+                <span><%= t("#{tf}.active") %></span>
               </label>
-              <button type="button" class="ad-textbtn !text-danger" @click="removeNewOption(index)"><%= t("cart.remove") %></button>
+              <button type="button" class="ad-textbtn !text-danger min-h-11" @click="removeNewOption(index)"><%= t("cart.remove") %></button>
             </div>
           </template>
+          <datalist id="swatch-tokens"><% swatch_tokens.each do |token| %><option value="<%= token %>"></option><% end %></datalist>
         </div>
+        <p class="m-0 mt-3 ad-hint"><%= t("#{vf}.swatch_hint") %></p>
         <button type="button" class="vn-btn vn-btn--outline vn-btn--sm mt-5" @click="addOption"><%= vn_icon(:plus, size: 16) %><span><%= t("#{vf}.add_option") %></span></button>
       </section>
     </div>

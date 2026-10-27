@@ -5,7 +5,7 @@ class Storefront::WishlistsController < ApplicationController
   def index
     @wishlist_items = current_user.wishlist_items
                                   .includes(product: [:product_images, :sub_category])
-                                  .includes(:product_variant)
+                                  .includes(product_variant: ProductVariant::DISPLAY_INCLUDES)
                                   .order(created_at: :desc)
   end
 

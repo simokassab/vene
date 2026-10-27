@@ -99,7 +99,7 @@ class Cart
     variant_ids = cart_data.map { |d| d[:variant_id] }.compact.uniq
 
     products = Product.where(id: product_ids).includes(:category).index_by(&:id)
-    variants = ProductVariant.where(id: variant_ids).index_by(&:id) if variant_ids.any?
+    variants = ProductVariant.includes(*ProductVariant::DISPLAY_INCLUDES).where(id: variant_ids).index_by(&:id) if variant_ids.any?
     variants ||= {}
 
     cart_data.map do |data|

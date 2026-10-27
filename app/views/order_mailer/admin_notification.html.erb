@@ -26,7 +26,7 @@
   <% @order.order_items.each do |item| %>
     <%= vn_email_line_item(
           name: item.product.name_en,
-          image: vn_email_image_url(item.product),
+          image: vn_email_image_url(item.product, variant: item.product_variant),
           meta: item.product_variant&.display_name,
           detail: [t("vene.email.qty", count: item.quantity), "#{vn_email_order_price(item.unit_price, @order)} #{t('cart.each')}", (t("vene.email.made_to_order") if item.is_preorder)].compact.join(" · "),
           price: vn_email_order_price(item.line_total, @order)) %>

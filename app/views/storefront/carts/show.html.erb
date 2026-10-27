@@ -31,7 +31,7 @@
             <% unit = capture do %><%= vn_price(item.unit_price) %> <%= t("cart.each") %><% if product.on_sale_with_price? %> <s class="text-ink-subtle"><%= vn_price(product.price) %></s><% end %><% end %>
             <li class="py-8 border-b border-line">
               <%= render "shared/vene/line_item", size: :lg, heading: :h2, href: href, title: product.name(I18n.locale),
-                    image: vn_product_image_url(product), meta: meta.presence || product.category.name(I18n.locale),
+                    image: vn_product_image_url(product, variant: item.product_variant), meta: meta.presence || product.category.name(I18n.locale),
                     detail: unit, price: vn_price(item.line_total) do %>
                 <span x-data="{ qty: <%= item.quantity %> }" class="contents">
                 <%= form_with url: update_item_cart_path(locale: I18n.locale), method: :patch, local: true,

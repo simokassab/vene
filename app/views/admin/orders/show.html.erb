@@ -16,7 +16,7 @@
         <% @order.order_items.each do |item| %>
           <li class="flex items-center gap-4 py-4 border-b border-line first:pt-0">
             <span class="ad-thumb !w-16 !h-16">
-              <% if (src = vn_product_image_url(item.product, version: :thumb)) %><%= image_tag src, alt: "" %><% end %>
+              <% if (src = vn_product_image_url(item.product, version: :thumb, variant: item.product_variant)) %><%= image_tag src, alt: "" %><% end %>
             </span>
             <span class="flex-1 min-w-0 flex flex-col">
               <%= link_to item.product.name(I18n.locale), edit_admin_product_path(item.product, locale: I18n.locale), class: "vn-quiet !text-ink font-display text-xl leading-7" %>

@@ -82,7 +82,7 @@ class Admin::OrdersController < Admin::BaseController
   private
 
   def set_order
-    @order = Order.includes(order_items: { product: [:sub_category, :product_images], product_variant: [] }).find(params[:id])
+    @order = Order.includes(order_items: { product: [:sub_category, :product_images], product_variant: ProductVariant::DISPLAY_INCLUDES }).find(params[:id])
   end
 
   def order_params

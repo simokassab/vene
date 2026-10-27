@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_27_100200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -178,6 +178,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
     t.integer "position", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "variant_option_id"
+    t.index ["product_id", "variant_option_id", "position"], name: "idx_on_product_id_variant_option_id_position_0a6fc04f9e"
     t.index ["product_id"], name: "index_product_images_on_product_id"
   end
 
@@ -189,6 +191,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
     t.index ["product_id", "related_product_id"], name: "index_product_relations_on_product_id_and_related_product_id", unique: true
     t.index ["product_id"], name: "index_product_relations_on_product_id"
     t.index ["related_product_id"], name: "index_product_relations_on_related_product_id"
+  end
+
+  create_table "product_variant_options", force: :cascade do |t|
+    t.bigint "product_variant_id", null: false
+    t.bigint "variant_type_id", null: false
+    t.bigint "variant_option_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_variant_id", "variant_type_id"], name: "index_pv_options_one_per_type", unique: true
+    t.index ["variant_option_id"], name: "index_product_variant_options_on_variant_option_id"
+    t.index ["variant_type_id"], name: "index_product_variant_options_on_variant_type_id"
   end
 
   create_table "product_variants", force: :cascade do |t|
@@ -203,8 +216,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
     t.bigint "variant_option_id"
     t.boolean "allow_preorder", default: false, null: false
     t.date "preorder_estimated_delivery_date"
+    t.string "option_signature"
     t.index ["allow_preorder"], name: "index_product_variants_on_allow_preorder"
     t.index ["product_id", "name", "value"], name: "index_variants_on_product_name_value", unique: true
+    t.index ["product_id", "option_signature"], name: "index_product_variants_on_signature", unique: true, where: "(option_signature IS NOT NULL)"
     t.index ["product_id"], name: "index_product_variants_on_product_id"
     t.index ["variant_option_id"], name: "index_product_variants_on_variant_option_id"
     t.index ["variant_type_id"], name: "index_product_variants_on_variant_type_id"
@@ -323,8 +338,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "value_ar"
+    t.string "slug"
+    t.string "swatch_color"
+    t.boolean "default_choice", default: false, null: false
+    t.index ["variant_type_id", "slug"], name: "index_variant_options_on_variant_type_id_and_slug", unique: true, where: "(slug IS NOT NULL)"
     t.index ["variant_type_id", "value"], name: "index_variant_options_on_variant_type_id_and_value", unique: true
     t.index ["variant_type_id"], name: "index_variant_options_on_variant_type_id"
+    t.index ["variant_type_id"], name: "index_variant_options_one_default_per_type", unique: true, where: "default_choice"
   end
 
   create_table "variant_types", force: :cascade do |t|
@@ -333,6 +354,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name_ar"
+    t.integer "position", default: 0, null: false
+    t.string "display", default: "text", null: false
+    t.boolean "drives_images", default: false, null: false
     t.index ["name"], name: "index_variant_types_on_name", unique: true
   end
 
@@ -363,8 +388,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_24_120000) do
   add_foreign_key "orders", "coupons", on_delete: :nullify
   add_foreign_key "orders", "users"
   add_foreign_key "product_images", "products"
+  add_foreign_key "product_images", "variant_options", on_delete: :nullify
   add_foreign_key "product_relations", "products"
   add_foreign_key "product_relations", "products", column: "related_product_id"
+  add_foreign_key "product_variant_options", "product_variants", on_delete: :cascade
+  add_foreign_key "product_variant_options", "variant_options"
+  add_foreign_key "product_variant_options", "variant_types"
   add_foreign_key "product_variants", "products"
   add_foreign_key "product_variants", "variant_options"
   add_foreign_key "product_variants", "variant_types"

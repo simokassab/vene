@@ -8,7 +8,7 @@
   <%= vn_email_text(t("mailers.wishlist_mailer.price_drop.body", product: @product.name, percentage: @percentage)) %>
 <% end %>
 <%= vn_email_section(ground: :raised) do %>
-  <%= vn_email_line_item(name: @product.name, image: vn_email_image_url(@product), meta: @product.metal.presence,
+  <%= vn_email_line_item(name: @product.name, image: vn_email_image_url(@product, variant: @variant), meta: @product.metal.presence,
                          detail: @variant&.display_name, price: vn_email_usd(@current_price)) %>
   <%= vn_email_totals([[t("wishlist.original_price"), vn_email_usd(@original_price)],
                        [t("wishlist.you_save"), "#{vn_email_usd(@original_price - @current_price)} (#{@percentage}%)"]],

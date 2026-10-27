@@ -93,75 +93,133 @@
         </div>
       <% end %>
 
-      <%
-        variant_types_data = VariantType.includes(:variant_options).active.map do |vt|
-          {
-            id: vt.id,
-            name: vt.name,
-            options: vt.variant_options.active.ordered.map do |vo|
-              existing_pv = @product.product_variants.find { |pv| pv.variant_option_id == vo.id }
-              {
-                variant_option_id: vo.id,
-                value: vo.value,
-                stock_quantity: existing_pv&.stock_quantity || 0,
-                id: existing_pv&.id,
-                active: existing_pv&.active || true,
-                allow_preorder: existing_pv&.allow_preorder || false,
-                preorder_estimated_delivery_date: existing_pv&.preorder_estimated_delivery_date&.iso8601 || ""
-              }
-            end
-          }
-        end
-        selected_variant_type_id = @product.product_variants.first&.variant_type_id || nil
-      %>
-      <section class="ad-card"
-               x-data="{
-                 selectedVariantTypeId: <%= selected_variant_type_id.to_json %>,
-                 variantTypes: <%= variant_types_data.to_json %>,
-                 get currentVariantType() { return this.variantTypes.find(vt => vt.id === this.selectedVariantTypeId); },
-                 get currentOptions() { return this.currentVariantType?.options || []; },
-                 shouldSubmitVariant(option) { return option.id || option.stock_quantity > 0; }
-               }">
+      <%# The variant grid: types, their options, then one row per combination. Rows post as
+          product[variant_matrix][rows][n]; Products::VariantMatrixSyncService saves them. %>
+      <% mf = "vene.admin.variant_matrix" %>
+      <section class="ad-card" x-data="variantMatrix(<%= admin_variant_matrix_data(@product).to_json %>)">
+        <input type="hidden" name="product[variant_matrix][submitted]" value="1">
         <header class="flex flex-wrap items-start justify-between gap-4 mb-5">
           <div class="flex flex-col gap-1">
             <h2 class="ad-h2"><%= t("#{tf}.variants") %></h2>
-            <p class="m-0 ad-hint"><%= t("#{tf}.variants_text") %></p>
+            <p class="m-0 ad-hint"><%= t("#{mf}.intro") %></p>
           </div>
           <%= link_to t("vene.admin.nav.variant_types"), admin_variant_types_path(locale: I18n.locale), target: "_blank", class: "ad-textbtn" %>
         </header>
-        <div class="ad-field max-w-[320px] mb-6">
-          <label for="variant-type" class="ad-label"><%= t("#{tf}.variant_type") %></label>
-          <select id="variant-type" x-model.number="selectedVariantTypeId" class="ad-select">
-            <option value=""><%= t("#{tf}.no_variants") %></option>
-            <% VariantType.active.each do |vt| %>
-              <option value="<%= vt.id %>" <%= "selected" if selected_variant_type_id == vt.id %>><%= vt.name %></option>
-            <% end %>
-          </select>
-        </div>
-        <div x-show="selectedVariantTypeId !== null" class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
-          <template x-for="(option, index) in currentOptions" :key="option.variant_option_id">
-            <div class="p-4 border border-line bg-surface flex flex-col gap-3" :class="option.stock_quantity > 0 && '!border-ink'">
-              <span class="font-latin text-lg vn-num" x-text="option.value"></span>
-              <input type="hidden" :name="`product[product_variants_attributes][${index}][id]`" :value="option.id || ''">
-              <input type="hidden" :name="`product[product_variants_attributes][${index}][variant_type_id]`" :value="selectedVariantTypeId">
-              <input type="hidden" :name="`product[product_variants_attributes][${index}][variant_option_id]`" :value="option.variant_option_id">
-              <input type="hidden" :name="`product[product_variants_attributes][${index}][stock_quantity]`" :value="option.stock_quantity">
-              <input type="hidden" :name="`product[product_variants_attributes][${index}][active]`" value="1">
-              <label class="ad-field">
-                <span class="ad-label"><%= t("#{tf}.stock") %></span>
-                <input type="number" x-model.number="option.stock_quantity" class="ad-input font-latin" placeholder="0" min="0">
+
+        <fieldset class="m-0 p-0 border-0 mb-6">
+          <legend class="ad-label mb-2"><%= t("#{mf}.types") %></legend>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="type in types" :key="type.id">
+              <button type="button" class="vn-chip" :aria-pressed="typeOn(type.id).toString()" @click="toggleType(type.id)" x-text="type.name"></button>
+            </template>
+          </div>
+          <p x-show="types.length === 0" class="m-0 ad-muted"><%= t("#{tf}.no_variants_text") %></p>
+        </fieldset>
+
+        <template x-for="type in types.filter(t => typeOn(t.id))" :key="type.id">
+          <fieldset class="m-0 p-0 border-0 mb-6">
+            <div class="flex flex-wrap items-baseline justify-between gap-3 mb-2">
+              <legend class="ad-label" x-text="type.name"></legend>
+              <span class="flex gap-4">
+                <button type="button" class="ad-textbtn" @click="allOptions(type.id, true)"><%= t("#{mf}.select_all") %></button>
+                <button type="button" class="ad-textbtn" @click="allOptions(type.id, false)"><%= t("#{mf}.clear") %></button>
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="option in type.options" :key="option.id">
+                <button type="button" class="vn-chip font-latin" :aria-pressed="optionOn(type.id, option.id).toString()" @click="toggleOption(type.id, option.id)">
+                  <span x-show="option.swatch" aria-hidden="true" class="vn-metal !w-4 !h-4 !cursor-inherit"
+                        :class="['yellow','rose','white'].includes(option.swatch) && `vn-metal--${option.swatch}`"
+                        :style="option.swatch && option.swatch.startsWith('#') ? `background:${option.swatch}` : ''"></span>
+                  <bdi x-text="option.label"></bdi>
+                </button>
+              </template>
+            </div>
+          </fieldset>
+        </template>
+
+        <div x-show="count() > 0" x-cloak class="flex flex-col gap-4 pt-6 border-t border-line">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <p class="m-0 ad-hint" x-text="'<%= j t("#{mf}.summary", count: "__C__", stocked: "__S__") %>'.replace('__C__', count()).replace('__S__', inStockCount())"></p>
+            <div class="flex flex-wrap items-end gap-3">
+              <label class="ad-field !w-28">
+                <span class="ad-label"><%= t("#{mf}.stock_for_all") %></span>
+                <input type="number" min="0" x-model="bulkStock" class="ad-input font-latin" placeholder="0">
               </label>
-              <label class="vn-check !text-[13px] !leading-5">
-                <input type="checkbox" x-model="option.allow_preorder" :name="`product[product_variants_attributes][${index}][allow_preorder]`" value="1">
-                <span><%= t("products.made_to_order_badge") %></span>
+              <button type="button" class="vn-btn vn-btn--outline vn-btn--sm" @click="setStock(null)"><%= t("#{mf}.apply_all") %></button>
+              <button type="button" class="vn-btn vn-btn--outline vn-btn--sm" @click="setMadeToOrder(true)"><%= t("#{mf}.mto_all") %></button>
+              <button type="button" class="ad-textbtn" @click="setMadeToOrder(false)"><%= t("#{mf}.mto_none") %></button>
+              <label class="ad-field !w-44">
+                <span class="ad-label"><%= t("#{mf}.filter") %></span>
+                <select x-model="filterOption" class="ad-select">
+                  <option value=""><%= t("#{mf}.filter_all") %></option>
+                  <template x-for="type in activeTypes()" :key="type.id">
+                    <optgroup :label="type.name">
+                      <template x-for="option in type.options.filter(o => optionOn(type.id, o.id))" :key="option.id">
+                        <option :value="option.id" x-text="option.label"></option>
+                      </template>
+                    </optgroup>
+                  </template>
+                </select>
               </label>
-              <input type="date" x-show="option.allow_preorder" x-model="option.preorder_estimated_delivery_date"
-                     :name="`product[product_variants_attributes][${index}][preorder_estimated_delivery_date]`"
-                     class="ad-input" aria-label="<%= t("#{tf}.estimated_date") %>">
+            </div>
+          </div>
+          <p x-show="tooLarge()" class="m-0 text-[13px] leading-5 text-gold-text" role="status"><%= t("#{mf}.large_warning") %></p>
+
+          <template x-for="group in groups()" :key="group.id">
+            <div class="border border-line">
+              <div x-show="group.id !== 'all'" class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-surface-sunken">
+                <button type="button" class="ad-textbtn !text-ink inline-flex items-center gap-3" @click="toggleGroup(group.id)" :aria-expanded="groupOpen(group.id).toString()">
+                  <span x-show="group.swatch" aria-hidden="true" class="vn-metal !w-5 !h-5"
+                        :class="['yellow','rose','white'].includes(group.swatch) && `vn-metal--${group.swatch}`"
+                        :style="group.swatch && group.swatch.startsWith('#') ? `background:${group.swatch}` : ''"></span>
+                  <span class="font-medium" x-text="group.label"></span>
+                  <span class="ad-hint" x-text="`(${group.combos.length})`"></span>
+                </button>
+                <button type="button" class="ad-textbtn" @click="setStock(group.id)"><%= t("#{mf}.apply_group") %></button>
+              </div>
+              <div x-show="groupOpen(group.id)" class="ad-table-wrap">
+                <table class="ad-table">
+                  <thead>
+                    <tr>
+                      <template x-for="type in columnTypes()" :key="type.id"><th scope="col" x-text="type.name"></th></template>
+                      <th scope="col"><%= t("#{tf}.stock") %></th>
+                      <th scope="col"><%= t("products.made_to_order_badge") %></th>
+                      <th scope="col"><%= t("#{tf}.estimated_date") %></th>
+                      <th scope="col"><%= t("#{tf}.active") %></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="combo in group.combos" :key="combo.key">
+                      <tr :class="!combo.row.active && 'opacity-50'">
+                        <template x-for="type in columnTypes()" :key="type.id"><td class="font-latin"><bdi x-text="labelFor(combo, type.id)"></bdi></td></template>
+                        <td>
+                          <input type="number" min="0" x-model.number="combo.row.stock" class="ad-input font-latin !w-24" :aria-label="`<%= j t("#{tf}.stock") %> ${combo.options.map(o => o.label).join(' · ')}`">
+                        </td>
+                        <td><label class="vn-check !text-[13px]"><input type="checkbox" x-model="combo.row.preorder"><span class="sr-only"><%= t("products.made_to_order_badge") %></span></label></td>
+                        <td><input type="date" x-show="combo.row.preorder" x-model="combo.row.date" class="ad-input !w-40" aria-label="<%= t("#{tf}.estimated_date") %>"></td>
+                        <td><label class="vn-check !text-[13px]"><input type="checkbox" x-model="combo.row.active"><span class="sr-only"><%= t("#{tf}.active") %></span></label></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </template>
+
+          <%# Every combination posts, filtered out or folded, so nothing is dropped by the view. %>
+          <template x-for="(combo, index) in combinations()" :key="combo.key">
+            <span hidden>
+              <input type="hidden" :name="`product[variant_matrix][rows][${index}][id]`" :value="combo.row.id || ''">
+              <template x-for="id in combo.ids" :key="id"><input type="hidden" :name="`product[variant_matrix][rows][${index}][option_ids][]`" :value="id"></template>
+              <input type="hidden" :name="`product[variant_matrix][rows][${index}][stock_quantity]`" :value="combo.row.stock">
+              <input type="hidden" :name="`product[variant_matrix][rows][${index}][allow_preorder]`" :value="combo.row.preorder ? 1 : 0">
+              <input type="hidden" :name="`product[variant_matrix][rows][${index}][preorder_estimated_delivery_date]`" :value="combo.row.preorder ? combo.row.date : ''">
+              <input type="hidden" :name="`product[variant_matrix][rows][${index}][active]`" :value="combo.row.active ? 1 : 0">
+            </span>
+          </template>
         </div>
-        <p x-show="selectedVariantTypeId === null" class="m-0 ad-muted"><%= t("#{tf}.no_variants_text") %></p>
+        <p x-show="selectedTypes.length > 0 && count() === 0" x-cloak class="m-0 ad-muted"><%= t("#{mf}.pick_options") %></p>
       </section>
 
       <%= render "admin/shared/card", title: t("#{tf}.related") do %>
@@ -173,7 +231,17 @@
         </div>
       <% end %>
 
+      <% image_colors = @product.persisted? ? admin_image_color_options(@product) : [] %>
       <%= render "admin/shared/card", title: t("admin.products.images"), subtitle: t("admin.products.image_hint") do %>
+        <% if image_colors.any? %>
+          <div class="ad-field mb-4 max-w-[320px]">
+            <label for="images-color" class="ad-label"><%= t("vene.admin.variant_matrix.upload_color") %></label>
+            <select id="images-color" name="product[images_variant_option_id]" class="ad-select">
+              <option value=""><%= t("vene.admin.variant_matrix.all_colors") %></option>
+              <% image_colors.each do |id, label| %><option value="<%= id %>"><%= label %></option><% end %>
+            </select>
+          </div>
+        <% end %>
         <div class="ad-field mb-6">
           <%= form.label :images, t("#{tf}.upload_images"), class: "ad-label" %>
           <%= form.file_field :images, multiple: true, accept: "image/jpeg,image/png,image/webp", class: "ad-input" %>
@@ -190,6 +258,14 @@
                   <span class="ad-hint"><%= i.zero? ? t("#{tf}.cover") : "##{i + 1}" %></span>
                   <button type="button" class="ad-textbtn !text-danger" onclick="document.getElementById('delete-image-form-<%= img.id %>').requestSubmit()"><%= t("admin.actions.delete") %></button>
                 </span>
+                <% if image_colors.any? %>
+                  <%= hidden_field_tag "product[product_images_attributes][#{i}][id]", img.id, id: nil %>
+                  <select name="product[product_images_attributes][<%= i %>][variant_option_id]" class="ad-select !h-9 !text-[13px]"
+                          aria-label="<%= t("vene.admin.variant_matrix.photo_color", number: i + 1) %>">
+                    <option value=""><%= t("vene.admin.variant_matrix.all_colors") %></option>
+                    <% image_colors.each do |id, label| %><option value="<%= id %>" <%= "selected" if img.variant_option_id == id %>><%= label %></option><% end %>
+                  </select>
+                <% end %>
               </li>
             <% end %>
           </ul>

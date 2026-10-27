@@ -17,12 +17,13 @@
     <ul class="list-none m-0 p-0 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-8 gap-y-12">
       <% @wishlist_items.each do |item| %>
         <% product = item.product %>
-        <% href = product_path(product.slug, locale: I18n.locale) %>
+        <%# Opens the product on the saved color (?color=rose-gold). %>
+        <% href = product_path(product.slug, locale: I18n.locale, color: item.product_variant&.image_option&.slug) %>
         <% made_to_order = product.made_to_order_with?(item.product_variant) %>
         <li class="flex flex-col gap-3">
           <div class="relative">
             <%= link_to href, class: "flex aspect-[4/5] bg-media items-center justify-center overflow-hidden", tabindex: "-1", "aria-hidden": "true" do %>
-              <% if (src = vn_product_image_url(product)) %>
+              <% if (src = vn_product_image_url(product, variant: item.product_variant)) %>
                 <%= image_tag src, alt: "", loading: "lazy", class: "block w-[84%] h-[84%] object-contain" %>
               <% end %>
             <% end %>

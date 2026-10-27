@@ -3,7 +3,7 @@ class Storefront::OrdersController < ApplicationController
   before_action :set_order, only: %i[show invoice cancel pay]
 
   def index
-    @orders = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).order(created_at: :desc)
+    @orders = current_user.orders.includes(order_items: { product: :product_images, product_variant: ProductVariant::DISPLAY_INCLUDES }).order(created_at: :desc)
     @addresses = current_user.addresses.order(is_default: :desc, updated_at: :desc)
   end
 
@@ -43,11 +43,11 @@ class Storefront::OrdersController < ApplicationController
   def set_order
     if user_signed_in?
       # Authenticated users can only see their own orders
-      @order = current_user.orders.includes(order_items: { product: :product_images, product_variant: [] }).find(params[:id])
+      @order = current_user.orders.includes(order_items: { product: :product_images, product_variant: ProductVariant::DISPLAY_INCLUDES }).find(params[:id])
     else
       # Guests can only see their pending order from session
       if session[:pending_order_id].to_s == params[:id]
-        @order = Order.includes(order_items: { product: :product_images, product_variant: [] }).find_by(id: params[:id])
+        @order = Order.includes(order_items: { product: :product_images, product_variant: ProductVariant::DISPLAY_INCLUDES }).find_by(id: params[:id])
         unless @order
           redirect_to root_path(locale: I18n.locale), alert: t("orders.not_found", default: "Order not found")
         end

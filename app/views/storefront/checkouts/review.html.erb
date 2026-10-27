@@ -32,7 +32,7 @@
         <ul class="list-none m-0 p-0 flex flex-col gap-6">
           <% @cart.items.each do |item| %>
             <li>
-              <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product),
+              <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product, variant: item.product_variant),
                     meta: [item.product.metal.presence, item.product_variant&.display_name].compact.join(" · ").presence || item.product.category.name(I18n.locale),
                     detail: safe_join([vn_price(item.unit_price), " × ", tag.bdi(item.quantity, class: "font-latin"), (" · #{t('orders.preorder')}" if item.is_preorder?)]),
                     price: vn_price(item.line_total) %>

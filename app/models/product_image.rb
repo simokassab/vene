@@ -1,5 +1,7 @@
 class ProductImage < ApplicationRecord
   belongs_to :product
+  # The color this photo shows. Untagged photos show for every color.
+  belongs_to :variant_option, optional: true
 
   mount_uploader :image, ProductImageUploader
 

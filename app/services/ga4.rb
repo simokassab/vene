@@ -15,7 +15,7 @@ module Ga4
       item_id: product.id.to_s,
       item_name: product.name(:en),
       item_category: product.category&.name(:en),
-      item_variant: variant&.display_name,
+      item_variant: variant&.display_name(:en),
       price: money(price || product.current_price),
       quantity: quantity.to_i
     }.compact

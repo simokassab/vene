@@ -48,7 +48,7 @@
       <ul class="list-none m-0 p-0 border-t border-line">
         <% @order.order_items.each do |item| %>
           <li class="py-6 border-b border-line">
-            <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product),
+            <%= render "shared/vene/line_item", size: :md, title: item.product.name(I18n.locale), image: vn_product_image_url(item.product, variant: item.product_variant),
                   href: product_path(item.product.slug, locale: I18n.locale),
                   meta: [item.product.metal.presence, item.product_variant&.display_name].compact.join(" · "),
                   detail: safe_join([vn_order_price(item.unit_price, @order), " × ", tag.bdi(item.quantity, class: "font-latin")]),

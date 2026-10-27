@@ -130,8 +130,8 @@ module VeneEmailHelper
   end
 
   # Absolute URL of a product's thumbnail; uploads are served from the app host.
-  def vn_email_image_url(product)
-    path = product.primary_image&.image&.thumb&.url
+  def vn_email_image_url(product, variant: nil)
+    path = (variant&.primary_image || product.primary_image)&.image&.thumb&.url
     URI.join(root_url, path).to_s if path.present?
   end
 
