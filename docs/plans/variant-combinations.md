@@ -1,6 +1,37 @@
 # Plan: colors and sizes on one product, with photos per color
 
-Status: decisions made (section 9), not started. Written 2026-10-27 against branch `design/vene-system`.
+Status: **done** on branch `feature/variant-combinations` (2026-10-27), commits `b032264`, `09574af`, `6427321`. Release 1 and phase 2 are built and tested; the only open item is the legacy-column cleanup in 8.3, which by design waits for a release after production has been backfilled. Written 2026-10-27 against branch `design/vene-system`.
+
+## Status by section
+
+| Section | State | Where |
+|---|---|---|
+| 3.1 Combinations | Done | `ProductVariantOption`, `product_variants.option_signature` |
+| 3.2 Arabic names, display, default | Done | `VariantType`, `VariantOption` (swatches use the design-system metals `yellow`/`rose`/`white`, or a hex code) |
+| 3.3 Photos per color | Done | `product_images.variant_option_id`, `Product#images_for`, cover photo prefers the default color |
+| 3.4 Price | Decided: one price per product | No change |
+| 3.5 `Product#metal` | Done | Field kept; admin hint says material only |
+| 4.1 Variant types screen | Done | Removing an in-use option or type shows why instead of erroring |
+| 4.2 Product grid | Done | `components/variant_matrix.js`, any number of types, grouped by color, bulk tools, filter, large-grid warning |
+| 4.3 Saving service | Done | `Products::VariantMatrixSyncService`: ordered or wishlisted combinations are deactivated, others deleted; sold-out rows saved |
+| 4.4 Other admin screens | Done | Orders, preorders, wishlists show the combination and its photo; product list shows "Color 3 · Ring size 5" and total stock |
+| 5.1 Product page | Done | `components/product_page.js`: rows per type, greyed sold-out options, photo switching, `?color=`, Yellow gold first |
+| 5.2 Card dots | Done (phase 2) | `Products::SwatchPreloadService`, `shared/vene/_product_card` |
+| 5.3 Bag, checkout, orders, emails, invoice | Done | `display_name(locale)`, variant photos, English names in the invoice and GA4 |
+| 5.4 Wishlist | Done | Saved combination opens on its color |
+| 5.5 Color filter | Done (phase 2) | `Product.in_color`, `Product.color_options_for`, `shared/vene/_color_filter` on collections and search |
+| 6 Queries | Done | Display preloads (`ProductVariant::DISPLAY_INCLUDES`), batched card dots, no new N+1 warnings |
+| 7 Tests | Done | 27 tests in `test/models/product_variant_combination_test.rb`, `test/services/products/`, `test/integration/variant_combinations_test.rb`. The Capybara system test is replaced by request tests plus manual Chrome runs (EN/AR, 1440 and 390): the dev container has no browser for Selenium |
+| 8.1 Migrations | Done | `db/migrate/20261027100000`–`100200` |
+| 8.2 Backfill | Done | `bin/rails variants:backfill_options [DRY_RUN=1]`, idempotent |
+| 8.3 Cleanup | **Waits for a later release** | Drop the old columns only after production has run the backfill and the new code |
+
+### Before deploying
+
+1. In the production console: `ProductVariant.where(variant_option_id: nil).where.missing(:product_variant_options).count` (legacy name/value variants; they keep working either way).
+2. Deploy, run the migrations, then `bin/rails variants:backfill_options`.
+3. In the admin, on the Color type: tick "Changes the product photos", set the dot colors, tick "Selected first" on Yellow gold, and add the Arabic names for every type and option.
+4. Tag each product's photos with their color.
 
 ## 1. What we want
 
@@ -219,7 +250,7 @@ Alpine state: `selected = { typeId: optionId }`.
 
 Unchanged in shape (`product_variant_id`). The heart on the product page saves the current combination once one is complete, or the product alone before that. Back-in-stock and price-drop jobs are already variant-aware.
 
-### 5.5 Collection filter by color (optional, phase 2)
+### 5.5 Collection filter by color (phase 2)
 
 `Product.joins(product_variants: :product_variant_options).where(product_variant_options: { variant_option_id: ids }, product_variants: { active: true }).distinct`, with the index on `variant_option_id`. A "Color" filter on collection and search pages. Needs `ransackable_associations` updated.
 
