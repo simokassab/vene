@@ -9,5 +9,9 @@ class Storefront::SearchesController < ApplicationController
                 else
                   Product.none
                 end
+    @color_options = @query.present? ? Product.color_options_for(@products).to_a : []
+    @selected_color = @color_options.find { |o| o.slug == params[:color] }
+    @products = @products.in_color(@selected_color) if @selected_color
+    Products::SwatchPreloadService.call(@products.load.records)
   end
 end

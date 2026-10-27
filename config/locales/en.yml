@@ -610,6 +610,8 @@ en:
         track_title: "Track every order"
         track_text: "Follow your piece from our atelier to your door, with or without an account."
     product:
+      colors_of: "Colors of %{name}"
+      more_colors: "%{count} more colors"
       combination_missing: "This combination isn't made. Choose another option."
       diamonds: "Diamonds"
       sold_out: "Sold out"
@@ -636,6 +638,9 @@ en:
       appearance_note: "Colour and stone appearance may vary slightly from images and by size."
     breadcrumb: "Breadcrumb"
     collection:
+      colors: "Filter by color"
+      color: "Color"
+      all_colors: "All colors"
       eyebrow: "The collection"
       fine_jewelry: "Fine Jewelry"
       lead: "18K gold and natural diamonds, handcrafted in Beirut."

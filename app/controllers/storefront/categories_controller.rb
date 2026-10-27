@@ -14,6 +14,11 @@ class Storefront::CategoriesController < ApplicationController
       @products_query = @products_query.where(sub_category_id: @selected_subcategory.id) if @selected_subcategory
     end
 
+    # Filter by color (?color=rose-gold), offering only colors this listing sells
+    @color_options = Product.color_options_for(@products_query).to_a
+    @selected_color = @color_options.find { |o| o.slug == params[:color] }
+    @products_query = @products_query.in_color(@selected_color) if @selected_color
+
     # Apply sorting
     @products = case @sort
                 when "price_low"
@@ -25,6 +30,8 @@ class Storefront::CategoriesController < ApplicationController
                 else
                   @products_query.includes(:product_images).order(featured: :desc, created_at: :desc)
                 end
+
+    Products::SwatchPreloadService.call(@products.load.records)
 
     # Get active subcategories with product counts for filter sidebar
     @subcategories_with_counts = @category.sub_categories.active.ordered

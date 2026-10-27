@@ -22,21 +22,24 @@
   <div role="group" aria-label="<%= t('vene.collection.filter_sort') %>"
        class="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 py-4 border-y border-line mb-12">
     <% if subcategories.any? %>
-      <nav aria-label="<%= t('vene.collection.subcategories') %>" class="vn-scroll-x flex items-center gap-3 overflow-x-auto max-w-full">
+      <nav aria-label="<%= t('vene.collection.subcategories') %>" x-data x-init="$el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })" class="vn-scroll-x flex items-center gap-3 overflow-x-auto max-w-full">
         <span class="vn-label whitespace-nowrap me-1"><%= t("vene.collection.category") %></span>
-        <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort), class: "vn-chip", "aria-current": (@selected_subcategory ? nil : "page") do %>
+        <%= link_to category_path(@category.slug, locale: I18n.locale, sort: @sort, color: @selected_color&.slug), class: "vn-chip", "aria-current": (@selected_subcategory ? nil : "page") do %>
           <%= t("vene.collection.all") %> <span class="vn-num font-latin opacity-70"><%= total %></span>
         <% end %>
         <% subcategories.each do |sub| %>
-          <%= link_to category_path(@category.slug, locale: I18n.locale, subcategory: sub.slug, sort: @sort), class: "vn-chip",
+          <%= link_to category_path(@category.slug, locale: I18n.locale, subcategory: sub.slug, sort: @sort, color: @selected_color&.slug), class: "vn-chip",
                 "aria-current": (@selected_subcategory&.id == sub.id ? "page" : nil) do %>
             <%= sub.name(I18n.locale) %> <span class="vn-num font-latin opacity-70"><%= sub.products_count %></span>
           <% end %>
         <% end %>
       </nav>
     <% end %>
+    <%= render "shared/vene/color_filter", options: @color_options, selected: @selected_color,
+          href_for: ->(option) { category_path(@category.slug, locale: I18n.locale, subcategory: @selected_subcategory&.slug, sort: @sort, color: option&.slug) } %>
     <%= form_with url: category_path(@category.slug, locale: I18n.locale), method: :get, local: true, class: "flex items-center gap-3 min-w-[220px]" do %>
       <% if @selected_subcategory %><%= hidden_field_tag :subcategory, @selected_subcategory.slug %><% end %>
+      <% if @selected_color %><%= hidden_field_tag :color, @selected_color.slug %><% end %>
       <label for="sort" class="vn-label whitespace-nowrap"><%= t("vene.collection.sort") %></label>
       <%= select_tag :sort, options_for_select({
             t("vene.collection.sort_featured") => "featured",
@@ -53,7 +56,7 @@
   <% if count.positive? %>
     <div class="vn-products">
       <% @products.each do |product| %>
-        <%= render "shared/vene/product_card", product: product, heading: :h2 %>
+        <%= render "shared/vene/product_card", product: product, heading: :h2, color: @selected_color %>
       <% end %>
     </div>
   <% else %>

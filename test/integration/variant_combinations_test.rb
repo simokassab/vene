@@ -64,6 +64,47 @@ class VariantCombinationsTest < ActionDispatch::IntegrationTest
     assert_equal @rose.id, image.reload.variant_option_id
   end
 
+  test "product cards show one dot per color, each pointing at its photo and link" do
+    get category_path(@product.category.slug, locale: :en)
+
+    assert_response :success
+    card = css_select(".vn-card").find { |c| c.text.include?(@product.name_en) }
+    dots = card.css("button.vn-metal")
+    assert_equal [ "Yellow gold", "Rose gold" ], dots.map { |d| d["title"] }
+    assert_includes dots.last["@click"], "color=rose-gold"
+    assert_includes dots.first["class"], "vn-metal--yellow"
+  end
+
+  test "swatches load in one batch and mark a color with nothing to buy" do
+    sync([ row(@yellow, @s52, stock: 0), row(@rose, @s52, stock: 2) ])
+    products = Products::SwatchPreloadService.call([ @product.reload ])
+
+    swatches = products.first.swatch_options
+    assert_equal [ @yellow, @rose ], swatches.map(&:option)
+    assert_equal [ false, true ], swatches.map(&:available)
+  end
+
+  test "the color filter keeps only pieces sold in that color and opens cards on it" do
+    plain = Product.create!(name_en: "Plain", name_ar: "عادي", price: 50, stock_quantity: 2,
+                            sub_category: @product.sub_category, slug: "plain-#{SecureRandom.hex(4)}")
+    get category_path(@product.category.slug, locale: :en, color: @rose.slug)
+
+    assert_response :success
+    names = css_select(".vn-card__name").map(&:text)
+    assert_includes names, @product.name_en
+    assert_not_includes names, plain.name_en
+    assert_select "a[aria-current=page]", text: /Rose gold/
+    assert_select ".vn-card a[href*='color=rose-gold']"
+  end
+
+  test "the search results offer the same color filter" do
+    get search_path(locale: :en, q: "lumen", color: @yellow.slug)
+
+    assert_response :success
+    assert_includes response.body, @product.name_en
+    assert_select "a[aria-current=page]", text: /Yellow gold/
+  end
+
   test "the admin grid keeps a deactivated type the product still sells" do
     sign_in create_admin, scope: :admin_user
     @size.update!(active: false)

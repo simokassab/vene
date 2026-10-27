@@ -25,10 +25,16 @@
       <%= render "shared/vene/button", label: t("storefront.home.hero_cta"), href: products_path(locale: I18n.locale), variant: :outline %>
     </div>
   <% else %>
+    <% if @color_options.size > 1 %>
+      <div class="py-4 border-y border-line mb-8">
+        <%= render "shared/vene/color_filter", options: @color_options, selected: @selected_color,
+              href_for: ->(option) { search_path(locale: I18n.locale, q: @query, color: option&.slug) } %>
+      </div>
+    <% end %>
     <p aria-live="polite" class="m-0 mb-6 vn-small"><%= t("vene.collection.count", count: @products.size) %></p>
     <div class="vn-products">
       <% @products.each do |product| %>
-        <%= render "shared/vene/product_card", product: product, heading: :h2 %>
+        <%= render "shared/vene/product_card", product: product, heading: :h2, color: @selected_color %>
       <% end %>
     </div>
   <% end %>

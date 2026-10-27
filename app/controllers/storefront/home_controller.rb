@@ -23,5 +23,8 @@ class Storefront::HomeController < ApplicationController
                                 .where(active: true)
                                 .includes(:product_images, :sub_category)
                                 .group_by { |p| p.sub_category.category_id }
+    Products::SwatchPreloadService.call(
+      @featured_products.load.records + @scrolling_featured_products.load.records + @category_products.values.flatten
+    )
   end
 end

@@ -630,6 +630,8 @@ ar:
         track_title: "تتبّع كل طلب"
         track_text: "تابع قطعتك من مشغلنا حتى باب منزلك، بحساب أو من دونه."
     product:
+      colors_of: "ألوان %{name}"
+      more_colors: "%{count} ألوان أخرى"
       combination_missing: "هذه التركيبة غير متوفرة. اختر خياراً آخر."
       diamonds: "ألماس"
       sold_out: "نفدت الكمية"
@@ -656,6 +658,9 @@ ar:
       appearance_note: "قد يختلف لون المعدن ومظهر الأحجار قليلًا عن الصور وبحسب المقاس."
     breadcrumb: "مسار التنقل"
     collection:
+      colors: "التصفية حسب اللون"
+      color: "اللون"
+      all_colors: "كل الألوان"
       eyebrow: "المجموعة"
       fine_jewelry: "المجوهرات الراقية"
       lead: "ذهب عيار ١٨ وألماس طبيعي، صُنعت يدويًا في بيروت."

@@ -34,6 +34,19 @@ class Product < ApplicationRecord
   scope :on_sale, -> { where(on_sale: true) }
   scope :preorder_available, -> { where(allow_preorder: true) }
   scope :available_for_purchase, -> { where("stock_quantity > 0 OR allow_preorder = true") }
+  # Products sold in a color (Rose gold): any active combination with that option.
+  scope :in_color, ->(option) {
+    where(id: ProductVariant.active.joins(:product_variant_options)
+                            .where(product_variant_options: { variant_option_id: option }).select(:product_id))
+  }
+
+  # The colors (photo-driving options) sold by the products in a relation, for filters.
+  def self.color_options_for(relation)
+    VariantOption.joins(:variant_type, product_variant_options: :product_variant)
+                 .where(variant_types: { drives_images: true }, active: true)
+                 .where(product_variants: { active: true, product_id: relation.unscope(:order).select(:id) })
+                 .distinct.ordered
+  end
 
   # Ransack configuration
   def self.ransackable_attributes(auth_object = nil)
@@ -64,6 +77,15 @@ class Product < ApplicationRecord
     images.find { |img| default_ids.include?(img.variant_option_id) } ||
       images.find { |img| img.variant_option_id.nil? } ||
       images.first
+  end
+
+  # Color dots for product cards. Listing pages set them in one batch with
+  # Products::SwatchPreloadService; a lone product loads its own.
+  attr_writer :swatch_options
+
+  def swatch_options
+    Products::SwatchPreloadService.call([ self ]) unless defined?(@swatch_options)
+    @swatch_options
   end
 
   # Photos for one color first, then the shared (untagged) photos. With no color, every

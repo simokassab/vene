@@ -1,0 +1,17 @@
+<%# locals: (options:, selected:, href_for:) %>
+<%# Color filter chips: a metal dot and the color's name. href_for takes an option, or nil
+    for "all colors", and keeps the page's other filters. Shown only when there is a choice. %>
+<% if options.size > 1 %>
+  <%# On narrow screens the row scrolls; bring the chosen chip into view. %>
+  <nav aria-label="<%= t('vene.collection.colors') %>" x-data x-init="$el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })" class="vn-scroll-x flex items-center gap-3 overflow-x-auto max-w-full">
+    <span class="vn-label whitespace-nowrap me-1"><%= t("vene.collection.color") %></span>
+    <%= link_to t("vene.collection.all_colors"), href_for.call(nil), class: "vn-chip", "aria-current": (selected ? nil : "page") %>
+    <% options.each do |option| %>
+      <%= link_to href_for.call(option), class: "vn-chip", "aria-current": (selected&.id == option.id ? "page" : nil) do %>
+        <span aria-hidden="true" class="vn-metal !w-3.5 !h-3.5 !cursor-inherit <%= "vn-metal--#{option.swatch_color}" if VariantOption::SWATCH_TOKENS.include?(option.swatch_color) %>"
+              <% if option.swatch_color.to_s.start_with?("#") %>style="background: <%= option.swatch_color %>"<% end %>></span>
+        <span><%= option.label %></span>
+      <% end %>
+    <% end %>
+  </nav>
+<% end %>
