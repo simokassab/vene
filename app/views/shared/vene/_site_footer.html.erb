@@ -12,7 +12,7 @@
        ([t("vene.header.whatsapp"), "https://wa.me/#{whatsapp}"] if whatsapp.present?)
      ].compact],
      [t("vene.footer.house"), [
-       [t("vene.footer.our_story"), page_path("our-story", locale: I18n.locale)],
+       [t("vene.footer.our_story"), root_path(locale: I18n.locale, anchor: "our-story")],
        (user_signed_in? ? [t("orders.my_orders"), orders_path(locale: I18n.locale)] : [t("vene.footer.sign_in"), new_user_session_path(locale: I18n.locale)]),
        [t("pages.terms"), page_path("terms-and-conditions", locale: I18n.locale)],
        [t("pages.privacy"), page_path("privacy-policy", locale: I18n.locale)]
