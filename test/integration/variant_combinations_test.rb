@@ -105,6 +105,36 @@ class VariantCombinationsTest < ActionDispatch::IntegrationTest
     assert_select "a[aria-current=page]", text: /Yellow gold/
   end
 
+  test "removing an option that products sell explains why instead of failing" do
+    sign_in create_admin, scope: :admin_user
+    patch admin_variant_type_path(@color, locale: :en), params: { variant_type: {
+      name: @color.name, variant_options_attributes: { "0" => { id: @rose.id, _destroy: "1" } }
+    } }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, ERB::Util.html_escape(I18n.t("admin.variant_types.option_in_use"))
+    assert VariantOption.exists?(@rose.id)
+  end
+
+  test "deleting a type that products sell is refused with a message" do
+    sign_in create_admin, scope: :admin_user
+    delete admin_variant_type_path(@size, locale: :en)
+
+    assert_redirected_to admin_variant_types_path(locale: :en)
+    assert_equal I18n.t("admin.variant_types.type_in_use"), flash[:alert]
+    assert VariantType.exists?(@size.id)
+  end
+
+  test "the admin product list summarises the options each piece is sold in" do
+    sign_in create_admin, scope: :admin_user
+    get admin_products_path(locale: :en)
+
+    assert_response :success
+    assert_includes response.body, "#{@color.name} 2 · #{@size.name} 2"
+    row = css_select("tr").find { |tr| tr.text.include?(@product.name_en) }
+    assert_equal "5", row.css(".vn-status").text.strip, "stock is the total across combinations"
+  end
+
   test "the admin grid keeps a deactivated type the product still sells" do
     sign_in create_admin, scope: :admin_user
     @size.update!(active: false)

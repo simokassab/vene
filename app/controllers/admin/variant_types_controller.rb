@@ -30,14 +30,27 @@ class Admin::VariantTypesController < Admin::BaseController
     else
       render :edit, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotDestroyed
+    # An option that products sell can't be removed; deactivating it hides it instead.
+    @variant_type.errors.add(:base, t("admin.variant_types.option_in_use"))
+    render :edit, status: :unprocessable_entity
   end
 
   def destroy
-    @variant_type.destroy
-    redirect_to admin_variant_types_path(locale: I18n.locale), notice: t("admin.variant_types.deleted")
+    if destroy_type
+      redirect_to admin_variant_types_path(locale: I18n.locale), notice: t("admin.variant_types.deleted")
+    else
+      redirect_to admin_variant_types_path(locale: I18n.locale), alert: t("admin.variant_types.type_in_use")
+    end
   end
 
   private
+
+  def destroy_type
+    @variant_type.destroy
+  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey
+    false
+  end
 
   def set_variant_type
     @variant_type = VariantType.includes(:variant_options).find(params[:id])

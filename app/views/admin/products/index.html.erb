@@ -52,6 +52,8 @@
       </thead>
       <tbody>
         <% if @products.any? %>
+          <% variant_summaries = admin_variant_summaries(@products) %>
+          <% variant_stock = admin_variant_stock(@products) %>
           <% @products.each do |product| %>
             <tr>
               <td>
@@ -60,6 +62,7 @@
                   <span class="flex flex-col min-w-0">
                     <%= link_to product.name_en, edit_admin_product_path(product, locale: I18n.locale), class: "vn-quiet !text-ink font-display text-lg leading-6" %>
                     <span class="ad-hint" lang="ar" dir="rtl"><%= product.name_ar %></span>
+                    <% if (summary = variant_summaries[product.id]) %><span class="ad-hint"><%= summary %></span><% end %>
                   </span>
                   <% if product.made_to_order? %><span class="vn-badge vn-badge--gold"><%= t("products.made_to_order_badge") %></span><% end %>
                 </span>
@@ -73,7 +76,8 @@
                 <% end %>
               </td>
               <td>
-                <span class="vn-status <%= product.stock_quantity.positive? ? 'vn-status--ok' : (product.made_to_order? ? 'vn-status--off' : 'vn-status--bad') %> font-latin"><%= product.stock_quantity %></span>
+                <% stock = variant_stock.fetch(product.id, product.stock_quantity) %>
+                <span class="vn-status <%= stock.positive? ? 'vn-status--ok' : (product.made_to_order? ? 'vn-status--off' : 'vn-status--bad') %> font-latin"><%= stock %></span>
               </td>
               <td><%= product.featured? ? tag.span(t("vene.admin.common.yes_label"), class: "vn-badge vn-badge--noir") : tag.span(t("vene.admin.common.no_label"), class: "ad-off") %></td>
               <td><%= product.on_sale? ? tag.span(t("vene.product.sale"), class: "vn-badge vn-badge--outline") : tag.span(t("vene.admin.common.no_label"), class: "ad-off") %></td>

@@ -87,7 +87,8 @@
           <% { metal: "18K Yellow Gold", diamonds: "0.24 ct natural diamonds", gemstones: "Morganite", others: "" }.each do |field, example| %>
             <div class="ad-field">
               <%= form.label field, t("#{tf}.#{field}"), class: "ad-label" %>
-              <%= form.text_field field, class: "ad-input", placeholder: example %>
+              <%= form.text_field field, class: "ad-input", placeholder: example, "aria-describedby": ("metal-hint" if field == :metal) %>
+              <% if field == :metal %><span id="metal-hint" class="ad-hint"><%= t("#{tf}.metal_hint") %></span><% end %>
             </div>
           <% end %>
         </div>

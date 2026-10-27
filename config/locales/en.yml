@@ -286,6 +286,8 @@ en:
       created: "Variant type created"
       updated: "Variant type saved"
       deleted: "Variant type deleted"
+      option_in_use: "That option is sold on products, so it can't be removed. Untick Active to hide it instead."
+      type_in_use: "That type is sold on products, so it can't be deleted. Untick Active to hide it instead."
     sub_categories:
       title: "Subcategories"
       subtitle: "Manage product subcategories"
@@ -969,6 +971,7 @@ en:
         note_en: "Made-to-order note (English)"
         note_ar: "Made-to-order note (Arabic)"
         metal: "Metal"
+        metal_hint: "For a piece sold in several golds, write the material only (18K gold); customers choose the color under Sizes and options."
         diamonds: "Diamonds"
         gemstones: "Gemstones"
         others: "Other details"

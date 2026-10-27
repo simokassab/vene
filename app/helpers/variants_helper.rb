@@ -31,6 +31,28 @@ module VariantsHelper
     { types: types, selectedTypes: selected.select { |_, ids| ids.any? }.keys, selectedOptions: selected, rows: rows }
   end
 
+  # "Color 3 · Ring size 5" per product, for the admin product list. One grouped query
+  # for the page's products.
+  def admin_variant_summaries(products)
+    ids = products.map(&:id)
+    return {} if ids.empty?
+
+    counts = ProductVariantOption.joins(:product_variant)
+                                 .where(product_variants: { product_id: ids, active: true })
+                                 .group("product_variants.product_id", :variant_type_id)
+                                 .distinct.count(:variant_option_id)
+    types = VariantType.where(id: counts.keys.map(&:second).uniq).index_by(&:id)
+    counts.group_by { |(product_id, _), _| product_id }.transform_values do |pairs|
+      pairs.sort_by { |(_, type_id), _| [ types[type_id].position, types[type_id].name ] }
+           .map { |(_, type_id), n| "#{types[type_id].localized_name} #{n}" }.join(" · ")
+    end
+  end
+
+  # Pieces sold in combinations keep their stock on the variants: the total per product.
+  def admin_variant_stock(products)
+    ProductVariant.active.where(product_id: products.map(&:id)).group(:product_id).sum(:stock_quantity)
+  end
+
   # The color options a photo can be tagged with: the options of the photo-driving type
   # that this product sells.
   def admin_image_color_options(product)
