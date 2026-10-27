@@ -1,524 +1,250 @@
-<%= form_with(model: [:admin, @product], class: "space-y-6", data: { turbo: false }) do |form| %>
-  <% if @product.errors.any? %>
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-      <div class="font-semibold mb-2">Please fix the errors below</div>
-      <ul class="list-disc pl-5 space-y-1">
-        <% @product.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-  <!-- Basic Information Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <%= t("admin.products.basic_info", default: "Basic Information") %>
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <%= form.label :name_en, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :name_en,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "Enter product name in English" %>
-      </div>
-
-      <div>
-        <%= form.label :name_ar, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :name_ar,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "أدخل اسم المنتج بالعربية" %>
-      </div>
-
-      <div class="md:col-span-2">
-        <%= form.label :description_en, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :description_en, rows: 3,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "Detailed product description in English" %>
-      </div>
-
-      <div class="md:col-span-2">
-        <%= form.label :description_ar, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :description_ar, rows: 3,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "وصف تفصيلي للمنتج بالعربية" %>
-      </div>
-
-      <div>
-        <%= form.label :slug, "Slug (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :slug,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "Leave blank to auto-generate from product name" %>
-        <p class="mt-1 text-xs text-gray-500">Auto-generated from product name if left blank</p>
-      </div>
-
-      <div class="flex items-start pt-8">
-        <div class="flex items-center h-5">
-          <%= form.check_box :active,
-            class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
-        </div>
-        <div class="ml-3">
-          <%= form.label :active, class: "text-sm font-medium text-gray-700" %>
-          <p class="text-xs text-gray-500">Make this product visible on the storefront</p>
-        </div>
-      </div>
-
-      <div class="flex items-start pt-8">
-        <div class="flex items-center h-5">
-          <%= form.check_box :featured,
-            class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
-        </div>
-        <div class="ml-3">
-          <%= form.label :featured, class: "text-sm font-medium text-gray-700" %>
-          <p class="text-xs text-gray-500">Show this product in the Featured Products section</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pricing & Inventory Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <%= t("admin.products.pricing_inventory", default: "Pricing & Inventory") %>
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <%= form.label :price, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-            <span>$</span>
+<%# AdminProductEdit.dc.html: content in the main column (names, story, price, made to order,
+    specifications, sizes, related pieces, media); visibility, placement and save in the side
+    column. Field names, the variant builder's inputs and the image delete forms are unchanged. %>
+<% tf = "vene.admin.product_form" %>
+<%= form_with(model: [:admin, @product], data: { turbo: false }) do |form| %>
+  <%= render "shared/vene/form_errors", record: @product, title: t("#{tf}.fix") %>
+  <div class="flex flex-wrap items-start gap-6 mt-2">
+    <div class="flex-[999_1_560px] min-w-0 flex flex-col gap-6">
+      <%= render "admin/shared/card", title: t("#{tf}.details") do %>
+        <div class="ad-grid-2">
+          <div class="ad-field">
+            <%= form.label :name_en, t("#{tf}.name_en"), class: "ad-label" %>
+            <%= form.text_field :name_en, class: "ad-input", dir: "ltr" %>
           </div>
-          <%= form.number_field :price, step: 0.01,
-            class: "block w-full pl-8 pr-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-            placeholder: "0.00" %>
-        </div>
-      </div>
-
-      <div>
-        <%= form.label :sale_price, "Sale Price (optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-            <span>$</span>
+          <div class="ad-field">
+            <%= form.label :name_ar, t("#{tf}.name_ar"), class: "ad-label" %>
+            <%= form.text_field :name_ar, class: "ad-input", dir: "rtl", lang: "ar" %>
           </div>
-          <%= form.number_field :sale_price, step: 0.01,
-            class: "block w-full pl-8 pr-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-            placeholder: "0.00" %>
+          <div class="ad-field col-span-full">
+            <%= form.label :description_en, t("#{tf}.description_en"), class: "ad-label" %>
+            <%= form.text_area :description_en, rows: 4, class: "ad-textarea", dir: "ltr" %>
+          </div>
+          <div class="ad-field col-span-full">
+            <%= form.label :description_ar, t("#{tf}.description_ar"), class: "ad-label" %>
+            <%= form.text_area :description_ar, rows: 4, class: "ad-textarea", dir: "rtl", lang: "ar" %>
+          </div>
+          <div class="ad-field col-span-full">
+            <%= form.label :slug, t("#{tf}.slug"), class: "ad-label" %>
+            <%= form.text_field :slug, class: "ad-input ad-mono", dir: "ltr", placeholder: t("#{tf}.slug_placeholder"), "aria-describedby": "slug-hint" %>
+            <span id="slug-hint" class="ad-hint"><%= t("#{tf}.slug_hint") %></span>
+          </div>
         </div>
-        <p class="mt-1 text-xs text-gray-500">Leave empty if not on sale</p>
-      </div>
+      <% end %>
 
-      <div>
-        <%= form.label :stock_quantity, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.number_field :stock_quantity,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "0" %>
-      </div>
-
-      <div>
-        <%= form.label :sub_category_id, t("admin.products.subcategory", default: "Subcategory"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.grouped_collection_select :sub_category_id,
-          Category.active.ordered, :sub_categories, :name_en,
-          :id, :name_en,
-          { prompt: "Select a subcategory" },
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors" %>
-        <p class="mt-1 text-xs text-gray-500">Select the subcategory this product belongs to</p>
-      </div>
-
-      <div class="flex items-start pt-4">
-        <div class="flex items-center h-5">
-          <%= form.check_box :on_sale,
-            class: "w-4 h-4 text-[#465FFF] bg-gray-100 border-gray-300 rounded focus:ring-[#465FFF] focus:ring-2" %>
+      <%= render "admin/shared/card", title: t("#{tf}.pricing") do %>
+        <div class="ad-grid-2">
+          <div class="ad-field">
+            <%= form.label :price, t("#{tf}.price"), class: "ad-label" %>
+            <%= form.number_field :price, step: 0.01, class: "ad-input font-latin", dir: "ltr", placeholder: "0.00" %>
+          </div>
+          <div class="ad-field">
+            <%= form.label :sale_price, t("#{tf}.sale_price"), class: "ad-label" %>
+            <%= form.number_field :sale_price, step: 0.01, class: "ad-input font-latin", dir: "ltr", placeholder: "0.00", "aria-describedby": "sale-hint" %>
+            <span id="sale-hint" class="ad-hint"><%= t("#{tf}.sale_hint") %></span>
+          </div>
+          <div class="ad-field">
+            <%= form.label :stock_quantity, t("#{tf}.stock"), class: "ad-label" %>
+            <%= form.number_field :stock_quantity, class: "ad-input font-latin", dir: "ltr", placeholder: "0" %>
+          </div>
         </div>
-        <div class="ml-3">
-          <%= form.label :on_sale, class: "text-sm font-medium text-gray-700" %>
-          <p class="text-xs text-gray-500">Mark this product as on sale (shows in Must Have section)</p>
+      <% end %>
+
+      <%= render "admin/shared/card", title: t("products.made_to_order_badge"), subtitle: t("#{tf}.mto_text") do %>
+        <label class="vn-check mb-6">
+          <%= form.check_box :allow_preorder %>
+          <span><%= t("#{tf}.mto_label") %><span class="vn-check__hint"><%= t("#{tf}.mto_hint") %></span></span>
+        </label>
+        <div class="ad-grid-2">
+          <div class="ad-field">
+            <%= form.label :lead_time_en, t("#{tf}.lead_time_en"), class: "ad-label" %>
+            <%= form.text_field :lead_time_en, class: "ad-input", dir: "ltr", placeholder: "2-3 weeks", "aria-describedby": "lead-en-hint" %>
+            <span id="lead-en-hint" class="ad-hint"><%= t("#{tf}.lead_time_hint") %></span>
+          </div>
+          <div class="ad-field">
+            <%= form.label :lead_time_ar, t("#{tf}.lead_time_ar"), class: "ad-label" %>
+            <%= form.text_field :lead_time_ar, class: "ad-input", dir: "rtl", lang: "ar", placeholder: "٢-٣ أسابيع" %>
+          </div>
+          <div class="ad-field">
+            <%= form.label :preorder_estimated_delivery_date, t("#{tf}.estimated_date"), class: "ad-label" %>
+            <%= form.date_field :preorder_estimated_delivery_date, class: "ad-input", "aria-describedby": "eta-hint" %>
+            <span id="eta-hint" class="ad-hint"><%= t("#{tf}.estimated_date_hint") %></span>
+          </div>
+          <div></div>
+          <div class="ad-field">
+            <%= form.label :preorder_note_en, t("#{tf}.note_en"), class: "ad-label" %>
+            <%= form.text_area :preorder_note_en, rows: 2, class: "ad-textarea", dir: "ltr" %>
+          </div>
+          <div class="ad-field">
+            <%= form.label :preorder_note_ar, t("#{tf}.note_ar"), class: "ad-label" %>
+            <%= form.text_area :preorder_note_ar, rows: 2, class: "ad-textarea", dir: "rtl", lang: "ar" %>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+      <% end %>
 
-  <!-- Pre-Order Settings Section -->
-  <div class="bg-amber-50 rounded-xl border border-amber-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <%= t("admin.products.made_to_order", default: "Made to Order") %>
-    </h3>
-
-    <div class="space-y-6">
-      <div class="flex items-start">
-        <div class="flex items-center h-5">
-          <%= form.check_box :allow_preorder,
-            class: "w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2" %>
+      <%= render "admin/shared/card", title: t("vene.product.specifications") do %>
+        <div class="ad-grid-2">
+          <% { metal: "18K Yellow Gold", diamonds: "0.24 ct natural diamonds", gemstones: "Morganite", others: "" }.each do |field, example| %>
+            <div class="ad-field">
+              <%= form.label field, t("#{tf}.#{field}"), class: "ad-label" %>
+              <%= form.text_field field, class: "ad-input", placeholder: example %>
+            </div>
+          <% end %>
         </div>
-        <div class="ml-3">
-          <%= form.label :allow_preorder, "Made to Order (routes to WhatsApp)", class: "text-sm font-medium text-gray-700" %>
-          <p class="text-xs text-gray-600">Hides Add to Cart everywhere on the site and shows an Order on WhatsApp button instead. <strong>Applies regardless of stock quantity.</strong></p>
-        </div>
-      </div>
+      <% end %>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <%= form.label :preorder_estimated_delivery_date, "Estimated Delivery Date (internal)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.date_field :preorder_estimated_delivery_date,
-            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors" %>
-          <p class="mt-1 text-xs text-gray-500">Not shown on the storefront. Used only by pre-order reporting for existing orders.</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <%= form.label :lead_time_en, "Lead Time (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.text_field :lead_time_en,
-            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
-            placeholder: "2-3 weeks" %>
-          <p class="mt-1 text-xs text-gray-500">Shown under the price as &ldquo;Handcrafted in Beirut &middot; Ships in &hellip;&rdquo;. Leave blank for &ldquo;2-3 weeks&rdquo;.</p>
-        </div>
-
-        <div>
-          <%= form.label :lead_time_ar, "Lead Time (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.text_field :lead_time_ar,
-            class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
-            placeholder: "٢-٣ أسابيع",
-            dir: "rtl" %>
-          <p class="mt-1 text-xs text-gray-500">Leave blank to use the Arabic default.</p>
-        </div>
-      </div>
-
-      <div>
-        <%= form.label :preorder_note_en, "Pre-order Note (English)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :preorder_note_en, rows: 2,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
-          placeholder: "Optional custom note for customers (e.g., 'Handcrafted to order')" %>
-      </div>
-
-      <div>
-        <%= form.label :preorder_note_ar, "Pre-order Note (Arabic)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :preorder_note_ar, rows: 2,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors",
-          placeholder: "ملاحظة مخصصة للعملاء (اختياري)",
-          dir: "rtl" %>
-      </div>
-    </div>
-  </div>
-
-  <!-- Product Specifications Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-      </svg>
-      <%= t("admin.products.specifications", default: "Specifications") %>
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div>
-        <%= form.label :metal, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :metal,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "e.g., 18K Gold, Silver" %>
-      </div>
-
-      <div>
-        <%= form.label :diamonds, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :diamonds,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "e.g., 0.5 carat" %>
-      </div>
-
-      <div>
-        <%= form.label :gemstones, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :gemstones,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "e.g., Ruby, Emerald" %>
-      </div>
-
-      <div>
-        <%= form.label :others, class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_field :others,
-          class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors",
-          placeholder: "e.g., Other specifications" %>
-      </div>
-    </div>
-  </div>
-
-  <!-- Product Variants Section -->
-  <%
-    # Build the variant data structure
-    variant_types_data = VariantType.includes(:variant_options).active.map do |vt|
-      {
-        id: vt.id,
-        name: vt.name,
-        options: vt.variant_options.active.ordered.map do |vo|
-          existing_pv = @product.product_variants.find { |pv| pv.variant_option_id == vo.id }
+      <%
+        variant_types_data = VariantType.includes(:variant_options).active.map do |vt|
           {
-            variant_option_id: vo.id,
-            value: vo.value,
-            stock_quantity: existing_pv&.stock_quantity || 0,
-            id: existing_pv&.id,
-            active: existing_pv&.active || true,
-            allow_preorder: existing_pv&.allow_preorder || false,
-            preorder_estimated_delivery_date: existing_pv&.preorder_estimated_delivery_date&.iso8601 || ''
+            id: vt.id,
+            name: vt.name,
+            options: vt.variant_options.active.ordered.map do |vo|
+              existing_pv = @product.product_variants.find { |pv| pv.variant_option_id == vo.id }
+              {
+                variant_option_id: vo.id,
+                value: vo.value,
+                stock_quantity: existing_pv&.stock_quantity || 0,
+                id: existing_pv&.id,
+                active: existing_pv&.active || true,
+                allow_preorder: existing_pv&.allow_preorder || false,
+                preorder_estimated_delivery_date: existing_pv&.preorder_estimated_delivery_date&.iso8601 || ""
+              }
+            end
           }
         end
-      }
-    end
-
-    selected_variant_type_id = @product.product_variants.first&.variant_type_id || nil
-  %>
-
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
-       x-data="{
-         selectedVariantTypeId: <%= selected_variant_type_id.to_json %>,
-         variantTypes: <%= variant_types_data.to_json %>,
-
-         get currentVariantType() {
-           return this.variantTypes.find(vt => vt.id === this.selectedVariantTypeId);
-         },
-
-         get currentOptions() {
-           return this.currentVariantType?.options || [];
-         },
-
-         shouldSubmitVariant(option) {
-           // Submit if it's an existing variant (has id) OR if stock > 0
-           return option.id || option.stock_quantity > 0;
-         }
-       }">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-      </svg>
-      <%= t("admin.products.variants", default: "Product Variants") %>
-    </h3>
-
-    <div class="mb-4">
-      <p class="text-sm text-gray-600">
-        Select a variant type (like Size) and set stock quantities for each option.
-        <%= link_to "Manage Variant Types", admin_variant_types_path(locale: I18n.locale), target: "_blank", class: "text-[#465FFF] hover:text-[#3651E6]" %>
-      </p>
-    </div>
-
-    <!-- Variant Type Selection -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select Variant Type</label>
-      <select x-model.number="selectedVariantTypeId"
-              class="block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]">
-        <option value="">No Variants</option>
-        <% VariantType.active.each do |vt| %>
-          <option value="<%= vt.id %>" <%= 'selected' if selected_variant_type_id == vt.id %>><%= vt.name %></option>
-        <% end %>
-      </select>
-    </div>
-
-    <!-- Variant Options Grid -->
-    <div x-show="selectedVariantTypeId !== null" class="space-y-3">
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        <template x-for="(option, index) in currentOptions" :key="option.variant_option_id">
-          <div class="variant-option-card p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-[#465FFF] transition-colors">
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-medium text-gray-900" x-text="option.value"></span>
-            </div>
-
-            <!-- Hidden inputs - always submit them so Alpine can track changes -->
-            <input type="hidden"
-                   :name="`product[product_variants_attributes][${index}][id]`"
-                   :value="option.id || ''">
-            <input type="hidden"
-                   :name="`product[product_variants_attributes][${index}][variant_type_id]`"
-                   :value="selectedVariantTypeId">
-            <input type="hidden"
-                   :name="`product[product_variants_attributes][${index}][variant_option_id]`"
-                   :value="option.variant_option_id">
-            <input type="hidden"
-                   :name="`product[product_variants_attributes][${index}][stock_quantity]`"
-                   :value="option.stock_quantity">
-            <input type="hidden"
-                   :name="`product[product_variants_attributes][${index}][active]`"
-                   value="1">
-
-            <!-- Stock quantity input (visible) -->
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">Stock Quantity</label>
-              <input type="number"
-                     x-model.number="option.stock_quantity"
-                     class="block w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]"
-                     placeholder="0"
-                     min="0">
-            </div>
-
-            <!-- Pre-order checkbox -->
-            <div class="mt-3">
-              <label class="flex items-center cursor-pointer">
-                <input type="checkbox"
-                       x-model="option.allow_preorder"
-                       :name="`product[product_variants_attributes][${index}][allow_preorder]`"
-                       value="1"
-                       class="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2">
-                <span class="ml-2 text-xs text-gray-700">Allow Pre-Order</span>
-              </label>
-            </div>
-
-            <!-- Pre-order delivery date (shown when allow_preorder is checked) -->
-            <div x-show="option.allow_preorder" class="mt-2">
-              <input type="date"
-                     x-model="option.preorder_estimated_delivery_date"
-                     :name="`product[product_variants_attributes][${index}][preorder_estimated_delivery_date]`"
-                     class="block w-full px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                     placeholder="Delivery Date">
-            </div>
+        selected_variant_type_id = @product.product_variants.first&.variant_type_id || nil
+      %>
+      <section class="ad-card"
+               x-data="{
+                 selectedVariantTypeId: <%= selected_variant_type_id.to_json %>,
+                 variantTypes: <%= variant_types_data.to_json %>,
+                 get currentVariantType() { return this.variantTypes.find(vt => vt.id === this.selectedVariantTypeId); },
+                 get currentOptions() { return this.currentVariantType?.options || []; },
+                 shouldSubmitVariant(option) { return option.id || option.stock_quantity > 0; }
+               }">
+        <header class="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div class="flex flex-col gap-1">
+            <h2 class="ad-h2"><%= t("#{tf}.variants") %></h2>
+            <p class="m-0 ad-hint"><%= t("#{tf}.variants_text") %></p>
           </div>
-        </template>
-      </div>
-    </div>
-
-    <div x-show="selectedVariantTypeId === null" class="text-sm text-gray-500 italic">
-      Select a variant type above to add variants to this product, or leave as "No Variants" if this product doesn't need variants.
-    </div>
-  </div>
-
-  <!-- Related Products Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-      </svg>
-      <%= t("admin.products.related_products", default: "Related Products") %>
-    </h3>
-
-    <%= form.label :related_product_ids, t("admin.products.select_related", default: "Select related products"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-    <%= form.collection_select :related_product_ids, Product.where.not(id: @product.id), :id, :name_en,
-      { include_hidden: false, selected: @product.related_product_ids },
-      multiple: true,
-      class: "block w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] transition-colors h-32" %>
-    <p class="mt-2 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple products to feature as recommendations</p>
-  </div>
-
-  <!-- Product Images Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
-      <%= t("admin.products.images") %>
-    </h3>
-
-    <div class="space-y-4">
-      <div>
-        <%= form.label :images, t("admin.products.upload_images", default: "Upload Images"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.file_field :images, multiple: true,
-          class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-[#465FFF] file:text-white hover:file:bg-[#3651E6]" %>
-        <p class="mt-2 text-xs text-gray-500">
-          <%= t("admin.products.image_hint") %> (<%= t("admin.products.multiple_upload") %>)
-        </p>
-      </div>
-
-      <% if @product.persisted? && @product.product_images.any? %>
-        <div>
-          <p class="text-sm font-medium text-gray-700 mb-3"><%= t("admin.products.current_images", default: "Current Images") %></p>
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <% @product.product_images.each do |img| %>
-              <div class="group relative rounded-lg border-2 border-gray-200 overflow-hidden hover:border-[#465FFF] transition-all">
-                <% if img.image.present? %>
-                  <div class="w-full h-32 bg-white">
-                    <%= image_tag img.image.url, class: "w-full h-full object-cover", alt: "Product image" %>
-                  </div>
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                    <button
-                      type="button"
-                      onclick="document.getElementById('delete-image-form-<%= img.id %>').submit()"
-                      class="bg-red-600 hover:bg-red-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-lg">
-                      Delete
-                    </button>
-                  </div>
-                <% else %>
-                  <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
-                    <span class="text-gray-400 text-sm">No image</span>
-                  </div>
-                <% end %>
-              </div>
+          <%= link_to t("vene.admin.nav.variant_types"), admin_variant_types_path(locale: I18n.locale), target: "_blank", class: "ad-textbtn" %>
+        </header>
+        <div class="ad-field max-w-[320px] mb-6">
+          <label for="variant-type" class="ad-label"><%= t("#{tf}.variant_type") %></label>
+          <select id="variant-type" x-model.number="selectedVariantTypeId" class="ad-select">
+            <option value=""><%= t("#{tf}.no_variants") %></option>
+            <% VariantType.active.each do |vt| %>
+              <option value="<%= vt.id %>" <%= "selected" if selected_variant_type_id == vt.id %>><%= vt.name %></option>
             <% end %>
-          </div>
+          </select>
         </div>
-      <% end %>
-    </div>
-  </div>
-
-  <!-- Product Video Section -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#465FFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-      </svg>
-      <%= t("admin.products.video", default: "Product Video") %>
-      <span class="ml-2 text-xs font-normal text-gray-500">(Optional)</span>
-    </h3>
-
-    <div class="space-y-4">
-      <div>
-        <%= form.label :video, t("admin.products.upload_video", default: "Upload Video"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.file_field :video,
-          class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF] file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-[#465FFF] file:text-white hover:file:bg-[#3651E6]",
-          accept: "video/mp4,video/mov,video/avi,video/webm,video/mkv" %>
-        <p class="mt-2 text-xs text-gray-500">
-          Accepted formats: MP4, MOV, AVI, WebM, MKV (Max 100MB)
-        </p>
-      </div>
-
-      <% if @product.persisted? && @product.video.present? %>
-        <div>
-          <p class="text-sm font-medium text-gray-700 mb-3"><%= t("admin.products.current_video", default: "Current Video") %></p>
-          <div class="rounded-lg border-2 border-gray-200 overflow-hidden bg-black max-w-md">
-            <video controls class="w-full">
-              <source src="<%= @product.video.url %>" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div class="mt-3">
-            <div class="flex items-center">
-              <%= form.check_box :remove_video, class: "w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500" %>
-              <%= form.label :remove_video, "Remove current video", class: "ml-2 text-sm font-medium text-red-600" %>
+        <div x-show="selectedVariantTypeId !== null" class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+          <template x-for="(option, index) in currentOptions" :key="option.variant_option_id">
+            <div class="p-4 border border-line bg-surface flex flex-col gap-3" :class="option.stock_quantity > 0 && '!border-ink'">
+              <span class="font-latin text-lg vn-num" x-text="option.value"></span>
+              <input type="hidden" :name="`product[product_variants_attributes][${index}][id]`" :value="option.id || ''">
+              <input type="hidden" :name="`product[product_variants_attributes][${index}][variant_type_id]`" :value="selectedVariantTypeId">
+              <input type="hidden" :name="`product[product_variants_attributes][${index}][variant_option_id]`" :value="option.variant_option_id">
+              <input type="hidden" :name="`product[product_variants_attributes][${index}][stock_quantity]`" :value="option.stock_quantity">
+              <input type="hidden" :name="`product[product_variants_attributes][${index}][active]`" value="1">
+              <label class="ad-field">
+                <span class="ad-label"><%= t("#{tf}.stock") %></span>
+                <input type="number" x-model.number="option.stock_quantity" class="ad-input font-latin" placeholder="0" min="0">
+              </label>
+              <label class="vn-check !text-[13px] !leading-5">
+                <input type="checkbox" x-model="option.allow_preorder" :name="`product[product_variants_attributes][${index}][allow_preorder]`" value="1">
+                <span><%= t("products.made_to_order_badge") %></span>
+              </label>
+              <input type="date" x-show="option.allow_preorder" x-model="option.preorder_estimated_delivery_date"
+                     :name="`product[product_variants_attributes][${index}][preorder_estimated_delivery_date]`"
+                     class="ad-input" aria-label="<%= t("#{tf}.estimated_date") %>">
             </div>
-          </div>
+          </template>
+        </div>
+        <p x-show="selectedVariantTypeId === null" class="m-0 ad-muted"><%= t("#{tf}.no_variants_text") %></p>
+      </section>
+
+      <%= render "admin/shared/card", title: t("#{tf}.related") do %>
+        <div class="ad-field">
+          <%= form.label :related_product_ids, t("#{tf}.related_label"), class: "ad-label" %>
+          <%= form.collection_select :related_product_ids, Product.where.not(id: @product.id), :id, :name_en,
+                { include_hidden: false, selected: @product.related_product_ids }, multiple: true, class: "ad-input !h-40 py-2", "aria-describedby": "related-hint" %>
+          <span id="related-hint" class="ad-hint"><%= t("#{tf}.related_hint") %></span>
         </div>
       <% end %>
+
+      <%= render "admin/shared/card", title: t("admin.products.images"), subtitle: t("admin.products.image_hint") do %>
+        <div class="ad-field mb-6">
+          <%= form.label :images, t("#{tf}.upload_images"), class: "ad-label" %>
+          <%= form.file_field :images, multiple: true, accept: "image/jpeg,image/png,image/webp", class: "ad-input" %>
+          <span class="ad-hint"><%= t("admin.products.multiple_upload") %></span>
+        </div>
+        <% if @product.persisted? && @product.product_images.any? %>
+          <ul class="list-none m-0 p-0 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4">
+            <% @product.product_images.each_with_index do |img, i| %>
+              <li class="flex flex-col gap-2">
+                <span class="aspect-square bg-media shadow-hairline flex items-center justify-center">
+                  <% if img.image.present? %><%= image_tag img.image.url, alt: "", class: "w-[88%] h-[88%] object-contain" %><% end %>
+                </span>
+                <span class="flex justify-between items-center">
+                  <span class="ad-hint"><%= i.zero? ? t("#{tf}.cover") : "##{i + 1}" %></span>
+                  <button type="button" class="ad-textbtn !text-danger" onclick="document.getElementById('delete-image-form-<%= img.id %>').requestSubmit()"><%= t("admin.actions.delete") %></button>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+
+      <%= render "admin/shared/card", title: t("#{tf}.video"), subtitle: t("#{tf}.optional") do %>
+        <div class="ad-field">
+          <%= form.label :video, t("#{tf}.upload_video"), class: "ad-label" %>
+          <%= form.file_field :video, accept: "video/mp4,video/mov,video/avi,video/webm,video/mkv", class: "ad-input", "aria-describedby": "video-hint" %>
+          <span id="video-hint" class="ad-hint"><%= t("#{tf}.video_hint") %></span>
+        </div>
+        <% if @product.persisted? && @product.video.present? %>
+          <div class="mt-5 flex flex-col gap-3 max-w-md">
+            <video controls class="w-full bg-media"><source src="<%= @product.video.url %>" type="video/mp4"></video>
+            <label class="vn-check vn-check--muted"><%= form.check_box :remove_video %><span class="text-danger"><%= t("#{tf}.remove_video") %></span></label>
+          </div>
+        <% end %>
+      <% end %>
     </div>
-  </div>
 
-  <!-- Form Actions -->
-  <div class="flex items-center justify-between pt-4">
-    <%= link_to admin_products_path(locale: I18n.locale),
-      class: "inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" do %>
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-      <%= t("common.cancel", default: "Cancel") %>
-    <% end %>
-
-    <%= form.submit t("admin.actions.save"),
-      class: "inline-flex items-center px-6 py-2.5 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" %>
+    <aside class="flex-[1_1_280px] min-w-0 max-w-[360px] flex flex-col gap-6 lg:sticky lg:top-6">
+      <%= render "admin/shared/card", title: t("#{tf}.visibility") do %>
+        <div class="flex flex-col gap-4">
+          <label class="vn-check"><%= form.check_box :active %><span><%= t("#{tf}.active") %><span class="vn-check__hint"><%= t("#{tf}.active_hint") %></span></span></label>
+          <label class="vn-check"><%= form.check_box :featured %><span><%= t("vene.admin.products.featured") %><span class="vn-check__hint"><%= t("#{tf}.featured_hint") %></span></span></label>
+          <label class="vn-check"><%= form.check_box :on_sale %><span><%= t("vene.admin.products.on_sale") %><span class="vn-check__hint"><%= t("#{tf}.on_sale_hint") %></span></span></label>
+        </div>
+      <% end %>
+      <%= render "admin/shared/card", title: t("#{tf}.placement") do %>
+        <div class="ad-field">
+          <%= form.label :sub_category_id, t("vene.admin.nav.subcategories"), class: "ad-label" %>
+          <%= form.grouped_collection_select :sub_category_id, Category.active.ordered, :sub_categories, :name_en, :id, :name_en,
+                { prompt: t("#{tf}.choose_subcategory") }, class: "ad-select" %>
+        </div>
+      <% end %>
+      <div class="ad-card flex flex-col gap-3">
+        <%= form.button t("admin.actions.save"), type: "submit", class: "vn-btn vn-btn--primary vn-btn--block" %>
+        <%= link_to t("common.cancel"), admin_products_path(locale: I18n.locale), class: "vn-btn vn-btn--outline vn-btn--block vn-btn--sm" %>
+        <% if @product.persisted? %>
+          <%= link_to product_path(@product.slug, locale: I18n.locale), target: "_blank", rel: "noopener", class: "ad-textbtn self-center inline-flex items-center gap-2" do %>
+            <%= t("#{tf}.view_live") %> <%= vn_icon(:external, size: 14) %>
+          <% end %>
+        <% end %>
+      </div>
+    </aside>
   </div>
 <% end %>
-
-<!-- Delete Image Forms (outside main form to avoid nesting issues) -->
+<%# Image delete forms sit outside the product form so forms never nest. %>
 <% if @product.persisted? && @product.product_images.any? %>
   <% @product.product_images.each do |img| %>
-    <form id="delete-image-form-<%= img.id %>"
-          action="<%= admin_product_product_image_path(@product, img, locale: I18n.locale) %>"
-          method="post"
-          data-turbo="true"
-          onsubmit="return confirm('<%= t("admin.actions.confirm") %>')">
-      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-      <%= hidden_field_tag :_method, 'delete' %>
+    <form id="delete-image-form-<%= img.id %>" action="<%= admin_product_product_image_path(@product, img, locale: I18n.locale) %>" method="post"
+          data-turbo="true" data-turbo-confirm="<%= t("admin.actions.confirm") %>">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
+      <%= hidden_field_tag :_method, "delete", id: nil %>
     </form>
   <% end %>
 <% end %>
-

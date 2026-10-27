@@ -1,123 +1,36 @@
-<!-- Page Header -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.preorders.title") %></h1>
-    <p class="mt-1 text-sm text-gray-600"><%= t("admin.preorders.subtitle") %></p>
-  </div>
-</div>
-
-<!-- Pre-Order Items Table -->
-<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+<%= render "admin/shared/top_bar", title: t("vene.admin.nav.preorders"), crumb: t("vene.admin.nav.sales"), subtitle: t("admin.preorders.subtitle") %>
+<div class="ad-card !p-0">
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.order_id") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.customer") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.product") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.variant") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.quantity") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.est_delivery") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.preorders.order_status") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("common.actions") %>
-          </th>
+          <th scope="col"><%= t("vene.orders.order_label") %></th>
+          <th scope="col"><%= t("admin.preorders.customer") %></th>
+          <th scope="col"><%= t("admin.preorders.product") %></th>
+          <th scope="col"><%= t("admin.preorders.quantity") %></th>
+          <th scope="col"><%= t("admin.preorders.est_delivery") %></th>
+          <th scope="col"><%= t("admin.preorders.order_status") %></th>
+          <th scope="col"><span class="sr-only"><%= t("common.actions") %></span></th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody>
         <% if @preorder_items.any? %>
           <% @preorder_items.each do |item| %>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">#<%= item.order.id %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900"><%= item.order.name %></div>
-                <div class="text-xs text-gray-500"><%= item.order.email %></div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-900"><%= item.product.name(I18n.locale) %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <% if item.product_variant %>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <%= item.variant_display_name %>
-                  </span>
-                <% else %>
-                  <span class="text-xs text-gray-400">&mdash;</span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <%= item.quantity %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <% if item.preorder_estimated_delivery_date %>
-                  <div class="text-sm text-gray-900">
-                    <%= l(item.preorder_estimated_delivery_date, format: :short) %>
-                  </div>
-                <% else %>
-                  <span class="text-xs text-gray-400"><%= t("admin.preorders.not_specified") %></span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <%
-                  status_type = case item.order.status
-                  when 'pending', 'payment_pending' then 'warning'
-                  when 'paid' then 'success'
-                  when 'shipped' then 'info'
-                  when 'delivered' then 'default'
-                  when 'canceled' then 'danger'
-                  else 'default'
-                  end
-                %>
-                <%= render 'admin/shared/badge', text: item.order.status.titleize, type: status_type %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <%= link_to admin_order_path(item.order, locale: I18n.locale),
-                  class: "inline-flex items-center text-[#465FFF] hover:text-[#3651E6] font-medium transition-colors" do %>
-                  <%= t("admin.preorders.view_order") %>
-                  <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
-                <% end %>
-              </td>
+            <tr>
+              <td><%= link_to "##{item.order.id}", admin_order_path(item.order, locale: I18n.locale), class: "vn-link ad-mono" %></td>
+              <td><span class="flex flex-col"><span><%= item.order.name %></span><span class="ad-hint"><%= item.order.email %></span></span></td>
+              <td><span class="flex flex-col"><span class="font-display text-lg leading-6"><%= item.product.name(I18n.locale) %></span><% if item.product_variant %><span class="ad-hint"><%= item.variant_display_name %></span><% end %></span></td>
+              <td class="font-latin"><%= item.quantity %></td>
+              <td class="whitespace-nowrap"><%= item.preorder_estimated_delivery_date ? l(item.preorder_estimated_delivery_date, format: :long) : tag.span(t("admin.preorders.not_specified"), class: "ad-off") %></td>
+              <td><span class="vn-badge vn-badge--<%= vn_status_tone(item.order.status) %>"><%= vn_status_label(item.order.status) %></span></td>
+              <td class="!text-end"><%= link_to t("admin.preorders.view_order"), admin_order_path(item.order, locale: I18n.locale), class: "ad-textbtn" %></td>
             </tr>
           <% end %>
         <% else %>
-          <tr>
-            <td colspan="8" class="px-6 py-12 text-center">
-              <div class="text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p class="text-sm font-medium"><%= t("admin.preorders.no_preorders") %></p>
-                <p class="mt-1 text-xs text-gray-500"><%= t("admin.preorders.no_preorders_subtitle") %></p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="7" class="!py-12 text-center ad-muted"><%= t("admin.preorders.no_preorders_subtitle") %></td></tr>
         <% end %>
       </tbody>
     </table>
   </div>
-
-  <!-- Pagination -->
-  <% if @pagy.pages > 1 %>
-    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-      <%== pagy_nav(@pagy) %>
-    </div>
-  <% end %>
+  <% if @pagy.pages > 1 %><div class="px-5 py-4 border-t border-line"><%== pagy_nav(@pagy) %></div><% end %>
 </div>

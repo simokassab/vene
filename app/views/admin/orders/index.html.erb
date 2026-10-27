@@ -1,103 +1,67 @@
-<!-- Page Header -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.orders.title") %></h1>
-    <p class="mt-1 text-sm text-gray-600"><%= t("admin.orders.subtitle", default: "Manage and track customer orders") %></p>
-  </div>
-</div>
+<%# AdminOrders.dc.html: status tabs (the controller's ?status filter), the month at a glance,
+    then the orders with payment, status and waybill. %>
+<% statuses = Order::STATUSES %>
+<% total = @status_counts.values.sum %>
+<%= render "admin/shared/top_bar", title: t("admin.orders.title"), crumb: t("vene.admin.nav.sales") %>
 
-<!-- Orders Table -->
-<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+<ul class="list-none m-0 mb-6 p-0 ad-grid-3">
+  <li><%= render "admin/shared/stat_card", title: t("vene.admin.orders.to_prepare"), value: @status_counts.fetch("paid", 0).to_s %></li>
+  <li><%= render "admin/shared/stat_card", title: t("vene.admin.orders.awaiting_payment"), value: (@status_counts.fetch("payment_pending", 0) + @status_counts.fetch("pending", 0)).to_s %></li>
+  <li><%= render "admin/shared/stat_card", title: t("vene.admin.orders.on_the_way"), value: @status_counts.fetch("shipped", 0).to_s %></li>
+</ul>
+
+<div class="ad-card !p-0">
+  <nav class="ad-tabs px-5 pt-1" aria-label="<%= t('vene.admin.orders.filter') %>">
+    <%= link_to admin_orders_path(locale: I18n.locale), class: "ad-tab", "aria-current": (params[:status].blank? ? "page" : nil) do %>
+      <%= t("vene.collection.all") %>&nbsp;<span class="ad-off font-latin"><%= total %></span>
+    <% end %>
+    <% statuses.each do |status| %>
+      <%= link_to admin_orders_path(locale: I18n.locale, status: status), class: "ad-tab", "aria-current": (params[:status] == status ? "page" : nil) do %>
+        <%= vn_status_label(status) %>&nbsp;<span class="ad-off font-latin"><%= @status_counts.fetch(status, 0) %></span>
+      <% end %>
+    <% end %>
+  </nav>
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.order_number", default: "Order") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.customer") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.status") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.payment", default: "Payment") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.total") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.orders.date", default: "Date") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("common.actions", default: "Actions") %>
-          </th>
+          <th scope="col"><%= t("vene.orders.order_label") %></th>
+          <th scope="col"><%= t("vene.orders.placed") %></th>
+          <th scope="col"><%= t("admin.orders.customer") %></th>
+          <th scope="col"><%= t("vene.admin.orders.pieces") %></th>
+          <th scope="col"><%= t("vene.orders.value") %></th>
+          <th scope="col"><%= t("vene.orders.payment") %></th>
+          <th scope="col"><%= t("admin.orders.status") %></th>
+          <th scope="col"><%= t("vene.admin.orders.waybill") %></th>
+          <th scope="col"><span class="sr-only"><%= t("common.actions") %></span></th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody>
         <% if @orders.any? %>
           <% @orders.each do |order| %>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">#<%= order.id %></div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900"><%= order.name %></div>
-                <div class="text-xs text-gray-500"><%= order.email %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <%
-                  status_type = case order.status
-                  when 'pending' then 'warning'
-                  when 'processing' then 'info'
-                  when 'completed' then 'success'
-                  when 'cancelled' then 'danger'
-                  else 'default'
-                  end
-                %>
-                <%= render 'admin/shared/badge', text: order.status.capitalize, type: status_type %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <%
-                  payment_type = case order.payment_status
-                  when 'paid' then 'success'
-                  when 'pending' then 'warning'
-                  when 'failed' then 'danger'
-                  else 'default'
-                  end
-                %>
-                <%= render 'admin/shared/badge', text: order.payment_status.capitalize, type: payment_type, size: 'sm' %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-semibold text-gray-900"><%= number_to_currency(order.total_amount) %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500"><%= order.created_at.strftime('%b %d, %Y') %></div>
-                <div class="text-xs text-gray-400"><%= order.created_at.strftime('%I:%M %p') %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <%= link_to admin_order_path(order, locale: I18n.locale), class: "inline-flex items-center text-[#465FFF] hover:text-[#3651E6] font-medium transition-colors" do %>
-                  <%= t("admin.actions.view") %>
-                  <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
+            <% payment_tone = { "paid" => "ok", "failed" => "bad" }.fetch(order.payment_status, "warn") %>
+            <tr>
+              <td><%= link_to "##{order.id}", admin_order_path(order, locale: I18n.locale), class: "vn-link ad-mono" %></td>
+              <td class="ad-muted whitespace-nowrap"><%= l(order.created_at.to_date, format: :long) %></td>
+              <td><span class="flex flex-col"><span><%= order.name %></span><span class="ad-hint"><%= order.email %></span></span></td>
+              <td class="font-latin"><%= order.order_items.sum(&:quantity) %></td>
+              <td class="whitespace-nowrap"><%= vn_order_price(order.total_amount, order) %></td>
+              <td><span class="vn-status vn-status--<%= payment_tone %>"><%= vn_payment_status_label(order.payment_status) %></span></td>
+              <td><span class="vn-badge vn-badge--<%= vn_status_tone(order.status) %>"><%= vn_status_label(order.status) %></span></td>
+              <td>
+                <% if order.dhl_tracking_id.present? %>
+                  <span class="ad-mono"><%= order.dhl_tracking_id %></span>
+                <% elsif %w[paid shipped].include?(order.status) %>
+                  <span class="vn-status vn-status--bad"><%= t("vene.admin.orders.missing") %></span>
+                <% else %>
+                  <span class="ad-off"><%= t("vene.admin.orders.not_shipped") %></span>
                 <% end %>
               </td>
+              <td class="!text-end"><%= link_to t("admin.actions.view"), admin_order_path(order, locale: I18n.locale), class: "ad-textbtn" %></td>
             </tr>
           <% end %>
         <% else %>
-          <tr>
-            <td colspan="7" class="px-6 py-12 text-center">
-              <div class="text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-                <p class="text-sm font-medium"><%= t("admin.orders.no_orders", default: "No orders yet") %></p>
-                <p class="mt-1 text-xs text-gray-500"><%= t("admin.orders.no_orders_subtitle", default: "Orders will appear here once customers make purchases") %></p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="9" class="!py-12 text-center ad-muted"><%= t("vene.admin.orders.none") %></td></tr>
         <% end %>
       </tbody>
     </table>

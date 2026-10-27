@@ -1,21 +1,24 @@
-<h1 class="text-xl font-semibold mb-4"><%= t("admin.orders.details") %> #<%= @order.id %></h1>
-
-<%= form_with model: [:admin, @order], local: true do |form| %>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded shadow">
-    <div>
-      <%= form.label :dhl_tracking_id, class: "block text-sm font-medium" %>
-      <%= form.text_field :dhl_tracking_id, class: "mt-1 w-full border rounded px-3 py-2" %>
-    </div>
-    <div>
-      <%= form.label :status, class: "block text-sm font-medium" %>
-      <%= form.select :status, Order::STATUSES, {}, class: "mt-1 w-full border rounded px-3 py-2" %>
-    </div>
-    <div>
-      <%= form.label :payment_status, class: "block text-sm font-medium" %>
-      <%= form.select :payment_status, Order::PAYMENT_STATUSES, {}, class: "mt-1 w-full border rounded px-3 py-2" %>
+<%= render "admin/shared/top_bar", title: "#{t('admin.actions.edit')} · ##{@order.id}", crumb: t("admin.orders.title"), crumb_href: admin_order_path(@order, locale: I18n.locale) %>
+<%= form_with model: [:admin, @order], local: true, class: "max-w-[760px] flex flex-col gap-6" do |form| %>
+  <%= render "shared/vene/form_errors", record: @order, title: t("vene.checkout.fix_details") %>
+  <div class="ad-card">
+    <div class="ad-grid-2">
+      <div class="ad-field">
+        <%= form.label :dhl_tracking_id, t("vene.admin.orders.waybill"), class: "ad-label" %>
+        <%= form.text_field :dhl_tracking_id, class: "ad-input ad-mono", dir: "ltr", autocomplete: "off" %>
+      </div>
+      <div class="ad-field">
+        <%= form.label :status, t("admin.orders.status"), class: "ad-label" %>
+        <%= form.select :status, Order::STATUSES.map { |s| [vn_status_label(s), s] }, {}, class: "ad-select" %>
+      </div>
+      <div class="ad-field">
+        <%= form.label :payment_status, t("vene.orders.payment"), class: "ad-label" %>
+        <%= form.select :payment_status, Order::PAYMENT_STATUSES.map { |s| [vn_payment_status_label(s), s] }, {}, class: "ad-select" %>
+      </div>
     </div>
   </div>
-  <div class="mt-4">
-    <%= form.submit t("admin.actions.save"), class: "bg-black text-white px-4 py-2 rounded" %>
+  <div class="ad-row">
+    <%= form.button t("admin.actions.save"), type: "submit", class: "vn-btn vn-btn--primary vn-btn--sm" %>
+    <%= link_to t("common.cancel"), admin_order_path(@order, locale: I18n.locale), class: "ad-textbtn" %>
   </div>
 <% end %>

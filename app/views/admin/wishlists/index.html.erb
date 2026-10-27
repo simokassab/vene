@@ -1,174 +1,68 @@
-<!-- Page Header -->
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.wishlists.title", default: "Wishlists") %></h1>
-  <p class="mt-1 text-sm text-gray-600"><%= t("admin.wishlists.subtitle", default: "View all customer wishlisted products") %></p>
+<%= render "admin/shared/top_bar", title: t("admin.wishlists.title"), crumb: t("vene.admin.nav.sales"), subtitle: t("admin.wishlists.subtitle") %>
+<div class="ad-grid-3 mb-6">
+  <%= render "admin/shared/stat_card", title: t("admin.wishlists.total_items"), value: WishlistItem.count.to_s %>
+  <%= render "admin/shared/stat_card", title: t("admin.wishlists.unique_customers"), value: WishlistItem.select(:user_id).distinct.count.to_s %>
+  <%= render "admin/shared/stat_card", title: t("admin.wishlists.unique_products"), value: WishlistItem.select(:product_id).distinct.count.to_s %>
 </div>
-
-<!-- Stats Summary -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-  <%= render 'admin/shared/stat_card',
-    title: t("admin.wishlists.total_items"),
-    value: WishlistItem.count.to_s,
-    icon: '❤️',
-    color: 'red'
-  %>
-  <%= render 'admin/shared/stat_card',
-    title: t("admin.wishlists.unique_customers"),
-    value: WishlistItem.select(:user_id).distinct.count.to_s,
-    icon: '👥',
-    color: 'blue'
-  %>
-  <%= render 'admin/shared/stat_card',
-    title: t("admin.wishlists.unique_products"),
-    value: WishlistItem.select(:product_id).distinct.count.to_s,
-    icon: '📦',
-    color: 'emerald'
-  %>
-</div>
-
-<!-- Wishlist Items Table -->
-<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-  <% if @wishlist_items.any? %>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.customer", default: "Customer") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.product", default: "Product") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.variant", default: "Variant") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.price_when_added", default: "Price When Added") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.current_price", default: "Current Price") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.notifications", default: "Notifications") %>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= t("admin.wishlists.added_on", default: "Added On") %>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+<div class="ad-card !p-0">
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
+        <tr>
+          <th scope="col"><%= t("admin.wishlists.customer") %></th>
+          <th scope="col"><%= t("admin.wishlists.product") %></th>
+          <th scope="col"><%= t("admin.wishlists.price_when_added") %></th>
+          <th scope="col"><%= t("admin.wishlists.current_price") %></th>
+          <th scope="col"><%= t("admin.wishlists.notifications") %></th>
+          <th scope="col"><%= t("admin.wishlists.added_on") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @wishlist_items.any? %>
           <% @wishlist_items.each do |item| %>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
+            <tr>
+              <td>
                 <% if item.user %>
-                  <div class="text-sm font-medium text-gray-900"><%= item.user.name %></div>
-                  <div class="text-xs text-gray-500"><%= item.user.email %></div>
+                  <span class="flex flex-col"><span><%= item.user.name %></span><span class="ad-hint"><%= item.user.email %></span></span>
                 <% else %>
-                  <span class="text-xs text-gray-400 italic"><%= t("admin.wishlists.deleted_user", default: "Deleted User") %></span>
+                  <span class="ad-off"><%= t("admin.wishlists.deleted_user") %></span>
                 <% end %>
               </td>
-              <td class="px-6 py-4">
+              <td>
                 <% if item.product %>
-                  <div class="flex items-center">
-                    <% if item.product.product_images.any? %>
-                      <div class="h-10 w-10 flex-shrink-0">
-                        <%= image_tag item.product.product_images.first.image.url(:thumb), class: "h-10 w-10 rounded-lg object-cover", alt: item.product.name(I18n.locale) %>
-                      </div>
-                    <% else %>
-                      <div class="h-10 w-10 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                      </div>
-                    <% end %>
-                    <div class="ml-3">
-                      <div class="text-sm font-medium text-gray-900"><%= item.product.name(I18n.locale) %></div>
-                      <% if item.product.sub_category %>
-                        <div class="text-xs text-gray-500"><%= item.product.sub_category.name(I18n.locale) %></div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% else %>
-                  <span class="text-xs text-gray-400 italic"><%= t("admin.wishlists.deleted_product", default: "Deleted Product") %></span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <% if item.product_variant %>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <% if item.product_variant.variant_option %>
-                      <%= item.product_variant.variant_option.name(I18n.locale) %>
-                    <% else %>
-                      <%= item.product_variant.name %>
-                    <% end %>
+                  <span class="flex items-center gap-3">
+                    <span class="ad-thumb"><% if (src = vn_product_image_url(item.product, version: :thumb)) %><%= image_tag src, alt: "" %><% end %></span>
+                    <span class="flex flex-col">
+                      <span class="font-display text-lg leading-6"><%= item.product.name(I18n.locale) %></span>
+                      <span class="ad-hint"><%= [item.product.sub_category&.name(I18n.locale), item.product_variant&.display_name].compact.join(" · ") %></span>
+                    </span>
                   </span>
                 <% else %>
-                  <span class="text-xs text-gray-400">-</span>
+                  <span class="ad-off"><%= t("admin.wishlists.deleted_product") %></span>
                 <% end %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900"><%= number_to_currency(item.price_when_added) %></div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="whitespace-nowrap"><%= vn_price(item.price_when_added) %></td>
+              <td class="whitespace-nowrap">
                 <% if item.product %>
-                  <div class="text-sm font-medium <%= item.price_dropped? ? 'text-emerald-600' : 'text-gray-900' %>">
-                    <%= number_to_currency(item.current_price) %>
-                    <% if item.price_dropped? %>
-                      <span class="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                        -<%= item.price_drop_percentage %>%
-                      </span>
-                    <% end %>
-                  </div>
-                <% else %>
-                  <span class="text-xs text-gray-400">-</span>
-                <% end %>
+                  <%= vn_price(item.current_price) %>
+                  <% if item.price_dropped? %><span class="vn-status vn-status--ok ms-2">−<%= item.price_drop_percentage %>%</span><% end %>
+                <% else %>—<% end %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex flex-col gap-1">
-                  <% if item.notify_back_in_stock? %>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
-                      </svg>
-                      <%= t("admin.wishlists.stock_alert", default: "Stock Alert") %>
-                    </span>
-                  <% end %>
-                  <% if item.notify_price_drop? %>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-                      </svg>
-                      <%= t("admin.wishlists.price_alert", default: "Price Alert") %>
-                    </span>
-                  <% end %>
-                  <% unless item.notify_back_in_stock? || item.notify_price_drop? %>
-                    <span class="text-xs text-gray-400">-</span>
-                  <% end %>
-                </div>
+              <td>
+                <span class="flex flex-wrap gap-1.5">
+                  <% if item.notify_back_in_stock? %><span class="vn-badge vn-badge--outline"><%= t("admin.wishlists.stock_alert") %></span><% end %>
+                  <% if item.notify_price_drop? %><span class="vn-badge vn-badge--outline"><%= t("admin.wishlists.price_alert") %></span><% end %>
+                  <% unless item.notify_back_in_stock? || item.notify_price_drop? %><span class="ad-off">—</span><% end %>
+                </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500"><%= item.created_at.strftime('%b %d, %Y') %></div>
-                <div class="text-xs text-gray-400"><%= item.created_at.strftime('%I:%M %p') %></div>
-              </td>
+              <td class="ad-muted whitespace-nowrap"><%= l(item.created_at.to_date, format: :long) %></td>
             </tr>
           <% end %>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <% if @pagy.pages > 1 %>
-      <div class="px-6 py-4 border-t border-gray-200">
-        <%== pagy_nav(@pagy) %>
-      </div>
-    <% end %>
-  <% else %>
-    <!-- Empty State -->
-    <div class="text-center py-12">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900"><%= t("admin.wishlists.no_items", default: "No Wishlist Items") %></h3>
-      <p class="mt-1 text-sm text-gray-500"><%= t("admin.wishlists.no_items_subtitle", default: "Customers haven't added any products to their wishlists yet.") %></p>
-    </div>
-  <% end %>
+        <% else %>
+          <tr><td colspan="6" class="!py-12 text-center ad-muted"><%= t("admin.wishlists.no_items_subtitle") %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @pagy.pages > 1 %><div class="px-5 py-4 border-t border-line"><%== pagy_nav(@pagy) %></div><% end %>
 </div>

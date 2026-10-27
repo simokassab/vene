@@ -1,28 +1,8 @@
 <%
-  # Badge Component
+  # Badge: a square-cut status label (Badge / StatusPill).
   # Usage: render 'admin/shared/badge', text: 'Active', type: 'success'
-
   type ||= 'default'
   size ||= 'md'
-
-  size_classes = {
-    'sm' => 'px-2 py-0.5 text-xs',
-    'md' => 'px-2.5 py-1 text-xs',
-    'lg' => 'px-3 py-1.5 text-sm'
-  }
-
-  type_classes = {
-    'default' => 'bg-gray-100 text-gray-800',
-    'primary' => 'bg-blue-100 text-blue-800',
-    'success' => 'bg-emerald-100 text-emerald-800',
-    'warning' => 'bg-yellow-100 text-yellow-800',
-    'danger' => 'bg-red-100 text-red-800',
-    'info' => 'bg-indigo-100 text-indigo-800'
-  }
-
-  classes = "inline-flex items-center font-medium rounded-full #{size_classes[size]} #{type_classes[type]}"
+  tone = { 'default' => 'outline', 'primary' => 'noir', 'success' => 'noir', 'warning' => 'gold', 'danger' => 'danger', 'info' => 'outline' }.fetch(type, 'outline')
 %>
-
-<span class="<%= classes %>">
-  <%= text %>
-</span>
+<span class="vn-badge vn-badge--<%= tone %>"><%= text %></span>

@@ -1,139 +1,65 @@
-<!-- Page Header -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900"><%= t("admin.sub_categories.title") %></h1>
-    <p class="mt-1 text-sm text-gray-600"><%= t("admin.sub_categories.subtitle") %></p>
-  </div>
-  <%= link_to new_admin_sub_category_path(locale: I18n.locale),
-    class: "inline-flex items-center justify-center px-4 py-2 bg-[#465FFF] hover:bg-[#3651E6] text-white font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#465FFF]" do %>
-    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-    </svg>
-    <%= t("admin.sub_categories.new") %>
-  <% end %>
-</div>
-
-<!-- Search/Filter Form -->
-<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
-  <%= search_form_for [:admin, @q], url: admin_sub_categories_path(locale: I18n.locale) do |f| %>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div>
-        <%= f.label :name_en_cont, t("admin.sub_categories.search_name"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.search_field :name_en_cont, class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]", placeholder: t("admin.sub_categories.search_placeholder") %>
-      </div>
-      <div>
-        <%= f.label :category_id_eq, t("admin.sub_categories.filter_category"), class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.collection_select :category_id_eq, Category.ordered, :id, :name_en,
-          { include_blank: t("admin.sub_categories.all_categories") },
-          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#465FFF] focus:border-[#465FFF]" %>
-      </div>
-      <div class="flex items-end gap-2">
-        <%= f.submit t("admin.actions.search"), class: "px-6 py-2 bg-[#465FFF] hover:bg-[#3651E6] text-white rounded-lg transition-colors font-medium cursor-pointer" %>
-        <%= link_to t("admin.actions.reset"), admin_sub_categories_path(locale: I18n.locale), class: "px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" %>
-      </div>
+<%= render "admin/shared/top_bar", title: t("admin.sub_categories.title"), crumb: t("vene.admin.nav.catalog") do %>
+  <%= link_to new_admin_sub_category_path(locale: I18n.locale), class: "vn-btn vn-btn--primary vn-btn--sm" do %><%= vn_icon(:plus, size: 16) %><span><%= t("admin.sub_categories.new") %></span><% end %>
+<% end %>
+<div class="ad-card mb-6">
+  <%= search_form_for [:admin, @q], url: admin_sub_categories_path(locale: I18n.locale), html: { class: "flex flex-wrap items-end gap-x-6 gap-y-4" } do |f| %>
+    <div class="ad-field flex-[2_1_220px]">
+      <%= f.label :name_en_cont, t("admin.sub_categories.search_name"), class: "ad-label" %>
+      <%= f.search_field :name_en_cont, class: "ad-input", placeholder: t("admin.sub_categories.search_placeholder") %>
+    </div>
+    <div class="ad-field flex-[1_1_200px]">
+      <%= f.label :category_id_eq, t("admin.sub_categories.filter_category"), class: "ad-label" %>
+      <%= f.collection_select :category_id_eq, Category.ordered, :id, :name_en, { include_blank: t("admin.sub_categories.all_categories") }, class: "ad-select" %>
+    </div>
+    <div class="ad-row">
+      <%= f.button t("admin.actions.search"), type: "submit", class: "vn-btn vn-btn--primary vn-btn--sm" %>
+      <%= link_to t("admin.actions.reset"), admin_sub_categories_path(locale: I18n.locale), class: "ad-textbtn" %>
     </div>
   <% end %>
 </div>
-
-<!-- SubCategories Table -->
-<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+<div class="ad-card !p-0">
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.image") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.name") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.category") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.slug") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.position") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("admin.sub_categories.status") %>
-          </th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <%= t("common.actions") %>
-          </th>
+          <th scope="col"><%= t("admin.sub_categories.name") %></th>
+          <th scope="col"><%= t("admin.sub_categories.category") %></th>
+          <th scope="col"><%= t("admin.sub_categories.slug") %></th>
+          <th scope="col"><%= t("admin.sub_categories.position") %></th>
+          <th scope="col"><%= t("admin.sub_categories.status") %></th>
+          <th scope="col"><span class="sr-only"><%= t("common.actions") %></span></th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody>
         <% if @sub_categories.any? %>
           <% @sub_categories.each do |sub_category| %>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
-                <% if sub_category.image? %>
-                  <%= image_tag sub_category.image.thumb.url, class: "h-12 w-16 object-cover rounded" %>
-                <% else %>
-                  <div class="h-12 w-16 bg-gradient-to-br from-[#465FFF] to-[#3651E6] rounded flex items-center justify-center">
-                    <span class="text-lg font-bold text-white">
-                      <%= sub_category.name_en.first(2).upcase %>
-                    </span>
-                  </div>
-                <% end %>
+            <tr>
+              <td>
+                <span class="flex items-center gap-3">
+                  <span class="ad-thumb"><% if sub_category.image? %><%= image_tag sub_category.image.url, alt: "", class: "!w-full !h-full !object-cover" %><% end %></span>
+                  <span class="flex flex-col">
+                    <%= link_to sub_category.name_en, edit_admin_sub_category_path(sub_category, locale: I18n.locale), class: "vn-quiet !text-ink font-display text-lg leading-6" %>
+                    <span class="ad-hint" lang="ar" dir="rtl"><%= sub_category.name_ar %></span>
+                  </span>
+                </span>
               </td>
-              <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900"><%= sub_category.name_en %></div>
-                <div class="text-sm text-gray-500" dir="rtl"><%= sub_category.name_ar %></div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-900">
-                <%= sub_category.category.name_en %>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-500 font-mono"><%= sub_category.slug %></td>
-              <td class="px-6 py-4 text-sm text-gray-900 text-center"><%= sub_category.position %></td>
-              <td class="px-6 py-4">
-                <%= render 'admin/shared/badge',
-                  text: sub_category.active? ? t("common.active") : t("common.inactive"),
-                  type: sub_category.active? ? 'success' : 'default'
-                %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
-                <%= link_to edit_admin_sub_category_path(sub_category, locale: I18n.locale),
-                  class: "inline-flex items-center text-[#465FFF] hover:text-[#3651E6] font-medium transition-colors" do %>
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                  </svg>
-                  <%= t("admin.actions.edit") %>
-                <% end %>
-                <%= link_to admin_sub_category_path(sub_category, locale: I18n.locale),
-                  data: { turbo_method: :delete, turbo_confirm: t("admin.actions.confirm") },
-                  class: "inline-flex items-center text-red-600 hover:text-red-700 font-medium transition-colors" do %>
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                  <%= t("admin.actions.delete") %>
-                <% end %>
+              <td><%= sub_category.category&.name_en %></td>
+              <td class="ad-mono ad-muted"><%= sub_category.slug %></td>
+              <td class="font-latin"><%= sub_category.position %></td>
+              <td><span class="vn-status <%= sub_category.active? ? 'vn-status--ok' : 'vn-status--off' %>"><%= sub_category.active? ? t("common.active") : t("common.inactive") %></span></td>
+              <td class="!text-end whitespace-nowrap">
+                <%= link_to t("admin.actions.edit"), edit_admin_sub_category_path(sub_category, locale: I18n.locale), class: "ad-textbtn" %>
+                <span class="mx-2 ad-off" aria-hidden="true">·</span>
+                <%= link_to t("admin.actions.delete"), admin_sub_category_path(sub_category, locale: I18n.locale), class: "ad-textbtn !text-danger",
+                      data: { turbo_method: :delete, turbo_confirm: t("admin.actions.confirm") } %>
               </td>
             </tr>
           <% end %>
         <% else %>
-          <tr>
-            <td colspan="7" class="px-6 py-12 text-center">
-              <div class="text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                </svg>
-                <p class="text-sm font-medium"><%= t("admin.sub_categories.no_items") %></p>
-                <p class="mt-1 text-xs text-gray-500"><%= t("admin.sub_categories.no_items_subtitle") %></p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="6" class="!py-12 text-center ad-muted"><%= t("admin.sub_categories.no_items") %></td></tr>
         <% end %>
       </tbody>
     </table>
   </div>
-
-  <!-- Pagination -->
-  <% if @pagy.pages > 1 %>
-    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-      <%== pagy_nav(@pagy) %>
-    </div>
-  <% end %>
+  <% if @pagy.pages > 1 %><div class="px-5 py-4 border-t border-line"><%== pagy_nav(@pagy) %></div><% end %>
 </div>

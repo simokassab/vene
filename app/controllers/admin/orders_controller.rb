@@ -4,6 +4,7 @@ class Admin::OrdersController < Admin::BaseController
   def index
     @orders = Order.includes(:user, order_items: :product).order(created_at: :desc)
     @orders = @orders.where(status: params[:status]) if params[:status].present?
+    @status_counts = Order.group(:status).count
   end
 
   def show; end

@@ -1,0 +1,17 @@
+<%# locals: (title:, crumb: nil, crumb_href: nil, badge: nil, badge_tone: "outline", subtitle: nil) %>
+<%# AdminTopBar.dc.html: breadcrumb, display title (with an optional status badge), and the
+    page's actions from the block. %>
+<% content_for :title, title %>
+<div class="ad-top">
+  <div class="flex flex-col gap-0.5 py-4 min-w-0">
+    <% if crumb %>
+      <span class="ad-crumb"><%= crumb_href ? link_to(crumb, crumb_href, class: "vn-quiet") : crumb %><% if crumb_href %> / <%= title %><% end %></span>
+    <% end %>
+    <div class="ad-row">
+      <h1 class="ad-title rtl:[font-family:var(--font-arabic-display)] rtl:font-bold rtl:text-3xl"><%= title %></h1>
+      <% if badge %><span class="vn-badge vn-badge--<%= badge_tone %>"><%= badge %></span><% end %>
+    </div>
+    <% if subtitle %><span class="ad-hint"><%= subtitle %></span><% end %>
+  </div>
+  <% if block_given? %><div class="ad-row"><%= yield %></div><% end %>
+</div>
