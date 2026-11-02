@@ -1060,6 +1060,10 @@ en:
         no_product: "No linked piece"
         url: "URL"
         image_hint: "A wide photograph; it is cropped to fill the hero."
+        image_focus: "Photo focus"
+        image_focus_hint: "Move it towards the piece so the hero keeps it in view. The preview shows the hero's crop."
+        focus_left: "Left"
+        focus_right: "Right"
       page_form:
         title_en: "Title (English)"
         title_ar: "Title (Arabic)"

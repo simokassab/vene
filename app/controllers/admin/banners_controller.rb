@@ -40,6 +40,6 @@ class Admin::BannersController < Admin::BaseController
   end
 
   def banner_params
-    params.require(:banner).permit(:image, :title_en, :title_ar, :subtitle_en, :subtitle_ar, :active, :position, :product_id, :url)
+    params.require(:banner).permit(:image, :title_en, :title_ar, :subtitle_en, :subtitle_ar, :active, :position, :product_id, :url, :image_focus)
   end
 end

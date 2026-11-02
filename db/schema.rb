@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_27_100200) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_02_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,6 +44,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_27_100200) do
     t.string "url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "image_focus", default: 50, null: false
     t.index ["active"], name: "index_banners_on_active"
     t.index ["position"], name: "index_banners_on_position"
     t.index ["product_id"], name: "index_banners_on_product_id"

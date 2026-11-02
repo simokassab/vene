@@ -148,6 +148,9 @@
 
   /* ---------- Type ---------- */
   .vn-display-xl { font-family: var(--font-display); font-weight: 300; font-size: clamp(48px, 6.6vw, 120px); line-height: 0.94; letter-spacing: -0.015em; }
+  /* Inside a size container (the hero copy column): scales with the column, not the
+     window, so a long word never runs under the photo beside it. */
+  .vn-display-xl--fit { font-size: clamp(40px, min(6.6vw, 17cqi), 120px); overflow-wrap: break-word; hyphens: auto; }
   .vn-display-l { font-family: var(--font-display); font-weight: 300; font-size: clamp(40px, 4.6vw, 64px); line-height: 1.02; letter-spacing: -0.01em; }
   .vn-h1 { font-family: var(--font-display); font-weight: 300; font-size: clamp(32px, 3.4vw, 44px); line-height: 1.18; }
   .vn-h2 { font-family: var(--font-display); font-weight: 400; font-size: 32px; line-height: 40px; }

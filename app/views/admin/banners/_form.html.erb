@@ -20,7 +20,20 @@
       <% end %>
       <%= render "admin/shared/card", title: t("vene.admin.common.image"), subtitle: t("#{bf}.image_hint") do %>
         <div class="ad-field"><%= form.label :image, t("vene.admin.common.upload_image"), class: "ad-label" %><%= form.file_field :image, accept: "image/*", class: "ad-input" %></div>
-        <% if @banner.image? %><div class="mt-5 max-w-md aspect-[12/5] bg-media shadow-hairline overflow-hidden"><%= image_tag @banner.image.url, alt: "", class: "w-full h-full object-cover" %></div><% end %>
+        <% if @banner.image? %>
+          <%# The hero shows the photo in a near-square box: preview that crop while the focus moves. %>
+          <div class="mt-5 flex flex-wrap items-end gap-6" x-data="{ focus: <%= @banner.image_focus.to_i %> }">
+            <div class="w-56 aspect-[6/7] bg-media shadow-hairline overflow-hidden">
+              <%= image_tag @banner.image.url, alt: "", class: "w-full h-full object-cover", ":style": "`object-position: ${focus}% 50%`" %>
+            </div>
+            <div class="ad-field flex-1 min-w-[200px]">
+              <%= form.label :image_focus, t("#{bf}.image_focus"), class: "ad-label" %>
+              <%= form.range_field :image_focus, in: 0..100, step: 1, class: "w-full", "x-model.number": "focus", dir: "ltr" %>
+              <div class="flex justify-between ad-hint" dir="ltr"><span><%= t("#{bf}.focus_left") %></span><span class="font-latin" x-text="`${focus}%`"></span><span><%= t("#{bf}.focus_right") %></span></div>
+              <span class="ad-hint"><%= t("#{bf}.image_focus_hint") %></span>
+            </div>
+          </div>
+        <% end %>
       <% end %>
     </div>
     <aside class="flex-[1_1_280px] min-w-0 max-w-[360px] flex flex-col gap-6">

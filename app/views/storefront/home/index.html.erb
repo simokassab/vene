@@ -23,12 +23,13 @@
            class="grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] min-h-[clamp(520px,calc(100svh-170px),920px)]"
            role="group" aria-roledescription="slide" aria-label="<%= index + 1 %> / <%= @banners.size %>">
         <div class="relative order-1 md:order-2 min-h-[320px] overflow-hidden bg-media">
-          <%= image_tag banner.image.url, alt: banner.title(I18n.locale).to_s, class: "absolute inset-0 w-full h-full object-cover", loading: (index.zero? ? "eager" : "lazy") %>
+          <%= image_tag banner.image.url, alt: banner.title(I18n.locale).to_s, class: "absolute inset-0 w-full h-full object-cover",
+                                               style: "object-position: #{banner.image_focus}% 50%", loading: (index.zero? ? "eager" : "lazy") %>
         </div>
         <div class="order-2 md:order-1 flex items-center px-[var(--gutter)] py-12 md:py-20 md:ps-[max(var(--gutter),calc((100vw-var(--container-site))/2+var(--gutter)))]">
-          <div class="max-w-[560px] flex flex-col gap-6 md:gap-8">
+          <div class="@container w-full min-w-0 max-w-[560px] flex flex-col gap-6 md:gap-8">
             <%= render "shared/vene/eyebrow", text: (product&.name(I18n.locale) || t("storefront.home.hero_eyebrow")) %>
-            <h1 class="vn-display-xl m-0"><%= banner.title(I18n.locale).presence || t("vene.brand.tagline") %></h1>
+            <h1 class="vn-display-xl vn-display-xl--fit m-0"><%= banner.title(I18n.locale).presence || t("vene.brand.tagline") %></h1>
             <% if banner.subtitle(I18n.locale).present? %>
               <p class="vn-lead m-0 !text-[26px] !leading-9 rtl:!text-lg rtl:!leading-8"><%= banner.subtitle(I18n.locale) %></p>
             <% end %>

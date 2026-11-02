@@ -5,6 +5,7 @@ class Banner < ApplicationRecord
 
   validates :image, presence: true
   validates :position, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :image_focus, numericality: { only_integer: true, in: 0..100 }
 
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(position: :asc, created_at: :asc) }
