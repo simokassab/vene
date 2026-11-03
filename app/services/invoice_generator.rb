@@ -18,7 +18,7 @@ class InvoiceGenerator
   private
 
   def render_header(pdf)
-    logo_path = Rails.root.join("app", "assets", "images", "logo.jpg")
+    logo_path = Rails.root.join("app", "assets", "images", "logo-vene-diamond-lg.png")
     logo_height = 80
 
     # Company info on the left

@@ -53,9 +53,8 @@
       </button>
     </div>
 
-    <%= link_to root_path(locale: I18n.locale), lang: "en", dir: "ltr", class: "flex flex-col items-center gap-0.5 py-2 text-ink no-underline", "aria-label": t("vene.header.home_label") do %>
-      <span class="font-display font-medium text-[26px] leading-[26px] md:text-[32px] md:leading-8 tracking-nav uppercase ps-[0.12em]" style="font-family: var(--font-display); letter-spacing: var(--tracking-nav); text-transform: uppercase;">VENÈ</span>
-      <span class="font-latin text-[9px] leading-3 font-medium uppercase ps-[0.5em]" style="letter-spacing: 0.5em; text-transform: uppercase;">Jewelry</span>
+    <%= link_to root_path(locale: I18n.locale), lang: "en", dir: "ltr", class: "flex items-center py-1.5 text-ink no-underline", "aria-label": t("vene.header.home_label") do %>
+      <%= image_tag "logo-vene-diamond.png", alt: "VENÈ Jewelry", width: 356, height: 264, class: "block h-14 md:h-[72px] w-auto" %>
     <% end %>
 
     <div class="flex items-center justify-end gap-1">
